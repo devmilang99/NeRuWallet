@@ -1,11 +1,15 @@
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/neruwallet
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/icudtl.dat
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so
+/home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/lib/libsqlite3_flutter_libs_plugin.so
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/NOTICES
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/NOTICES.Z
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/version.json
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/NativeAssetsManifest.json
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/fonts/MaterialIcons-Regular.otf
+/home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/packages/font_awesome_flutter/lib/fonts/Font-Awesome-7-Free-Regular-400.otf
+/home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/packages/font_awesome_flutter/lib/fonts/Font-Awesome-7-Free-Solid-900.otf
+/home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/packages/font_awesome_flutter/lib/fonts/Font-Awesome-7-Brands-Regular-400.otf
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/shaders/stretch_effect.frag
 /home/milan/FlutterProgramming/NeRuWallet/build/linux/x64/debug/bundle/data/flutter_assets/shaders/ink_sparkle.frag

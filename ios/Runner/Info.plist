@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>NeRuWallet needs access to your camera to scan QR codes.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>NeRuWallet needs FaceID for secure login.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NeRuWallet needs access to your photos to upload profile pictures.</string>
 </dict>
 </plist>
