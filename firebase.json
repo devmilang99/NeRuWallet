@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"neruwallet","appId":"1:836637415070:android:6d6362c45715e352460d8f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"neruwallet","configurations":{"android":"1:836637415070:android:6d6362c45715e352460d8f","ios":"1:836637415070:ios:f7dea4e5970349f5460d8f"}}}}}}

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "836637415070",
+    "project_id": "neruwallet",
+    "storage_bucket": "neruwallet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:836637415070:android:6d6362c45715e352460d8f",
+        "android_client_info": {
+          "package_name": "com.example.neruwallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8-uSwjA0wkgeSmue2m22wtRUSKrtwePo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

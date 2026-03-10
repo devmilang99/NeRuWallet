@@ -1,0 +1,173 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import '../../../../core/providers/theme_provider.dart';
+
+class ThemeSelectionScreen extends ConsumerStatefulWidget {
+  const ThemeSelectionScreen({super.key});
+
+  @override
+  ConsumerState<ThemeSelectionScreen> createState() =>
+      _ThemeSelectionScreenState();
+}
+
+class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedThemeMode = ref.watch(themeProvider);
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(
+              isDark
+                  ? 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop'
+                  : 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop',
+            ),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(isDark ? 0.7 : 0.1),
+              BlendMode.darken,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 60),
+                Text(
+                  "Choose Your Style",
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ).animate().fadeIn().slideX(begin: -0.2, end: 0),
+                const SizedBox(height: 12),
+                Text(
+                  "Select a theme that suits you best. You can always change this in settings.",
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
+                  ),
+                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildThemeCard(
+                        context,
+                        title: "Light",
+                        icon: Icons.light_mode_rounded,
+                        mode: ThemeMode.light,
+                        isSelected: selectedThemeMode == ThemeMode.light,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: _buildThemeCard(
+                        context,
+                        title: "Dark",
+                        icon: Icons.dark_mode_rounded,
+                        mode: ThemeMode.dark,
+                        isSelected: selectedThemeMode == ThemeMode.dark,
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 20),
+                _buildThemeCard(
+                  context,
+                  title: "System Preference",
+                  icon: Icons.settings_brightness_rounded,
+                  mode: ThemeMode.system,
+                  isSelected: selectedThemeMode == ThemeMode.system,
+                  isWide: true,
+                ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () {
+                    context.go('/auth/login');
+                  },
+                  child: const Text("Continue"),
+                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required ThemeMode mode,
+    required bool isSelected,
+    bool isWide = false,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () {
+        ref.read(themeProvider.notifier).state = mode;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: isWide ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryColor.withOpacity(0.15)
+              : (isDark
+                    ? AppTheme.surfaceDark.withOpacity(0.4)
+                    : Colors.white.withOpacity(0.8)),
+          borderRadius: AppTheme.radiusLarge,
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : (isDark ? Colors.white70 : Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? AppTheme.primaryColor
+                    : (isDark ? Colors.white70 : Colors.black87),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
