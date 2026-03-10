@@ -1,1 +1,0 @@
- /home/milan/FlutterProgramming/NeRuWallet/.dart_tool/flutter_build/05a438f4ae6dcbbf9f6826a235a42b97/native_assets.json: 
