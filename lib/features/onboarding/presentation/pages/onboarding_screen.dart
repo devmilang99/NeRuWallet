@@ -47,132 +47,103 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background images that change with a cross-fade effect logically
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 1000),
-            child: Container(
-              key: ValueKey(_currentPageIndex),
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(_items[_currentPageIndex].imageUrl),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(isDark ? 0.75 : 0.4),
-                    BlendMode.darken,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: TextButton(
+                  onPressed: () => context.go('/theme-selection'),
+                  child: Text(
+                    "Skip",
+                    style: TextStyle(
+                      color: isDark
+                          ? Colors.white70
+                          : AppTheme.textSecondaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+              ).animate().fadeIn(duration: 600.ms),
+              // Page View for Slider
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPageIndex = index;
+                    });
+                  },
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    return _buildPage(_items[index]);
+                  },
+                ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 30,
-              ),
-              child: Column(
+              const SizedBox(height: 30),
+              // Indicator & Buttons
+              Column(
                 children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(
-                      onPressed: () => context.go('/theme-selection'),
-                      child: Text(
-                        "Skip",
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ).animate().fadeIn(duration: 600.ms),
-                  // Page View for Slider
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPageIndex = index;
-                        });
-                      },
-                      itemCount: _items.length,
-                      itemBuilder: (context, index) {
-                        return _buildPage(_items[index]);
-                      },
+                  SmoothPageIndicator(
+                    controller: _pageController,
+                    count: _items.length,
+                    effect: ExpandingDotsEffect(
+                      dotHeight: 8,
+                      dotWidth: 8,
+                      spacing: 8,
+                      expansionFactor: 3,
+                      dotColor: isDark ? Colors.white24 : Colors.black12,
+                      activeDotColor: AppTheme.primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  // Indicator & Buttons
-                  Column(
-                    children: [
-                      SmoothPageIndicator(
-                        controller: _pageController,
-                        count: _items.length,
-                        effect: ExpandingDotsEffect(
-                          dotHeight: 8,
-                          dotWidth: 8,
-                          spacing: 8,
-                          expansionFactor: 3,
-                          dotColor: Colors.white.withOpacity(0.3),
-                          activeDotColor: Colors.white,
-                        ),
+                  const SizedBox(height: 48),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_currentPageIndex == _items.length - 1) {
+                        context.go('/theme-selection');
+                      } else {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.fastOutSlowIn,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppTheme.radiusLarge,
                       ),
-                      const SizedBox(height: 48),
-                      ElevatedButton(
-                            onPressed: () {
-                              if (_currentPageIndex == _items.length - 1) {
-                                context.go('/theme-selection');
-                              } else {
-                                _pageController.nextPage(
-                                  duration: const Duration(milliseconds: 600),
-                                  curve: Curves.fastOutSlowIn,
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: AppTheme.primaryColor,
-                              minimumSize: const Size(double.infinity, 64),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: AppTheme.radiusLarge,
-                              ),
-                            ),
-                            child: Text(
-                              _currentPageIndex == _items.length - 1
-                                  ? "Get Started"
-                                  : "Next",
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 200.ms)
-                          .slideY(begin: 0.5, end: 0),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    ),
+                    child: Text(
+                      _currentPageIndex == _items.length - 1
+                          ? "Get Started"
+                          : "Next",
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5, end: 0),
+                  const SizedBox(height: 20),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildPage(OnboardingItem item) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: AppTheme.primaryColor.withOpacity(0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
           ),
-          child: Icon(item.icon, size: 100, color: Colors.white)
+          child: Icon(item.icon, size: 100, color: AppTheme.primaryColor)
               .animate(onPlay: (controller) => controller.repeat(reverse: true))
               .scale(
                 duration: 2.seconds,
@@ -187,7 +158,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
             fontWeight: FontWeight.w900,
-            color: Colors.white,
+            color: isDark ? Colors.white : AppTheme.textBodyColor,
           ),
         ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
         const SizedBox(height: 20),
@@ -197,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             item.description,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withOpacity(0.9),
+              color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
               height: 1.6,
             ),
           ),

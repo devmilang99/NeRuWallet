@@ -20,88 +20,70 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
     final selectedThemeMode = ref.watch(themeProvider);
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-              isDark
-                  ? 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop'
-                  : 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop',
-            ),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(isDark ? 0.7 : 0.1),
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 60),
-                Text(
-                  "Choose Your Style",
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ).animate().fadeIn().slideX(begin: -0.2, end: 0),
-                const SizedBox(height: 12),
-                Text(
-                  "Select a theme that suits you best. You can always change this in settings.",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isDark
-                        ? AppTheme.textSecondaryDark
-                        : AppTheme.textSecondaryColor,
-                  ),
-                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildThemeCard(
-                        context,
-                        title: "Light",
-                        icon: Icons.light_mode_rounded,
-                        mode: ThemeMode.light,
-                        isSelected: selectedThemeMode == ThemeMode.light,
-                      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 60),
+              Text(
+                "Choose Your Style",
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ).animate().fadeIn().slideX(begin: -0.2, end: 0),
+              const SizedBox(height: 12),
+              Text(
+                "Select a theme that suits you best. You can always change this in settings.",
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: isDark
+                      ? AppTheme.textSecondaryDark
+                      : AppTheme.textSecondaryColor,
+                ),
+              ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
+              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildThemeCard(
+                      context,
+                      title: "Light",
+                      icon: Icons.light_mode_rounded,
+                      mode: ThemeMode.light,
+                      isSelected: selectedThemeMode == ThemeMode.light,
                     ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: _buildThemeCard(
-                        context,
-                        title: "Dark",
-                        icon: Icons.dark_mode_rounded,
-                        mode: ThemeMode.dark,
-                        isSelected: selectedThemeMode == ThemeMode.dark,
-                      ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildThemeCard(
+                      context,
+                      title: "Dark",
+                      icon: Icons.dark_mode_rounded,
+                      mode: ThemeMode.dark,
+                      isSelected: selectedThemeMode == ThemeMode.dark,
                     ),
-                  ],
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
-                const SizedBox(height: 20),
-                _buildThemeCard(
-                  context,
-                  title: "System Preference",
-                  icon: Icons.settings_brightness_rounded,
-                  mode: ThemeMode.system,
-                  isSelected: selectedThemeMode == ThemeMode.system,
-                  isWide: true,
-                ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    context.go('/auth/login');
-                  },
-                  child: const Text("Continue"),
-                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2, end: 0),
-                const SizedBox(height: 20),
-              ],
-            ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+              const SizedBox(height: 20),
+              _buildThemeCard(
+                context,
+                title: "System Preference",
+                icon: Icons.settings_brightness_rounded,
+                mode: ThemeMode.system,
+                isSelected: selectedThemeMode == ThemeMode.system,
+                isWide: true,
+              ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  context.go('/auth/login');
+                },
+                child: const Text("Continue"),
+              ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2, end: 0),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),

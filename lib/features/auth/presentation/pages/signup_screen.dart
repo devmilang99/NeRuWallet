@@ -22,169 +22,145 @@ class _SignupScreenState extends State<SignupScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-              isDark
-                  ? 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?q=80&w=2070&auto=format&fit=crop'
-                  : 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop',
-            ),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(isDark ? 0.75 : 0.4),
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IconButton(
-                  onPressed: () => context.pop(),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppTheme.surfaceDark
-                        : Colors.white,
-                    padding: const EdgeInsets.all(12),
-                  ),
-                ).animate().fadeIn().slideX(begin: -0.5, end: 0),
-                const SizedBox(height: 32),
-                Text(
-                  "Create Account",
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-                const SizedBox(height: 8),
-                Text(
-                  "Join NeRuWallet and manage your financial life efficiently.",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isDark
-                        ? Colors.white70
-                        : AppTheme.textSecondaryColor,
-                  ),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-                const SizedBox(height: 40),
-                // Card for Signup Fields
-                Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                  padding: const EdgeInsets.all(12),
+                ),
+              ).animate().fadeIn().slideX(begin: -0.5, end: 0),
+              const SizedBox(height: 32),
+              Text(
+                "Create Account",
+                style: Theme.of(
+                  context,
+                ).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
+              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+              const SizedBox(height: 8),
+              Text(
+                "Join NeRuWallet and manage your financial life efficiently.",
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                ),
+              ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+              const SizedBox(height: 40),
+              // Card for Signup Fields
+              Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppTheme.surfaceDark.withOpacity(0.6)
+                          : Colors.white.withOpacity(0.8),
+                      borderRadius: AppTheme.radiusLarge,
+                      border: Border.all(
                         color: isDark
-                            ? AppTheme.surfaceDark.withOpacity(0.6)
-                            : Colors.white.withOpacity(0.8),
-                        borderRadius: AppTheme.radiusLarge,
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.white,
-                          width: 1.5,
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.white,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(
-                              isDark ? 0.2 : 0.05,
-                            ),
-                            blurRadius: 30,
-                            offset: const Offset(0, 15),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _buildTextField(
-                            controller: _nameController,
-                            label: "Full Name",
-                            hint: "Enter your full name",
-                            icon: Icons.person_outline_rounded,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildTextField(
-                            controller: _emailController,
-                            label: "Email address",
-                            hint: "example@domain.com",
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildTextField(
-                            controller: _passwordController,
-                            label: "Password",
-                            hint: "••••••••",
-                            icon: Icons.lock_outline_rounded,
-                            obscureText: _obscurePassword,
-                            isPassword: true,
-                            togglePassword: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildTextField(
-                            controller: _confirmPasswordController,
-                            label: "Confirm Password",
-                            hint: "••••••••",
-                            icon: Icons.lock_outline_rounded,
-                            obscureText: _obscurePassword,
-                            isPassword: true,
-                            togglePassword: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Handle Signup
-                            },
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 64),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: AppTheme.radiusMedium,
-                              ),
-                            ),
-                            child: const Text("Sign Up"),
-                          ),
-                        ],
-                      ),
-                    )
-                    .animate()
-                    .fadeIn(delay: 400.ms)
-                    .scale(
-                      begin: const Offset(0.95, 0.95),
-                      end: const Offset(1, 1),
+                      ],
                     ),
-                const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already have an account?",
+                    child: Column(
+                      children: [
+                        _buildTextField(
+                          controller: _nameController,
+                          label: "Full Name",
+                          hint: "Enter your full name",
+                          icon: Icons.person_outline_rounded,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          controller: _emailController,
+                          label: "Email address",
+                          hint: "example@domain.com",
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          controller: _passwordController,
+                          label: "Password",
+                          hint: "••••••••",
+                          icon: Icons.lock_outline_rounded,
+                          obscureText: _obscurePassword,
+                          isPassword: true,
+                          togglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          label: "Confirm Password",
+                          hint: "••••••••",
+                          icon: Icons.lock_outline_rounded,
+                          obscureText: _obscurePassword,
+                          isPassword: true,
+                          togglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Handle Signup
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 64),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppTheme.radiusMedium,
+                            ),
+                          ),
+                          child: const Text("Sign Up"),
+                        ),
+                      ],
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(delay: 400.ms)
+                  .scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1, 1),
+                  ),
+              const SizedBox(height: 48),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Already have an account?",
+                    style: TextStyle(
+                      color: isDark
+                          ? Colors.white70
+                          : AppTheme.textSecondaryColor,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text(
+                      "Login",
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.white70
-                            : AppTheme.textSecondaryColor,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 600.ms),
-              ],
-            ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 600.ms),
+            ],
           ),
         ),
       ),

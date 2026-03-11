@@ -13,7 +13,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
   int _selectedTab = 0;
   bool _balanceVisible = true;
+  bool _biometricsEnabled = false;
   late AnimationController _pulseController;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -94,6 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
       extendBody: true,
       backgroundColor: isDark
           ? AppTheme.backgroundDark
@@ -104,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildHomeTab(isDark),
           _buildPayTab(isDark),
           _buildHistoryTab(isDark),
-          _buildProfileTab(isDark),
+          _buildProfileTab(isDark), // Kept as hidden tab 3
         ],
       ),
       bottomNavigationBar: _buildBottomNav(isDark),
@@ -164,14 +167,19 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               _buildIconButton(isDark, Icons.notifications_outlined, () {}),
               const SizedBox(width: 12),
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-                child: const Text(
-                  'RG',
-                  style: TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () => setState(() => _selectedTab = 3),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppTheme.primaryColor.withValues(
+                    alpha: 0.15,
+                  ),
+                  child: const Text(
+                    'RG',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -1101,9 +1109,23 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           _buildProfileMenuItem(
             isDark,
-            Icons.linked_camera_rounded,
-            'Linked Accounts',
-            '3 accounts linked',
+            Icons.lock_reset_rounded,
+            'Change Password',
+            'Update your login password',
+          ),
+          _buildProfileMenuItem(
+            isDark,
+            Icons.pin_rounded,
+            'Change Transaction PIN',
+            'Secure your transactions',
+          ),
+          _buildBiometricToggle(isDark),
+          _buildProfileMenuItem(
+            isDark,
+            Icons.no_encryption_gmailerrorred_rounded,
+            'Remove Biometrics',
+            'Delete saved biometric data',
+            color: AppTheme.errorColor,
           ),
           _buildProfileMenuItem(
             isDark,
@@ -1147,8 +1169,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     bool isDark,
     IconData icon,
     String title,
-    String sub,
-  ) {
+    String sub, {
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
       child: Container(
@@ -1168,10 +1191,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: (color ?? AppTheme.primaryColor).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor, size: 22),
+              child: Icon(
+                icon,
+                color: color ?? AppTheme.primaryColor,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1180,9 +1207,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      color: color,
                     ),
                   ),
                   Text(
@@ -1218,7 +1246,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         Icons.receipt_long_outlined,
         'History',
       ),
-      _NavItem(Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
     ];
 
     return Container(
@@ -1240,6 +1267,64 @@ class _DashboardScreenState extends State<DashboardScreen>
             items.length,
             (i) => _buildNavItem(items[i], i, isDark),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBiometricToggle(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.surfaceDark : Colors.white,
+          borderRadius: AppTheme.radiusMedium,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.03),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.fingerprint_rounded,
+                color: Colors.orange,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Biometric Login',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  Text(
+                    'Use fingerprint or face ID',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: _biometricsEnabled,
+              activeColor: AppTheme.primaryColor,
+              onChanged: (val) {
+                setState(() => _biometricsEnabled = val);
+              },
+            ),
+          ],
         ),
       ),
     );

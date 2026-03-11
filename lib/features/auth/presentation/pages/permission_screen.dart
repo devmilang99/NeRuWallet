@@ -60,76 +60,58 @@ class _PermissionScreenState extends State<PermissionScreen> {
     final step = _steps[_currentStep];
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-              isDark
-                  ? 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop'
-                  : 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop',
-            ),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(isDark ? 0.75 : 0.4),
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_steps.length, (index) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 4,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: index <= _currentStep
-                            ? AppTheme.primaryColor
-                            : (isDark ? Colors.white24 : Colors.black12),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    );
-                  }),
-                ).animate().fadeIn(),
-                const Spacer(),
-                _buildPermissionCard(isDark, step)
-                    .animate(key: ValueKey(_currentStep))
-                    .fadeIn()
-                    .scale(begin: const Offset(0.9, 0.9)),
-                const Spacer(),
-                _buildPermissionInfoLine(
-                  context,
-                  isDark,
-                ).animate().fadeIn(delay: 400.ms),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _isHandled ? null : _requestNext,
-                  child: Text(
-                    _currentStep == _steps.length - 1
-                        ? "Get Started"
-                        : "Allow Access",
-                  ),
-                ).animate().fadeIn(delay: 600.ms),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => context.go('/onboarding'),
-                  child: Text(
-                    "Skip for now",
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black54,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_steps.length, (index) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 4,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: index <= _currentStep
+                          ? AppTheme.primaryColor
+                          : (isDark ? Colors.white24 : Colors.black12),
+                      borderRadius: BorderRadius.circular(2),
                     ),
+                  );
+                }),
+              ).animate().fadeIn(),
+              const Spacer(),
+              _buildPermissionCard(isDark, step)
+                  .animate(key: ValueKey(_currentStep))
+                  .fadeIn()
+                  .scale(begin: const Offset(0.9, 0.9)),
+              const Spacer(),
+              _buildPermissionInfoLine(
+                context,
+                isDark,
+              ).animate().fadeIn(delay: 400.ms),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isHandled ? null : _requestNext,
+                child: Text(
+                  _currentStep == _steps.length - 1
+                      ? "Get Started"
+                      : "Allow Access",
+                ),
+              ).animate().fadeIn(delay: 600.ms),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => context.go('/onboarding'),
+                child: Text(
+                  "Skip for now",
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black54,
                   ),
-                ).animate().fadeIn(delay: 800.ms),
-                const SizedBox(height: 20),
-              ],
-            ),
+                ),
+              ).animate().fadeIn(delay: 800.ms),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
