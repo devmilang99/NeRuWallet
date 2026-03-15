@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +15,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPageIndex = 0;
+  Timer? _autoSlideTimer;
 
   final List<OnboardingItem> _items = [
     OnboardingItem(
@@ -21,32 +23,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       description:
           "Experience professional digital payments with high-level security protocols and enterprise scalability.",
       icon: Icons.security_rounded,
-      imageUrl:
-          'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=2070&auto=format&fit=crop',
     ),
     OnboardingItem(
       title: "Real-time Transactions",
       description:
           "Send and receive money instantly with zero latency. Secure, fast, and simple.",
       icon: Icons.bolt_rounded,
-      imageUrl:
-          'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
     ),
     OnboardingItem(
       title: "Merchant Ecosystem",
       description:
           "Integrate with local and international merchants with simple APIs and effortless bill payments.",
       icon: Icons.account_balance_rounded,
-      imageUrl:
-          'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2026&auto=format&fit=crop',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (_currentPageIndex < _items.length - 1) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.fastOutSlowIn,
+        );
+      } else {
+        // Option 1: Loop back to start
+        _pageController.animateToPage(
+          0,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.fastOutSlowIn,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
@@ -59,9 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     "Skip",
                     style: TextStyle(
-                      color: isDark
-                          ? Colors.white70
-                          : AppTheme.textSecondaryColor,
+                      color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -75,6 +102,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     setState(() {
                       _currentPageIndex = index;
                     });
+                    // Reset timer on manual swipe
+                    _startAutoSlide();
                   },
                   itemCount: _items.length,
                   itemBuilder: (context, index) {
@@ -99,26 +128,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_currentPageIndex == _items.length - 1) {
-                        context.go('/theme-selection');
-                      } else {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.fastOutSlowIn,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppTheme.radiusLarge,
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_currentPageIndex == _items.length - 1) {
+                          context.go('/theme-selection');
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.fastOutSlowIn,
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppTheme.radiusLarge,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      _currentPageIndex == _items.length - 1
-                          ? "Get Started"
-                          : "Next",
+                      child: Text(
+                        _currentPageIndex == _items.length - 1
+                            ? "Get Started"
+                            : "Next",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5, end: 0),
                   const SizedBox(height: 20),
@@ -182,12 +218,10 @@ class OnboardingItem {
   final String title;
   final String description;
   final IconData icon;
-  final String imageUrl;
 
   OnboardingItem({
     required this.title,
     required this.description,
     required this.icon,
-    required this.imageUrl,
   });
 }

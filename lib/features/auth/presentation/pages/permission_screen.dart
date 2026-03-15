@@ -13,42 +13,75 @@ class PermissionScreen extends StatefulWidget {
 
 class _PermissionScreenState extends State<PermissionScreen> {
   int _currentStep = 0;
-  bool _isHandled = false;
+  bool _isNavigating = false;
+  // State for each: 0=Initial, 1=Granted, 2=Denied
+  final List<int> _permissionStates = [0, 0, 0, 0];
 
   final List<PermissionStep> _steps = [
     PermissionStep(
       title: "Camera Access",
-      subtitle:
-          "Required for scanning QR codes and ID verification during KYC.",
+      subtitle: "Required for scanning QR codes and ID verification.",
       icon: Icons.camera_alt_rounded,
       permission: Permission.camera,
     ),
     PermissionStep(
       title: "Smart Notifications",
-      subtitle: "Stay notified about your transactions and secure logins.",
+      subtitle: "Stay notified about transactions and secure logins.",
       icon: Icons.notifications_active_rounded,
       permission: Permission.notification,
     ),
     PermissionStep(
       title: "Secure Storage",
-      subtitle:
-          "Needed to save transaction receipts and encrypted data locally.",
+      subtitle: "Needed to save receipts and encrypted data locally.",
       icon: Icons.storage_rounded,
       permission: Permission.storage,
     ),
+    PermissionStep(
+      title: "Contacts Access",
+      subtitle: "Easily find and send money to your friends.",
+      icon: Icons.contacts_rounded,
+      permission: Permission.contacts,
+    ),
   ];
 
-  Future<void> _requestNext() async {
+  Future<void> _requestPermission() async {
     if (_currentStep < _steps.length) {
       final status = await _steps[_currentStep].permission.request();
-      if (status.isGranted || status.isLimited || status.isPermanentlyDenied) {
-        if (_currentStep == _steps.length - 1) {
-          setState(() => _isHandled = true);
-          Future.delayed(const Duration(milliseconds: 500), () {
+      if (status.isGranted || status.isLimited) {
+        setState(() {
+          _permissionStates[_currentStep] = 1; // Granted
+          _currentStep++;
+        });
+
+        if (_currentStep == _steps.length) {
+          setState(() => _isNavigating = true);
+          Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted) context.go('/onboarding');
           });
         } else {
-          setState(() => _currentStep++);
+          // Automatically ask for the next permission
+          Future.delayed(const Duration(milliseconds: 300), () {
+            _requestPermission();
+          });
+        }
+      } else {
+        setState(() {
+          _permissionStates[_currentStep] = 2; // Denied
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("${_steps[_currentStep].title} is required for a better experience."),
+              backgroundColor: AppTheme.errorColor,
+              action: status.isPermanentlyDenied 
+                  ? SnackBarAction(
+                      label: "Settings", 
+                      textColor: Colors.white,
+                      onPressed: () => openAppSettings(),
+                    )
+                  : null,
+            ),
+          );
         }
       }
     }
@@ -57,60 +90,81 @@ class _PermissionScreenState extends State<PermissionScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final step = _steps[_currentStep];
-
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_steps.length, (index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    height: 4,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: index <= _currentStep
-                          ? AppTheme.primaryColor
-                          : (isDark ? Colors.white24 : Colors.black12),
-                      borderRadius: BorderRadius.circular(2),
+              const SizedBox(height: 20),
+              Text(
+                "Security & \nPermissions",
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: isDark ? Colors.white : AppTheme.textBodyColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 40,
+                      height: 1.1,
                     ),
-                  );
-                }),
-              ).animate().fadeIn(),
-              const Spacer(),
-              _buildPermissionCard(isDark, step)
-                  .animate(key: ValueKey(_currentStep))
-                  .fadeIn()
-                  .scale(begin: const Offset(0.9, 0.9)),
-              const Spacer(),
-              _buildPermissionInfoLine(
-                context,
-                isDark,
-              ).animate().fadeIn(delay: 400.ms),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isHandled ? null : _requestNext,
-                child: Text(
-                  _currentStep == _steps.length - 1
-                      ? "Get Started"
-                      : "Allow Access",
+              ).animate().fadeIn().slideX(begin: -0.2, end: 0),
+              const SizedBox(height: 16),
+              Text(
+                "To ensure the highest level of security and provide a professional experience, NeRuWallet requires the following access.",
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                      height: 1.5,
+                    ),
+              ).animate().fadeIn(delay: 200.ms),
+              const SizedBox(height: 48),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: _steps.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 20),
+                  itemBuilder: (context, index) {
+                    final step = _steps[index];
+                    final state = _permissionStates[index];
+                    final isActive = _currentStep == index;
+
+                    return _buildPermissionTile(step, state, isActive, index, isDark);
+                  },
                 ),
-              ).animate().fadeIn(delay: 600.ms),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => context.go('/onboarding'),
-                child: Text(
-                  "Skip for now",
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.black54,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: (_currentStep < _steps.length && !_isNavigating) ? _requestPermission : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppTheme.radiusLarge,
+                    ),
+                    elevation: 5,
+                    shadowColor: AppTheme.primaryColor.withOpacity(0.3),
+                  ),
+                  child: Text(
+                    _currentStep == _steps.length ? "All Set!" : "Grant Access",
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ).animate().fadeIn(delay: 600.ms).scale(begin: const Offset(0.9, 0.9)),
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton(
+                  onPressed: () => context.go('/onboarding'),
+                  child: Text(
+                    "Skip for now",
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : AppTheme.textSecondaryColor,
+                      fontSize: 16
+                    ),
                   ),
                 ),
               ).animate().fadeIn(delay: 800.ms),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -118,76 +172,100 @@ class _PermissionScreenState extends State<PermissionScreen> {
     );
   }
 
-  Widget _buildPermissionCard(bool isDark, PermissionStep step) {
+  Widget _buildPermissionTile(PermissionStep step, int state, bool isActive, int index, bool isDark) {
+    // state: 0=Initial, 1=Granted, 2=Denied
+    final bool isGranted = state == 1;
+    final bool isDenied = state == 2;
+
+    Color tileColor;
+    Color borderColor;
+    Color iconBgColor;
+    Color iconColor;
+
+    if (isGranted) {
+      tileColor = Colors.green.withOpacity(isDark ? 0.1 : 0.05);
+      borderColor = Colors.green.withOpacity(0.3);
+      iconBgColor = Colors.green.withOpacity(0.2);
+      iconColor = isDark ? Colors.greenAccent : Colors.green[700]!;
+    } else if (isDenied) {
+      tileColor = AppTheme.errorColor.withOpacity(isDark ? 0.1 : 0.05);
+      borderColor = AppTheme.errorColor.withOpacity(0.3);
+      iconBgColor = AppTheme.errorColor.withOpacity(0.2);
+      iconColor = AppTheme.errorColor;
+    } else if (isActive) {
+      tileColor = AppTheme.primaryColor.withOpacity(isDark ? 0.15 : 0.05);
+      borderColor = AppTheme.primaryColor.withOpacity(0.5);
+      iconBgColor = AppTheme.primaryColor.withOpacity(0.1);
+      iconColor = AppTheme.primaryColor;
+    } else {
+      tileColor = isDark ? Colors.white.withOpacity(0.02) : Colors.grey[50]!;
+      borderColor = isDark ? Colors.white12 : Colors.grey[200]!;
+      iconBgColor = isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!;
+      iconColor = isDark ? Colors.white38 : Colors.grey[400]!;
+    }
+
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppTheme.surfaceDark.withOpacity(0.8)
-            : Colors.white.withOpacity(0.9),
-        borderRadius: AppTheme.radiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 40,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: tileColor,
+        borderRadius: AppTheme.radiusMedium,
+        border: Border.all(color: borderColor, width: 2),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: iconBgColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(step.icon, size: 64, color: AppTheme.primaryColor),
+            child: Icon(
+              isGranted ? Icons.check_rounded : (isDenied ? Icons.close_rounded : step.icon),
+              color: iconColor,
+              size: 28,
+            ).animate(target: (isGranted || isDenied) ? 1 : 0).scale(duration: 400.ms, curve: Curves.elasticOut),
           ),
-          const SizedBox(height: 32),
-          Text(
-            step.title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 28,
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  step.title,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : AppTheme.textBodyColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  step.subtitle,
+                  style: TextStyle(
+                    color: isDark ? Colors.white60 : AppTheme.textSecondaryColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            step.subtitle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
-              height: 1.5,
-            ),
-          ),
+          if (isGranted)
+            const Icon(Icons.verified_rounded, color: Colors.greenAccent, size: 30)
+                .animate()
+                .fadeIn()
+                .scale(begin: const Offset(0, 0), curve: Curves.elasticOut)
+          else if (isDenied)
+            const Icon(Icons.error_outline_rounded, color: AppTheme.errorColor, size: 30)
+                .animate()
+                .fadeIn()
+                .shake()
+          else if (isActive)
+            Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryColor.withOpacity(0.5), size: 20)
+                .animate(onPlay: (c) => c.repeat())
+                .shimmer(duration: 2.seconds)
         ],
       ),
-    );
-  }
-
-  Widget _buildPermissionInfoLine(BuildContext context, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.info_outline_rounded,
-          size: 20,
-          color: isDark ? Colors.white38 : Colors.black26,
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            "You can manage these permissions in system settings.",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isDark ? Colors.white38 : Colors.black26,
-            ),
-          ),
-        ),
-      ],
-    );
+    ).animate(delay: (150 * index).ms).fadeIn().slideX(begin: 0.1, end: 0);
   }
 }
 

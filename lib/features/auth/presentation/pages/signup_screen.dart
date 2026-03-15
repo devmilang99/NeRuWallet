@@ -57,18 +57,20 @@ class _SignupScreenState extends State<SignupScreen> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppTheme.surfaceDark.withOpacity(0.6)
-                          : Colors.white.withOpacity(0.8),
+                          ? AppTheme.surfaceDark.withValues(alpha: 0.6)
+                          : Colors.white.withValues(alpha: 0.8),
                       borderRadius: AppTheme.radiusLarge,
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withOpacity(0.05)
+                            ? Colors.white.withValues(alpha: 0.05)
                             : Colors.white,
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.05,
+                          ),
                           blurRadius: 30,
                           offset: const Offset(0, 15),
                         ),

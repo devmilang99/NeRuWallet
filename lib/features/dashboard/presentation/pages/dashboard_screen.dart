@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -16,6 +19,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _biometricsEnabled = false;
   late AnimationController _pulseController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final LocalAuthentication _auth = LocalAuthentication();
 
   @override
   void initState() {
@@ -24,6 +28,147 @@ class _DashboardScreenState extends State<DashboardScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
+    // Check for biometrics after a short delay to ensure UI is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndPromptBiometrics();
+    });
+  }
+
+  Future<void> _checkAndPromptBiometrics() async {
+    final prefs = await SharedPreferences.getInstance();
+    _biometricsEnabled = prefs.getBool('biometrics_enabled') ?? false;
+
+    if (_biometricsEnabled) return; // Already enabled, don't show prompt
+
+    // Determine if the device is capable of biometric auth
+    final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
+    final bool canAuthenticate = canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+    
+    if (canAuthenticate) {
+      final List<BiometricType> availableBiometrics = await _auth.getAvailableBiometrics();
+      
+      if (availableBiometrics.isNotEmpty) {
+        if (mounted) {
+          _showBiometricBottomSheet(availableBiometrics);
+        }
+      }
+    }
+  }
+
+  void _showBiometricBottomSheet(List<BiometricType> biometrics) {
+    final bool hasFace = biometrics.contains(BiometricType.face);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.surfaceDark : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  hasFace ? Icons.face_unlock_rounded : Icons.fingerprint_rounded,
+                  size: 64,
+                  color: AppTheme.primaryColor,
+                ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+              const SizedBox(height: 24),
+              Text(
+                "Enable Biometric Login",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Use your ${hasFace ? 'Face ID' : 'fingerprint'} for faster and more secure access to your wallet next time.",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final bool didAuthenticate = await _auth.authenticate(
+                        localizedReason: 'Please authenticate to enable biometric login',
+                        options: const AuthenticationOptions(
+                          stickyAuth: true,
+                          biometricOnly: true,
+                        ),
+                      );
+                      if (didAuthenticate) {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('biometrics_enabled', true);
+                        
+                        setState(() => _biometricsEnabled = true);
+                        if (mounted) Navigator.pop(context);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Biometric login enabled successfully!"),
+                              backgroundColor: AppTheme.successColor,
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      debugPrint(e.toString());
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppTheme.radiusLarge,
+                    ),
+                  ),
+                  child: const Text("Enroll Now", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Maybe Later",
+                  style: TextStyle(
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -434,7 +579,8 @@ class _DashboardScreenState extends State<DashboardScreen>
         Icons.receipt_long_rounded,
         const Color(0xFFEC4899),
       ),
-      _QuickAction('Merchant', Icons.store_rounded, const Color(0xFF0EA5E9)),
+      _QuickAction('Pay Bill', Icons.receipt_long_rounded, const Color(0xFFEC4899)),
+      _QuickAction('Exchange', Icons.currency_exchange_rounded, const Color(0xFF0EA5E9)),
       _QuickAction('History', Icons.history_rounded, const Color(0xFF6366F1)),
       _QuickAction(
         'More',
@@ -489,7 +635,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildQuickActionItem(_QuickAction action, int index, bool isDark) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        if (action.label == 'Exchange') {
+          context.push('/exchange-rates');
+        }
+      },
       child:
           Column(
                 mainAxisSize: MainAxisSize.min,

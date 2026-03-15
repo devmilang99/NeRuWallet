@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,11 +15,36 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 5), () {
+    _handleNavigation();
+  }
+
+  Future<void> _handleNavigation() async {
+    // Temporary boolean to suggest if the user is a first-time user
+    const bool isFirstTimeUser = true;
+
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    if (isFirstTimeUser) {
+      // Check if all required permissions are granted
+      final cameraStatus = await Permission.camera.status;
+      final notificationStatus = await Permission.notification.status;
+      final storageStatus = await Permission.storage.status;
+
+      final allPermissionsGranted =
+          cameraStatus.isGranted &&
+          notificationStatus.isGranted &&
+          storageStatus.isGranted;
+
       if (mounted) {
-        context.go('/permissions');
+        if (allPermissionsGranted) {
+          context.go('/onboarding');
+        } else {
+          context.go('/permissions');
+        }
       }
-    });
+    }
   }
 
   @override
@@ -60,8 +86,19 @@ class _SplashScreenState extends State<SplashScreen> {
                 .shimmer(
                   duration: 1200.ms,
                   color: isDark ? Colors.white10 : Colors.white24,
-                ),
-            const SizedBox(height: 40),
+                )
+                .then(delay: 100.ms) // 800 + 500 + 1200 + 100 = 2600ms
+                .scaleXY(
+                  begin: 1,
+                  end: 1.05,
+                  duration: 200.ms,
+                ) // 2600 + 200 = 2800ms
+                .then()
+                .scaleXY(
+                  begin: 1.05,
+                  end: 1,
+                  duration: 200.ms,
+                ), // 2800 + 200 = 3000ms
             Text(
                   "NeRuWallet",
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(

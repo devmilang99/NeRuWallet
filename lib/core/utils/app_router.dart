@@ -7,6 +7,7 @@ import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
+import '../../features/exchange/presentation/pages/exchange_rate_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -39,6 +40,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/dashboard',
       builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: '/exchange-rates',
+      builder: (context, state) => const ExchangeRateScreen(),
     ),
   ],
 );

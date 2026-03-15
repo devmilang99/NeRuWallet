@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:neruwallet/firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_router.dart';
-import 'core/utils/permission_utils.dart';
 import 'core/providers/theme_provider.dart';
 
 void main() async {
@@ -13,9 +12,6 @@ void main() async {
   // Initialize Firebase
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Check initial permissions
-  await PermissionUtils.checkInitialPermissions();
 
   runApp(const ProviderScope(child: NeRuWalletApp()));
 }

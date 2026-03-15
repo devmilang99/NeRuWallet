@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,6 +17,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  final LocalAuthentication _auth = LocalAuthentication();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndStartBiometricLogin();
+    });
+  }
+
+  Future<void> _checkAndStartBiometricLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool isBiometricEnabled = prefs.getBool('biometrics_enabled') ?? false;
+
+    if (isBiometricEnabled) {
+      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+
+      if (canAuthenticate) {
+        try {
+          final bool didAuthenticate = await _auth.authenticate(
+            localizedReason: 'Authenticate to access your NeRuWallet',
+            options: const AuthenticationOptions(
+              stickyAuth: true,
+              biometricOnly: true,
+            ),
+          );
+
+          if (didAuthenticate && mounted) {
+            context.go('/dashboard');
+          }
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +180,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: const Text("Sign In"),
                         ),
+                        if (_emailController.text.isEmpty) // Just a placeholder check if we should show biometric icon explicitly
+                           Padding(
+                             padding: const EdgeInsets.only(top: 16.0),
+                             child: IconButton(
+                               icon: const Icon(Icons.fingerprint, size: 40, color: AppTheme.primaryColor),
+                               onPressed: _checkAndStartBiometricLogin,
+                             ),
+                           ),
                       ],
                     ),
                   )
@@ -222,6 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         backgroundColor: isDark
             ? AppTheme.surfaceDark.withValues(alpha: 0.4)
             : Colors.white.withValues(alpha: 0.6),
@@ -234,9 +283,19 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.network(icon, height: 20),
-          const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontSize: 14)),
+          SvgPicture.network(
+            icon, 
+            height: 20,
+            placeholderBuilder: (context) => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label, 
+              style: const TextStyle(fontSize: 14),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

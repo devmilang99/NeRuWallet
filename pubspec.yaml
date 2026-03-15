@@ -66,6 +66,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   smooth_page_indicator: ^1.2.0+3
   flutter_animate: ^4.5.2
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:
