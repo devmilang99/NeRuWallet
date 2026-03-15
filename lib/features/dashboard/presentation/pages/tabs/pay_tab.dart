@@ -1,0 +1,253 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+
+class PayTab extends StatelessWidget {
+  final bool isDark;
+
+  const PayTab({
+    super.key,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(top: 64, bottom: 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Pay & Transfer',
+              style: Theme.of(context)
+                  .textTheme
+                  .displayMedium
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+          ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _buildSearchBar(isDark),
+          ).animate().fadeIn(delay: 200.ms),
+          const SizedBox(height: 28),
+          _buildSectionHeader(context, 'Recent Contacts', isDark),
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildContactAvatar('+', null, 'Add'),
+                _buildContactAvatar('RS', const Color(0xFF6366F1), 'Rajan'),
+                _buildContactAvatar('ST', const Color(0xFF10B981), 'Suraj'),
+                _buildContactAvatar('PK', const Color(0xFFF59E0B), 'Pratik'),
+                _buildContactAvatar('AK', const Color(0xFFEC4899), 'Anisha'),
+                _buildContactAvatar('BS', const Color(0xFF0EA5E9), 'Bishal'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          _buildSectionHeader(context, 'Payment Methods', isDark),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                _buildPaymentMethod(
+                  isDark,
+                  Icons.account_balance_rounded,
+                  'Bank Transfer',
+                  'NABIL Bank • ••••4512',
+                  const Color(0xFF6366F1),
+                ),
+                const SizedBox(height: 12),
+                _buildPaymentMethod(
+                  isDark,
+                  Icons.qr_code_rounded,
+                  'Scan QR Code',
+                  'Merchant & P2P Payments',
+                  const Color(0xFFF59E0B),
+                ),
+                const SizedBox(height: 12),
+                _buildPaymentMethod(
+                  isDark,
+                  Icons.nfc_rounded,
+                  'NFC Tap Pay',
+                  'Contactless Payments',
+                  const Color(0xFF10B981),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 300.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: AppTheme.radiusMedium,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: const TextField(
+        decoration: InputDecoration(
+          hintText: 'Search name or number...',
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: AppTheme.primaryColor,
+          ),
+          border: InputBorder.none,
+          filled: false,
+          contentPadding: EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          TextButton(
+            onPressed: () {},
+            child: const Text(
+              'See All',
+              style: TextStyle(color: AppTheme.primaryColor, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactAvatar(String initials, Color? color, String label) {
+    final isAdd = initials == '+';
+    return Padding(
+      padding: const EdgeInsets.only(right: 20),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: isAdd ? null : color?.withValues(alpha: 0.15),
+              border: isAdd
+                  ? Border.all(
+                      color: AppTheme.textHintColor.withValues(alpha: 0.4),
+                      width: 1.5,
+                      style: BorderStyle.solid,
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Center(
+              child: Text(
+                initials,
+                style: TextStyle(
+                  color: isAdd ? AppTheme.textHintColor : color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isAdd ? 22 : 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ).animate().fadeIn().scale(
+            begin: const Offset(0.8, 0.8),
+            end: const Offset(1, 1),
+          ),
+    );
+  }
+
+  Widget _buildPaymentMethod(
+    bool isDark,
+    IconData icon,
+    String title,
+    String sub,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: AppTheme.radiusMedium,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: AppTheme.radiusMedium,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  sub,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
