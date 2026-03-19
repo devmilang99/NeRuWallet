@@ -23,27 +23,31 @@ class DashboardHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good Evening 👋',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isDark
-                          ? AppTheme.textSecondaryDark
-                          : AppTheme.textSecondaryColor,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                userName,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w900),
-              ),
-            ],
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Good Evening 👋',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondaryColor,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userName,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ],
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
+          ),
           Row(
             children: [
               _buildIconButton(context, Icons.notifications_outlined, onNotificationTap),

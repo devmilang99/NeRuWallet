@@ -50,6 +50,8 @@ class TransactionTile extends StatelessWidget {
                 children: [
                   Text(
                     transaction.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -58,6 +60,8 @@ class TransactionTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     transaction.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark

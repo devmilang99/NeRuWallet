@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:ekyc_shared/router.dart' as kyc;
 import '../../features/splash/presentation/pages/splash_screen.dart';
 import '../../features/auth/presentation/pages/permission_screen.dart';
 import '../../features/onboarding/presentation/pages/onboarding_screen.dart';
@@ -6,6 +7,7 @@ import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
+import '../../features/dashboard/presentation/pages/profile_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
 import '../../features/exchange/presentation/pages/exchange_rate_screen.dart';
 
@@ -45,5 +47,10 @@ final GoRouter appRouter = GoRouter(
       path: '/exchange-rates',
       builder: (context, state) => const ExchangeRateScreen(),
     ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    ...kyc.kycRoutes,
   ],
 );

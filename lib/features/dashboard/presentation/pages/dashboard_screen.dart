@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-
 import '../../data/models/transaction_model.dart';
 import '../../data/models/quick_action_model.dart';
 import '../../data/models/nav_item_model.dart';
@@ -10,7 +10,6 @@ import '../widgets/biometric_prompt_sheet.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/pay_tab.dart';
 import 'tabs/history_tab.dart';
-import 'tabs/profile_tab.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,11 +18,12 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with WidgetsBindingObserver {
   int _selectedTab = 0;
   bool _balanceVisible = true;
-  bool _biometricsEnabled = false;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _hasPromptedThisSession = false;
+  bool _isKycVerified = false;
   final LocalAuthentication _auth = LocalAuthentication();
 
   final List<TransactionModel> _transactions = [
@@ -86,53 +86,137 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   final List<QuickActionModel> _quickActions = [
-    QuickActionModel(label: 'Send', icon: Icons.arrow_upward_rounded, color: const Color(0xFF6366F1)),
-    QuickActionModel(label: 'Receive', icon: Icons.arrow_downward_rounded, color: const Color(0xFF10B981)),
-    QuickActionModel(label: 'Scan QR', icon: Icons.qr_code_scanner_rounded, color: const Color(0xFFF59E0B)),
-    QuickActionModel(label: 'Top Up', icon: Icons.account_balance_wallet_rounded, color: const Color(0xFF8B5CF6)),
-    QuickActionModel(label: 'Pay Bill', icon: Icons.receipt_long_rounded, color: const Color(0xFFEC4899)),
-    QuickActionModel(label: 'Exchange', icon: Icons.currency_exchange_rounded, color: const Color(0xFF0EA5E9)),
-    QuickActionModel(label: 'History', icon: Icons.history_rounded, color: const Color(0xFF6366F1)),
-    QuickActionModel(label: 'More', icon: Icons.grid_view_rounded, color: AppTheme.textSecondaryColor),
+    QuickActionModel(
+      label: 'Send',
+      icon: Icons.arrow_upward_rounded,
+      color: const Color(0xFF6366F1),
+    ),
+    QuickActionModel(
+      label: 'Receive',
+      icon: Icons.arrow_downward_rounded,
+      color: const Color(0xFF10B981),
+    ),
+    QuickActionModel(
+      label: 'Scan QR',
+      icon: Icons.qr_code_scanner_rounded,
+      color: const Color(0xFFF59E0B),
+    ),
+    QuickActionModel(
+      label: 'Top Up',
+      icon: Icons.account_balance_wallet_rounded,
+      color: const Color(0xFF8B5CF6),
+    ),
+    QuickActionModel(
+      label: 'Pay Bill',
+      icon: Icons.receipt_long_rounded,
+      color: const Color(0xFFEC4899),
+    ),
+    QuickActionModel(
+      label: 'Exchange',
+      icon: Icons.currency_exchange_rounded,
+      color: const Color(0xFF0EA5E9),
+    ),
+    QuickActionModel(
+      label: 'History',
+      icon: Icons.history_rounded,
+      color: const Color(0xFF6366F1),
+    ),
+    QuickActionModel(
+      label: 'More',
+      icon: Icons.grid_view_rounded,
+      color: AppTheme.textSecondaryColor,
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadKycStatus();
+    _markOnboardingComplete();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndPromptBiometrics();
+      if (mounted) {
+        _checkAndPromptBiometrics();
+      }
     });
   }
 
-  Future<void> _checkAndPromptBiometrics() async {
-    final prefs = await SharedPreferences.getInstance();
-    _biometricsEnabled = prefs.getBool('biometrics_enabled') ?? false;
-
-    if (_biometricsEnabled) return;
-
-    final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-    final bool canAuthenticate = canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
-    
-    if (canAuthenticate) {
-      final List<BiometricType> availableBiometrics = await _auth.getAvailableBiometrics();
-      if (availableBiometrics.isNotEmpty && mounted) {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          builder: (context) => BiometricPromptSheet(
-            biometrics: availableBiometrics,
-            auth: _auth,
-            onEnrolled: () => setState(() => _biometricsEnabled = true),
-          ),
-        );
-      }
-    }
+  Future<void> _markOnboardingComplete() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_first_time', false);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadKycStatus();
+    }
+  }
+
+  Future<void> _loadKycStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isKycVerified = prefs.getBool('is_kyc_verified') ?? false;
+      });
+    }
+  }
+
+  Future<void> _checkAndPromptBiometrics() async {
+    if (_hasPromptedThisSession) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool isEnrolled = prefs.getBool('biometrics_enabled') ?? false;
+      final bool onboardingCompleted =
+          prefs.getBool('biometric_onboarding_completed') ?? false;
+
+      // Just load the preferences, we don't need to store _biometricsEnabled in state anymore
+
+      // If already enrolled or if we've already shown the onboarding prompt, don't prompt again
+      if (isEnrolled || onboardingCompleted) return;
+
+      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+
+      if (canAuthenticate && mounted) {
+        final List<BiometricType> availableBiometrics = await _auth
+            .getAvailableBiometrics();
+
+        if (availableBiometrics.isNotEmpty && mounted) {
+          _hasPromptedThisSession = true;
+          // Mark onboarding as completed so we don't prompt every time
+          await prefs.setBool('biometric_onboarding_completed', true);
+
+          if (!mounted) return;
+
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            useRootNavigator: true,
+            builder: (context) => BiometricPromptSheet(
+              biometrics: availableBiometrics,
+              auth: _auth,
+              onEnrolled: () {
+                // Biometrics enrolled successfully
+              },
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Biometric Check Error: $e");
+    }
   }
 
   @override
@@ -140,27 +224,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      key: _scaffoldKey,
-      extendBody: true,
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF1F5F9),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF1F5F9),
       body: IndexedStack(
         index: _selectedTab,
         children: [
           HomeTab(
             isDark: isDark,
             balanceVisible: _balanceVisible,
-            onToggleBalance: () => setState(() => _balanceVisible = !_balanceVisible),
-            onProfileTap: () => setState(() => _selectedTab = 3),
+            isKycVerified: _isKycVerified,
+            onToggleBalance: () =>
+                setState(() => _balanceVisible = !_balanceVisible),
+            onProfileTap: () {
+              context.push('/profile');
+            },
             transactions: _transactions,
             quickActions: _quickActions,
           ),
           PayTab(isDark: isDark),
           HistoryTab(isDark: isDark, transactions: _transactions),
-          ProfileTab(
-            isDark: isDark,
-            biometricsEnabled: _biometricsEnabled,
-            onToggleBiometrics: (val) => setState(() => _biometricsEnabled = val),
-          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(isDark),
@@ -169,9 +252,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildBottomNav(bool isDark) {
     final items = [
-      NavItemModel(activeIcon: Icons.home_rounded, inactiveIcon: Icons.home_outlined, label: 'Home'),
-      NavItemModel(activeIcon: Icons.send_rounded, inactiveIcon: Icons.send_outlined, label: 'Pay'),
-      NavItemModel(activeIcon: Icons.receipt_long_rounded, inactiveIcon: Icons.receipt_long_outlined, label: 'History'),
+      NavItemModel(
+        activeIcon: Icons.home_rounded,
+        inactiveIcon: Icons.home_outlined,
+        label: 'Home',
+      ),
+      NavItemModel(
+        activeIcon: Icons.send_rounded,
+        inactiveIcon: Icons.send_outlined,
+        label: 'Pay',
+      ),
+      NavItemModel(
+        activeIcon: Icons.receipt_long_rounded,
+        inactiveIcon: Icons.receipt_long_outlined,
+        label: 'History',
+      ),
     ];
 
     return Container(

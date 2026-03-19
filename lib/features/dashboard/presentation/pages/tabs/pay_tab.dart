@@ -12,79 +12,94 @@ class PayTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 64, bottom: 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 120,
+          floating: false,
+          pinned: true,
+          stretch: true,
+          backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF1F5F9),
+          elevation: 0,
+          flexibleSpace: FlexibleSpaceBar(
+            stretchModes: const [StretchMode.blurBackground, StretchMode.zoomBackground],
+            centerTitle: false,
+            titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+            title: Text(
               'Pay & Transfer',
-              style: Theme.of(context)
-                  .textTheme
-                  .displayMedium
-                  ?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _buildSearchBar(isDark),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 28),
-          _buildSectionHeader(context, 'Recent Contacts', isDark),
-          SizedBox(
-            height: 100,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildContactAvatar('+', null, 'Add'),
-                _buildContactAvatar('RS', const Color(0xFF6366F1), 'Rajan'),
-                _buildContactAvatar('ST', const Color(0xFF10B981), 'Suraj'),
-                _buildContactAvatar('PK', const Color(0xFFF59E0B), 'Pratik'),
-                _buildContactAvatar('AK', const Color(0xFFEC4899), 'Anisha'),
-                _buildContactAvatar('BS', const Color(0xFF0EA5E9), 'Bishal'),
-              ],
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 24,
+              ),
             ),
           ),
-          const SizedBox(height: 28),
-          _buildSectionHeader(context, 'Payment Methods', isDark),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                _buildPaymentMethod(
-                  isDark,
-                  Icons.account_balance_rounded,
-                  'Bank Transfer',
-                  'NABIL Bank • ••••4512',
-                  const Color(0xFF6366F1),
+        ),
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: _buildSearchBar(isDark),
+              ).animate().fadeIn(delay: 200.ms),
+              const SizedBox(height: 28),
+              _buildSectionHeader(context, 'Recent Contacts', isDark),
+              SizedBox(
+                height: 104,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildContactAvatar('+', null, 'Add'),
+                    _buildContactAvatar('RS', const Color(0xFF6366F1), 'Rajan'),
+                    _buildContactAvatar('ST', const Color(0xFF10B981), 'Suraj'),
+                    _buildContactAvatar('PK', const Color(0xFFF59E0B), 'Pratik'),
+                    _buildContactAvatar('AK', const Color(0xFFEC4899), 'Anisha'),
+                    _buildContactAvatar('BS', const Color(0xFF0EA5E9), 'Bishal'),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildPaymentMethod(
-                  isDark,
-                  Icons.qr_code_rounded,
-                  'Scan QR Code',
-                  'Merchant & P2P Payments',
-                  const Color(0xFFF59E0B),
+              ),
+              const SizedBox(height: 28),
+              _buildSectionHeader(context, 'Payment Methods', isDark),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _buildPaymentMethod(
+                      isDark,
+                      Icons.account_balance_rounded,
+                      'Bank Transfer',
+                      'NABIL Bank • ••••4512',
+                      const Color(0xFF6366F1),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildPaymentMethod(
+                      isDark,
+                      Icons.qr_code_rounded,
+                      'Scan QR Code',
+                      'Merchant & P2P Payments',
+                      const Color(0xFFF59E0B),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildPaymentMethod(
+                      isDark,
+                      Icons.nfc_rounded,
+                      'NFC Tap Pay',
+                      'Contactless Payments',
+                      const Color(0xFF10B981),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildPaymentMethod(
-                  isDark,
-                  Icons.nfc_rounded,
-                  'NFC Tap Pay',
-                  'Contactless Payments',
-                  const Color(0xFF10B981),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 300.ms),
-        ],
-      ),
+              ).animate().fadeIn(delay: 300.ms),
+              const SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

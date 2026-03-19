@@ -82,9 +82,11 @@ class BiometricPromptSheet extends StatelessWidget {
                   if (didAuthenticate) {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool('biometrics_enabled', true);
-                    onEnrolled();
-                    if (context.mounted) Navigator.pop(context);
+                    
                     if (context.mounted) {
+                      Navigator.of(context).pop();
+                      onEnrolled();
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Biometric login enabled successfully!"),

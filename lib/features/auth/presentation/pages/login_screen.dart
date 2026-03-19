@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +18,52 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
   final LocalAuthentication _auth = LocalAuthentication();
+  final AuthService _authService = AuthService();
+
+  Future<void> _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
+      if (mounted) context.go('/dashboard');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login Failed: ${e.toString()}")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (user != null && mounted) context.go('/dashboard');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Google Sign-In Failed: ${e.toString()}")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = await _authService.signInWithApple();
+      if (user != null && mounted) context.go('/dashboard');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Apple Sign-In Failed: ${e.toString()}")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void initState() {
@@ -171,14 +217,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton(
-                          onPressed: () => context.go('/dashboard'),
+                          onPressed: _isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: const Text("Sign In"),
+                          child: _isLoading 
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text("Sign In"),
                         ),
                         if (_emailController.text.isEmpty) // Just a placeholder check if we should show biometric icon explicitly
                            Padding(
@@ -216,15 +264,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _buildSocialButton(
                       icon: "https://www.svgrepo.com/show/355037/google.svg",
                       label: "Google",
-                      onPressed: () {},
+                      onPressed: _isLoading ? () {} : _handleGoogleLogin,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSocialButton(
-                      icon: "https://www.svgrepo.com/show/448234/apple.svg",
+                      icon: "https://icons8.com/icons/set/apple-logo",
                       label: "Apple",
-                      onPressed: () {},
+                      onPressed: _isLoading ? () {} : _handleAppleLogin,
                     ),
                   ),
                 ],

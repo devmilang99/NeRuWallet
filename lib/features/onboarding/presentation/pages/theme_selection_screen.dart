@@ -110,10 +110,10 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withOpacity(0.15)
+              ? AppTheme.primaryColor.withValues(alpha: 0.15)
               : (isDark
-                    ? AppTheme.surfaceDark.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.8)),
+                    ? AppTheme.surfaceDark.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.8)),
           borderRadius: AppTheme.radiusLarge,
           border: Border.all(
             color: isSelected ? AppTheme.primaryColor : Colors.transparent,
@@ -122,7 +122,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.3),
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),

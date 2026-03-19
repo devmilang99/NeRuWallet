@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "836637415070-r1vbjp486iqvl76l3ima56pbr7ogfqkd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.neruwallet",
+            "certificate_hash": "ae06d9146f9cb4cf5fd2b30cd15a5feaa9f56356"
+          }
+        },
+        {
           "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "836637415070-ouqk28g2trk6kgcaob1gtaml1frflgo1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.neruwallet"
+              }
             }
           ]
         }

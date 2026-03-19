@@ -82,6 +82,8 @@ class QuickActionsGrid extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             action.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 11,
