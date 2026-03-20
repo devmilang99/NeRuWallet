@@ -78,6 +78,11 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
+        displaySmall: GoogleFonts.outfit(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
         titleLarge: GoogleFonts.outfit(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -134,7 +139,10 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: radiusMedium,
-          borderSide: BorderSide(color: Colors.transparent, width: 1),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radiusMedium,

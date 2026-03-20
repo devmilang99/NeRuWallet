@@ -11,14 +11,8 @@ class AuthService {
   Future<UserModel?> signUpWithEmailPassword(String email, String password, String name) async {
     try {
       UserCredential cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      // Store name in Firebase Auth display name since we aren't using Firestore
       await cred.user!.updateDisplayName(name);
-      
-      return UserModel(
-        uid: cred.user!.uid, 
-        email: email, 
-        name: name,
-      );
+      return _saveAndReturnUser(cred, nameOverride: name);
     } catch (e) {
       debugPrint(e.toString());
       rethrow;
@@ -28,12 +22,7 @@ class AuthService {
   Future<UserModel?> signInWithEmailPassword(String email, String password) async {
     try {
       UserCredential cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
-      
-      return UserModel(
-        uid: cred.user!.uid,
-        email: email,
-        name: cred.user!.displayName ?? 'User',
-      );
+      return _saveAndReturnUser(cred);
     } catch (e) {
       debugPrint(e.toString());
       rethrow;
@@ -86,11 +75,14 @@ class AuthService {
 
   Future<UserModel?> _saveAndReturnUser(UserCredential cred, {String? nameOverride}) async {
     final user = cred.user!;
+    final bool isNewUser = cred.additionalUserInfo?.isNewUser ?? false;
+    
     return UserModel(
       uid: user.uid,
       email: user.email ?? '',
       name: nameOverride ?? user.displayName ?? 'User',
       profilePicUrl: user.photoURL,
+      isNewUser: isNewUser,
     );
   }
 }

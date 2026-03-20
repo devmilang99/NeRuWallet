@@ -5,9 +5,10 @@ class QuickActionModel {
   final IconData icon;
   final Color color;
 
-  QuickActionModel({
+  const QuickActionModel({
     required this.label,
     required this.icon,
     required this.color,
   });
+
 }

@@ -65,8 +65,20 @@ class QuickActionsGrid extends StatelessWidget {
       onTap: () {
         if (action.label == 'Exchange') {
           context.push('/exchange-rates');
+        } else if (action.label == 'Scan QR') {
+          context.push('/qr-pay');
+        } else if (action.label == 'Send') {
+          context.push('/transfer');
+        } else if (action.label == 'Receive') {
+          context.push('/receive');
+        } else if (action.label == 'Top Up') {
+          context.push('/top-up');
+        } else if (action.label == 'Pay Bill') {
+          context.push('/pay-bill');
         }
       },
+
+
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

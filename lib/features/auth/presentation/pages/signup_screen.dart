@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -14,41 +14,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _isLoading = false;
-  final AuthService _authService = AuthService();
 
-  Future<void> _handleSignup() async {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
-          return;
-    }
-    
-    if (_passwordController.text != _confirmPasswordController.text) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
-          return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signUpWithEmailPassword(
-        _emailController.text, 
-        _passwordController.text, 
-        _nameController.text
-      );
-      if (mounted) context.go('/dashboard');
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signup Failed: ${e.toString()}")));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,42 +91,27 @@ class _SignupScreenState extends State<SignupScreen> {
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: "Password",
-                          hint: "••••••••",
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscurePassword,
-                          isPassword: true,
-                          togglePassword: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _confirmPasswordController,
-                          label: "Confirm Password",
-                          hint: "••••••••",
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscurePassword,
-                          isPassword: true,
-                          togglePassword: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
                         const SizedBox(height: 32),
                         ElevatedButton(
-                          onPressed: _isLoading ? null : _handleSignup,
+                          onPressed: () {
+                            if (_nameController.text.isEmpty || !_emailController.text.contains('@')) {
+                              GlassDialog.showError(context, "Please enter a valid name and email.");
+                              return;
+                            }
+                            // Move to security setup which will handle password and PIN
+                            context.push('/auth/security-setup', extra: {
+                              'isSocial': false,
+                              'email': _emailController.text,
+                              'name': _nameController.text,
+                            });
+                          },
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text("Sign Up"),
+                          child: const Text("Next"),
                         ),
                       ],
                     ),
