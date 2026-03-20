@@ -5,9 +5,10 @@ class NavItemModel {
   final IconData inactiveIcon;
   final String label;
 
-  NavItemModel({
+  const NavItemModel({
     required this.activeIcon,
     required this.inactiveIcon,
     required this.label,
   });
+
 }

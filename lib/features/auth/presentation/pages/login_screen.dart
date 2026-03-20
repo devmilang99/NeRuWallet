@@ -6,6 +6,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,52 +19,63 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
   final LocalAuthentication _auth = LocalAuthentication();
   final AuthService _authService = AuthService();
 
   Future<void> _handleLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
-    setState(() => _isLoading = true);
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      GlassDialog.showError(context, "Please enter both email and password to continue.");
+      return;
+    }
+    
+    GlassDialog.showLoading(context, message: 'Signing you in...');
+    
     try {
       await _authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
-      if (mounted) context.go('/dashboard');
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        context.go('/dashboard');
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login Failed: ${e.toString()}")));
+        Navigator.pop(context); // Close loading
+        GlassDialog.showError(context, "Authentication Failed: ${e.toString()}");
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
+    GlassDialog.showLoading(context, message: 'Connecting to Google...');
     try {
       final user = await _authService.signInWithGoogle();
-      if (user != null && mounted) context.go('/dashboard');
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        if (user != null) context.go('/dashboard');
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Google Sign-In Failed: ${e.toString()}")));
+        Navigator.pop(context); // Close loading
+        GlassDialog.showError(context, "Google Sign-In failed. Please try again.");
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleAppleLogin() async {
-    setState(() => _isLoading = true);
+    GlassDialog.showLoading(context, message: 'Connecting to Apple...');
     try {
       final user = await _authService.signInWithApple();
-      if (user != null && mounted) context.go('/dashboard');
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        if (user != null) context.go('/dashboard');
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Apple Sign-In Failed: ${e.toString()}")));
+        Navigator.pop(context); // Close loading
+        GlassDialog.showError(context, "Apple Sign-In failed. Please try again.");
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   @override
   void initState() {
@@ -217,16 +229,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
+                          onPressed: _handleLogin,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text("Sign In"),
+                          child: const Text("Sign In"),
                         ),
                         if (_emailController.text.isEmpty) // Just a placeholder check if we should show biometric icon explicitly
                            Padding(
@@ -264,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _buildSocialButton(
                       icon: "https://www.svgrepo.com/show/355037/google.svg",
                       label: "Google",
-                      onPressed: _isLoading ? () {} : _handleGoogleLogin,
+                      onPressed: _handleGoogleLogin,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -272,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _buildSocialButton(
                       icon: "https://icons8.com/icons/set/apple-logo",
                       label: "Apple",
-                      onPressed: _isLoading ? () {} : _handleAppleLogin,
+                      onPressed: _handleAppleLogin,
                     ),
                   ),
                 ],

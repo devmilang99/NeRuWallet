@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ekyc_shared/router.dart' as kyc;
 import '../../features/splash/presentation/pages/splash_screen.dart';
@@ -8,6 +9,11 @@ import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
 import '../../features/dashboard/presentation/pages/profile_screen.dart';
+import '../../features/dashboard/presentation/pages/qr_scanner_screen.dart';
+import '../../features/transactions/presentation/pages/send_money_screen.dart';
+import '../../features/transactions/presentation/pages/receive_money_screen.dart';
+import '../../features/transactions/presentation/pages/top_up_screen.dart';
+import '../../features/transactions/presentation/pages/pay_bill_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
 import '../../features/exchange/presentation/pages/exchange_rate_screen.dart';
 
@@ -29,11 +35,15 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/auth/login',
-      builder: (context, state) => const LoginScreen(),
+      pageBuilder: (context, state) => _buildPageWithFadeTransition(
+        child: const LoginScreen(),
+      ),
     ),
     GoRoute(
       path: '/auth/signup',
-      builder: (context, state) => const SignupScreen(),
+      pageBuilder: (context, state) => _buildPageWithFadeTransition(
+        child: const SignupScreen(),
+      ),
     ),
     GoRoute(
       path: '/auth/forgot-password',
@@ -41,16 +51,80 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => const DashboardScreen(),
+      pageBuilder: (context, state) => _buildPageWithFadeTransition(
+        child: const DashboardScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/qr-pay',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const QrScannerScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/transfer',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const SendMoneyScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/receive',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const ReceiveMoneyScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/top-up',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const TopUpScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/pay-bill',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const PayBillScreen(),
+      ),
     ),
     GoRoute(
       path: '/exchange-rates',
-      builder: (context, state) => const ExchangeRateScreen(),
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const ExchangeRateScreen(),
+      ),
     ),
     GoRoute(
       path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const ProfileScreen(),
+      ),
     ),
     ...kyc.kycRoutes,
   ],
 );
+
+CustomTransitionPage _buildPageWithSlideTransition({required Widget child}) {
+  return CustomTransitionPage(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(0.0, 0.1);
+      const end = Offset.zero;
+      const curve = Curves.easeOutQuart;
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var offsetAnimation = animation.drive(tween);
+      return SlideTransition(position: offsetAnimation, child: child);
+    },
+    transitionDuration: const Duration(milliseconds: 400),
+  );
+}
+
+CustomTransitionPage _buildPageWithFadeTransition({required Widget child}) {
+  return CustomTransitionPage(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(opacity: animation, child: child);
+    },
+    transitionDuration: const Duration(milliseconds: 300),
+  );
+}
+
+
+

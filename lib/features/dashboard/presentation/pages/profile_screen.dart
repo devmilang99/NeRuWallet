@@ -3,6 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:go_router/go_router.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,18 +36,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _biometricsEnabled = value;
     });
-    
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(value ? 'Biometric login enabled' : 'Biometric login disabled'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: value ? AppTheme.successColor : AppTheme.textSecondaryColor,
-          duration: const Duration(seconds: 2),
-        ),
+      GlassDialog.showSuccess(
+        context,
+        value ? 'Biometric login has been enabled.' : 'Biometric login has been disabled.',
       );
     }
   }
+
+  void _handleLogout() {
+    GlassDialog.showConfirm(
+      context,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out of your NeRuWallet account?',
+      confirmText: 'Sign Out',
+      isDestructive: true,
+      onConfirm: () {
+        // Mock logout
+        context.go('/auth/login');
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -374,9 +388,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLogoutButton(bool isDark) {
     return OutlinedButton.icon(
-      onPressed: () {},
+      onPressed: _handleLogout,
       icon: const Icon(Icons.logout_rounded, size: 20),
       label: const Text('Sign Out'),
+
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.errorColor,
         side: const BorderSide(color: AppTheme.errorColor, width: 1.5),

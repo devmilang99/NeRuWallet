@@ -20,19 +20,13 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with WidgetsBindingObserver {
-  int _selectedTab = 0;
-  bool _balanceVisible = true;
-  bool _hasPromptedThisSession = false;
-  bool _isKycVerified = false;
-  final LocalAuthentication _auth = LocalAuthentication();
-
-  final List<TransactionModel> _transactions = [
+  static const List<TransactionModel> _transactions = [
     TransactionModel(
       title: 'Merchant Payment',
       subtitle: 'Pizza Palace',
       amount: -1250.00,
       icon: Icons.restaurant_rounded,
-      color: const Color(0xFFFF6B6B),
+      color: Color(0xFFFF6B6B),
       time: '10:32 AM',
     ),
     TransactionModel(
@@ -40,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'Rajan Sharma',
       amount: 5000.00,
       icon: Icons.arrow_downward_rounded,
-      color: const Color(0xFF10B981),
+      color: Color(0xFF10B981),
       time: 'Yesterday',
     ),
     TransactionModel(
@@ -48,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'NEA Electricity',
       amount: -850.00,
       icon: Icons.bolt_rounded,
-      color: const Color(0xFFF59E0B),
+      color: Color(0xFFF59E0B),
       time: 'Feb 28',
     ),
     TransactionModel(
@@ -56,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'Suraj Tamang',
       amount: -2000.00,
       icon: Icons.qr_code_rounded,
-      color: const Color(0xFF6366F1),
+      color: Color(0xFF6366F1),
       time: 'Feb 27',
     ),
     TransactionModel(
@@ -64,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'eSewa Wallet',
       amount: 10000.00,
       icon: Icons.account_balance_wallet_rounded,
-      color: const Color(0xFF10B981),
+      color: Color(0xFF10B981),
       time: 'Feb 26',
     ),
     TransactionModel(
@@ -72,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'Ncell Postpaid',
       amount: -500.00,
       icon: Icons.phone_android_rounded,
-      color: const Color(0xFF8B5CF6),
+      color: Color(0xFF8B5CF6),
       time: 'Feb 25',
     ),
     TransactionModel(
@@ -80,53 +74,50 @@ class _DashboardScreenState extends State<DashboardScreen>
       subtitle: 'WorldLink ISP',
       amount: -999.00,
       icon: Icons.wifi_rounded,
-      color: const Color(0xFF0EA5E9),
+      color: Color(0xFF0EA5E9),
       time: 'Feb 24',
     ),
   ];
 
-  final List<QuickActionModel> _quickActions = [
+  static const List<QuickActionModel> _quickActions = [
     QuickActionModel(
       label: 'Send',
       icon: Icons.arrow_upward_rounded,
-      color: const Color(0xFF6366F1),
+      color: Color(0xFF6366F1),
     ),
     QuickActionModel(
       label: 'Receive',
       icon: Icons.arrow_downward_rounded,
-      color: const Color(0xFF10B981),
+      color: Color(0xFF10B981),
     ),
     QuickActionModel(
       label: 'Scan QR',
       icon: Icons.qr_code_scanner_rounded,
-      color: const Color(0xFFF59E0B),
+      color: Color(0xFFF59E0B),
     ),
     QuickActionModel(
       label: 'Top Up',
       icon: Icons.account_balance_wallet_rounded,
-      color: const Color(0xFF8B5CF6),
+      color: Color(0xFF8B5CF6),
     ),
     QuickActionModel(
       label: 'Pay Bill',
       icon: Icons.receipt_long_rounded,
-      color: const Color(0xFFEC4899),
+      color: Color(0xFFEC4899),
     ),
     QuickActionModel(
       label: 'Exchange',
       icon: Icons.currency_exchange_rounded,
-      color: const Color(0xFF0EA5E9),
-    ),
-    QuickActionModel(
-      label: 'History',
-      icon: Icons.history_rounded,
-      color: const Color(0xFF6366F1),
-    ),
-    QuickActionModel(
-      label: 'More',
-      icon: Icons.grid_view_rounded,
-      color: AppTheme.textSecondaryColor,
+      color: Color(0xFF0EA5E9),
     ),
   ];
+
+  int _selectedTab = 0;
+  bool _balanceVisible = true;
+  bool _hasPromptedThisSession = false;
+  bool _isKycVerified = false;
+  final LocalAuthentication _auth = LocalAuthentication();
+
 
   @override
   void initState() {
@@ -250,25 +241,25 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBottomNav(bool isDark) {
-    final items = [
-      NavItemModel(
-        activeIcon: Icons.home_rounded,
-        inactiveIcon: Icons.home_outlined,
-        label: 'Home',
-      ),
-      NavItemModel(
-        activeIcon: Icons.send_rounded,
-        inactiveIcon: Icons.send_outlined,
-        label: 'Pay',
-      ),
-      NavItemModel(
-        activeIcon: Icons.receipt_long_rounded,
-        inactiveIcon: Icons.receipt_long_outlined,
-        label: 'History',
-      ),
-    ];
+  static const List<NavItemModel> _navItems = [
+    NavItemModel(
+      activeIcon: Icons.home_rounded,
+      inactiveIcon: Icons.home_outlined,
+      label: 'Home',
+    ),
+    NavItemModel(
+      activeIcon: Icons.send_rounded,
+      inactiveIcon: Icons.send_outlined,
+      label: 'Pay',
+    ),
+    NavItemModel(
+      activeIcon: Icons.receipt_long_rounded,
+      inactiveIcon: Icons.receipt_long_outlined,
+      label: 'History',
+    ),
+  ];
 
+  Widget _buildBottomNav(bool isDark) {
     return Container(
       padding: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -285,13 +276,14 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(
-            items.length,
-            (i) => _buildNavItem(items[i], i, isDark),
+            _navItems.length,
+            (i) => _buildNavItem(_navItems[i], i, isDark),
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildNavItem(NavItemModel item, int i, bool isDark) {
     final isActive = _selectedTab == i;

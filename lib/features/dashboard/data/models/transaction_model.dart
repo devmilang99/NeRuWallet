@@ -8,7 +8,7 @@ class TransactionModel {
   final Color color;
   final String time;
 
-  TransactionModel({
+  const TransactionModel({
     required this.title,
     required this.subtitle,
     required this.amount,
@@ -16,4 +16,5 @@ class TransactionModel {
     required this.color,
     required this.time,
   });
+
 }

@@ -50,9 +50,7 @@ class HomeTab extends StatelessWidget {
           ),
         ),
         if (!isKycVerified)
-          SliverToBoxAdapter(
-            child: _buildKycWarningBanner(context),
-          ),
+          SliverToBoxAdapter(child: _buildKycWarningBanner(context)),
         SliverToBoxAdapter(
           child: BalanceCard(
             isDark: isDark,
@@ -86,7 +84,7 @@ class HomeTab extends StatelessWidget {
   Widget _buildKycWarningBanner(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -105,67 +103,70 @@ class HomeTab extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Colors.white24,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Account Unverified',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Complete your eKYC to unlock transactions and higher limits.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Colors.white24,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.push('/home'), // Start eKYC
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFFD97706),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
-                elevation: 0,
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Account Unverified',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  'Complete eKYC to unlock full limits.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => context.push('/ekycHome'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFD97706),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: AppTheme.radiusMedium,
               ),
-              child: const Text(
-                'Verify Identity Now',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Verify Now',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildSectionHeader(BuildContext context, String title, bool isDark) {
     return Padding(
