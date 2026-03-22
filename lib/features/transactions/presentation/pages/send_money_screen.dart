@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,13 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
+=======
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_dialog.dart';
+import '../providers/transaction_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
 
 class SendMoneyScreen extends ConsumerStatefulWidget {
   const SendMoneyScreen({super.key});
@@ -18,6 +26,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   final _amountController = TextEditingController();
   final _receiverController = TextEditingController();
 
+<<<<<<< HEAD
   final List<Map<String, String>> _recentPeople = [
     {'name': 'Arun Sharma', 'id': '9841234567', 'init': 'AS'},
     {'name': 'Sita Rai', 'id': '9808765432', 'init': 'SR'},
@@ -101,6 +110,8 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     return "$res Rupees Only";
   }
 
+=======
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
   void _onSend() async {
     final amountText = _amountController.text.replaceAll(',', '');
     final amount = double.tryParse(amountText) ?? 0;
@@ -113,6 +124,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       return;
     }
 
+<<<<<<< HEAD
     _showConfirmationBottomSheet(amount, _receiverController.text);
   }
 
@@ -230,6 +242,15 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
           amount: amount,
           target: recipient,
         );
+=======
+    GlassDialog.showLoading(context, message: 'Transferring Funds...');
+
+    await ref.read(transactionProvider.notifier).processTransaction(
+      type: 'Transfer',
+      amount: amount,
+      target: _receiverController.text,
+    );
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
 
     if (!mounted) return;
 
@@ -241,7 +262,11 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     if (state.isSuccess) {
       GlassDialog.showSuccess(
         context,
+<<<<<<< HEAD
         'Rs. ${amount.toStringAsFixed(2)} has been successfully transferred to $recipient.',
+=======
+        'Rs. ${amount.toStringAsFixed(2)} has been successfully transferred to ${_receiverController.text}.',
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
         onConfirm: () => Navigator.pop(context),
       );
     } else if (state.error != null) {
@@ -249,6 +274,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     }
   }
 
+<<<<<<< HEAD
   Widget _buildReceiptRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -266,14 +292,21 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     );
   }
 
+=======
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: isDark
           ? AppTheme.backgroundDark
           : const Color(0xFFF8FAFC),
+=======
+      backgroundColor:
+          isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
       appBar: AppBar(
         title: const Text(
           'Send Money',
@@ -288,6 +321,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+<<<<<<< HEAD
             const Text(
               'Recent Recipients',
               style: TextStyle(
@@ -340,6 +374,8 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
               ),
             ),
             const SizedBox(height: 32),
+=======
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
             Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
@@ -357,10 +393,16 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                     children: [
                       _buildTextField(
                         controller: _receiverController,
+<<<<<<< HEAD
                         label: 'Phone Number',
                         hint: '+977 XXXXXXXXX',
                         icon: Icons.phone,
                         isNumber: true,
+=======
+                        label: 'Recipient Identifier',
+                        hint: 'UID or Phone Number',
+                        icon: Icons.alternate_email_rounded,
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                       ),
                       const SizedBox(height: 24),
                       _buildTextField(
@@ -370,6 +412,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                         icon: Icons.currency_rupee_rounded,
                         isNumber: true,
                         autoFocus: true,
+<<<<<<< HEAD
                         onChanged: _updateAmountInWords,
                       ),
                       if (_amountInWords.isNotEmpty)
@@ -384,6 +427,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                             ),
                           ),
                         ),
+=======
+                      ),
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                     ],
                   ),
                 )
@@ -426,7 +472,10 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     required IconData icon,
     bool isNumber = false,
     bool autoFocus = false,
+<<<<<<< HEAD
     Function(String)? onChanged,
+=======
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,7 +488,10 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
         TextField(
           controller: controller,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+<<<<<<< HEAD
           onChanged: onChanged,
+=======
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
           autofocus: autoFocus,
           decoration: InputDecoration(
             hintText: hint,

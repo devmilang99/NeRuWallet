@@ -5,7 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:go_router/go_router.dart';
+<<<<<<< HEAD
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+=======
+
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

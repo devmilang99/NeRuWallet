@@ -111,7 +111,11 @@ class _PayBillScreenState extends ConsumerState<PayBillScreen> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _services.length,
+<<<<<<< HEAD
                     separatorBuilder: (_, _) => const SizedBox(width: 16),
+=======
+                    separatorBuilder: (_, __) => const SizedBox(width: 16),
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                     itemBuilder: (ctx, i) {
                       final selected = _selectedServiceIndex == i;
                       final serviceColor = _services[i]['color'] as Color;

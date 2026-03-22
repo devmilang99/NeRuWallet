@@ -31,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     GlassDialog.showLoading(context, message: 'Signing you in...');
     
     try {
+<<<<<<< HEAD
       final user = await _authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
       if (mounted) {
         Navigator.pop(context); // Close loading
@@ -41,6 +42,12 @@ class _LoginScreenState extends State<LoginScreen> {
             context.go('/dashboard');
           }
         }
+=======
+      await _authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        context.go('/dashboard');
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
       }
     } catch (e) {
       if (mounted) {
@@ -56,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signInWithGoogle();
       if (mounted) {
         Navigator.pop(context); // Close loading
+<<<<<<< HEAD
         if (user != null) {
           if (user.isNewUser) {
             context.go('/auth/security-setup', extra: true);
@@ -63,6 +71,9 @@ class _LoginScreenState extends State<LoginScreen> {
             context.go('/dashboard');
           }
         }
+=======
+        if (user != null) context.go('/dashboard');
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
       }
     } catch (e) {
       if (mounted) {
@@ -78,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signInWithApple();
       if (mounted) {
         Navigator.pop(context); // Close loading
+<<<<<<< HEAD
         if (user != null) {
           if (user.isNewUser) {
             context.go('/auth/security-setup', extra: true);
@@ -85,6 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
             context.go('/dashboard');
           }
         }
+=======
+        if (user != null) context.go('/dashboard');
+>>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
       }
     } catch (e) {
       if (mounted) {
