@@ -148,11 +148,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _methods.length,
-<<<<<<< HEAD
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
-=======
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
->>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                   itemBuilder: (ctx, i) {
                     final selected = _selectedMethodIndex == i;
                     return GestureDetector(

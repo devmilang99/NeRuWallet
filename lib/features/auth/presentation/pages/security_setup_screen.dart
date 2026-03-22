@@ -162,13 +162,27 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Column(
                 children: [
-                   _buildRequirementRow("At least 8 characters", _passwordController.text.length >= 8),
+                  _buildRequirementRow(
+                    "At least 8 characters",
+                    _passwordController.text.length >= 8,
+                  ),
                   const SizedBox(height: 6),
-                  _buildRequirementRow("At least one capital letter", _passwordController.text.contains(RegExp(r'[A-Z]'))),
+                  _buildRequirementRow(
+                    "At least one capital letter",
+                    _passwordController.text.contains(RegExp(r'[A-Z]')),
+                  ),
                   const SizedBox(height: 6),
-                  _buildRequirementRow("At least one number", _passwordController.text.contains(RegExp(r'[0-9]'))),
+                  _buildRequirementRow(
+                    "At least one number",
+                    _passwordController.text.contains(RegExp(r'[0-9]')),
+                  ),
                   const SizedBox(height: 6),
-                  _buildRequirementRow("At least one special character", _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))),
+                  _buildRequirementRow(
+                    "At least one special character",
+                    _passwordController.text.contains(
+                      RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -178,7 +192,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
               obscureText: _obscurePassword,
               onChanged: (_) {
                 setState(() {
-                   if (_passwordError != null) _passwordError = null;
+                  if (_passwordError != null) _passwordError = null;
                 });
               },
               decoration: InputDecoration(
@@ -312,10 +326,17 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
     return Row(
       children: [
         Icon(
-          isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-          size: 16,
-          color: isMet ? AppTheme.successColor : Colors.grey.withValues(alpha: 0.5),
-        ).animate(target: isMet ? 1 : 0).scale(duration: 200.ms).tint(color: AppTheme.successColor),
+              isMet
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 16,
+              color: isMet
+                  ? AppTheme.successColor
+                  : Colors.grey.withValues(alpha: 0.5),
+            )
+            .animate(target: isMet ? 1 : 0)
+            .scale(duration: 200.ms)
+            .tint(color: AppTheme.successColor),
         const SizedBox(width: 8),
         Text(
           text,

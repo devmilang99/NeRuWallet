@@ -189,7 +189,7 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
                   minimumSize: const Size(double.infinity, 64),
                   shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
                 ),
-                child: Text(widget.mode == PinMode.verify || _step == 2 ? "Verify" : "Next"),
+                child: Text(widget.mode == PinMode.verify ? "Verify" : (_step == 2 ? "Confirm" : "Next")),
               ).animate().fadeIn(delay: 600.ms),
               
               if (widget.mode == PinMode.verify)

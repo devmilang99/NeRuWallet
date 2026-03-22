@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-<<<<<<< HEAD
-=======
-import 'package:neruwallet/features/auth/data/services/auth_service.dart';
->>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -18,47 +15,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-<<<<<<< HEAD
 
-=======
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  final AuthService _authService = AuthService();
-
-  Future<void> _handleSignup() async {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
-      GlassDialog.showError(context, "Please fill in all required fields to create your account.");
-      return;
-    }
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      GlassDialog.showError(context, "Passwords do not match. Please verify and try again.");
-      return;
-    }
-
-    GlassDialog.showLoading(context, message: 'Creating your account...');
-
-    try {
-      await _authService.signUpWithEmailPassword(
-        _emailController.text,
-        _passwordController.text,
-        _nameController.text,
-      );
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        context.go('/dashboard');
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, "Signup Failed: ${e.toString()}");
-      }
-    }
-  }
->>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
 
 
   @override
@@ -138,7 +95,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton(
-<<<<<<< HEAD
                           onPressed: () {
                             if (_nameController.text.isEmpty || !_emailController.text.contains('@')) {
                               GlassDialog.showError(context, "Please enter a valid name and email.");
@@ -151,20 +107,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               'name': _nameController.text,
                             });
                           },
-=======
-                          onPressed: _handleSignup,
->>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-<<<<<<< HEAD
                           child: const Text("Next"),
-=======
-                          child: const Text("Sign Up"),
->>>>>>> d02e1fcd7652e151aeefc42daf5d365c01e2f3e7
                         ),
 
                       ],
