@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -65,7 +66,9 @@ class _SplashScreenState extends State<SplashScreen> {
       if (isFirstTime) {
         await _navigateBasedOnPermissions();
       } else {
-        context.go('/auth/login');
+        // Check if user is already authenticated and can skip login
+        final destination = await _resolveAuthDestination(prefs);
+        context.go(destination);
       }
     } catch (e) {
       if (mounted) {
@@ -75,6 +78,37 @@ class _SplashScreenState extends State<SplashScreen> {
         });
       }
     }
+  }
+
+  /// Determines where to navigate after the splash screen for returning users.
+  ///
+  /// - If the user is signed in via a **social provider** (Google / Apple),
+  ///   go to dashboard directly (they never need to re-enter credentials).
+  /// - If the user signed in with **email/password** AND has "Remember Me"
+  ///   enabled, go to dashboard directly.
+  /// - Otherwise, route to the login screen.
+  Future<String> _resolveAuthDestination(SharedPreferences prefs) async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+
+    if (firebaseUser != null) {
+      // Check the sign-in providers linked to this account
+      final providers = firebaseUser.providerData.map((p) => p.providerId).toList();
+      final isSocialUser = providers.contains('google.com') ||
+          providers.contains('apple.com');
+
+      if (isSocialUser) {
+        // Social users: always go straight to dashboard on app reopen
+        return '/dashboard';
+      }
+
+      // Email/password user: only skip login if "Remember Me" was enabled
+      final bool rememberMe = prefs.getBool('remember_me') ?? false;
+      if (rememberMe) {
+        return '/dashboard';
+      }
+    }
+
+    return '/auth/login';
   }
 
   Future<void> _navigateBasedOnPermissions() async {

@@ -19,25 +19,35 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = false;
   final LocalAuthentication _auth = LocalAuthentication();
   final AuthService _authService = AuthService();
 
   Future<void> _handleLogin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      GlassDialog.showError(context, "Please enter both email and password to continue.");
+      GlassDialog.showError(
+        context,
+        "Please enter both email and password to continue.",
+      );
       return;
     }
-    
+
     GlassDialog.showLoading(context, message: 'Signing you in...');
-    
+
     try {
-      final user = await _authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
+      final user = await _authService.signInWithEmailPassword(
+        _emailController.text,
+        _passwordController.text,
+      );
       if (mounted) {
         Navigator.pop(context); // Close loading
         if (user != null) {
           if (user.isNewUser) {
             context.go('/auth/security-setup', extra: false);
           } else {
+            // Save 'remember me' preference for splash auto-login
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('remember_me', _rememberMe);
             context.go('/dashboard');
           }
         }
@@ -45,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, "Authentication Failed: ${e.toString()}");
+        GlassDialog.showError(
+          context,
+          "Authentication Failed: ${e.toString()}",
+        );
       }
     }
   }
@@ -58,7 +71,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pop(context); // Close loading
         if (user != null) {
           if (user.isNewUser) {
-            context.go('/auth/security-setup', extra: true);
+            context.go('/auth/security-setup', extra: {
+              'isSocial': true,
+              'email': user.email,
+              'name': user.name,
+              'isNewUser': true,
+            });
           } else {
             context.go('/dashboard');
           }
@@ -67,7 +85,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, "Google Sign-In failed. Please try again.");
+        GlassDialog.showError(
+          context,
+          "Google Sign-In failed. Please try again.",
+        );
       }
     }
   }
@@ -80,7 +101,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pop(context); // Close loading
         if (user != null) {
           if (user.isNewUser) {
-            context.go('/auth/security-setup', extra: true);
+            context.go('/auth/security-setup', extra: {
+              'isSocial': true,
+              'email': user.email,
+              'name': user.name,
+              'isNewUser': true,
+            });
           } else {
             context.go('/dashboard');
           }
@@ -89,27 +115,41 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, "Apple Sign-In failed. Please try again.");
+        GlassDialog.showError(
+          context,
+          "Apple Sign-In failed. Please try again.",
+        );
       }
     }
   }
 
-
   @override
   void initState() {
     super.initState();
+    _loadSavedPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndStartBiometricLogin();
     });
   }
 
+  Future<void> _loadSavedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _rememberMe = prefs.getBool('remember_me') ?? false;
+      });
+    }
+  }
+
   Future<void> _checkAndStartBiometricLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    final bool isBiometricEnabled = prefs.getBool('biometrics_enabled') ?? false;
+    final bool isBiometricEnabled =
+        prefs.getBool('biometrics_enabled') ?? false;
 
     if (isBiometricEnabled) {
       final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
 
       if (canAuthenticate) {
         try {
@@ -229,23 +269,46 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () =>
-                                context.push('/auth/forgot-password'),
-                            child: Text(
-                              "Forgot password?",
-                              style: TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                        // Row: Remember Me (left) + Forgot Password (right)
+                        Row(
+                          children: [
+                            // Remember Me checkbox
+                            Transform.scale(
+                              scale: 0.9,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                activeColor: AppTheme.primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
                               ),
                             ),
-                          ),
+                            GestureDetector(
+                              onTap: () => setState(() => _rememberMe = !_rememberMe),
+                              child: Text(
+                                "Remember me",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () => context.push('/auth/forgot-password'),
+                              child: Text(
+                                "Forgot password?",
+                                style: TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _handleLogin,
                           style: ElevatedButton.styleFrom(
@@ -256,14 +319,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: const Text("Sign In"),
                         ),
-                        if (_emailController.text.isEmpty) // Just a placeholder check if we should show biometric icon explicitly
-                           Padding(
-                             padding: const EdgeInsets.only(top: 16.0),
-                             child: IconButton(
-                               icon: const Icon(Icons.fingerprint, size: 40, color: AppTheme.primaryColor),
-                               onPressed: _checkAndStartBiometricLogin,
-                             ),
-                           ),
+                        if (_emailController
+                            .text
+                            .isEmpty) // Just a placeholder check if we should show biometric icon explicitly
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.fingerprint,
+                                size: 40,
+                                color: AppTheme.primaryColor,
+                              ),
+                              onPressed: _checkAndStartBiometricLogin,
+                            ),
+                          ),
                       ],
                     ),
                   )
@@ -290,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Expanded(
                     child: _buildSocialButton(
-                      icon: "https://www.svgrepo.com/show/355037/google.svg",
+                      icon: "https://www.svgrepo.com/show/475656/google-color.svg",
                       label: "Google",
                       onPressed: _handleGoogleLogin,
                     ),
@@ -298,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSocialButton(
-                      icon: "https://icons8.com/icons/set/apple-logo",
+                      icon: "https://www.svgrepo.com/show/303108/apple-black-logo.svg",
                       label: "Apple",
                       onPressed: _handleAppleLogin,
                     ),
@@ -360,14 +429,18 @@ class _LoginScreenState extends State<LoginScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SvgPicture.network(
-            icon, 
+            icon,
             height: 20,
-            placeholderBuilder: (context) => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+            placeholderBuilder: (context) => const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              label, 
+              label,
               style: const TextStyle(fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),

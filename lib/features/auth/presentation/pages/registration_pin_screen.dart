@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
@@ -47,7 +48,9 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
         return;
       }
       setState(() => _step = 2);
-      _confirmPinFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _confirmPinFocusNode.requestFocus();
+      });
       return;
     }
 
@@ -55,8 +58,11 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
       if (_pinController.text != _confirmPinController.text) {
         setState(() {
           _showMismatchError = true;
+          _confirmPinController.clear();
         });
-        _confirmPinFocusNode.requestFocus();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _confirmPinFocusNode.requestFocus();
+        });
         return;
       }
 
@@ -67,11 +73,15 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
         await prefs.setString('transaction_pin', _pinController.text);
         
         final data = widget.signupData;
-        await _authService.signUpWithEmailPassword(
-          data['email'], 
-          data['password'], 
-          data['name'],
-        );
+        final bool isSocial = data['isSocial'] ?? false;
+        
+        if (!isSocial) {
+          await _authService.signUpWithEmailPassword(
+            data['email'], 
+            data['password'], 
+            data['name'],
+          );
+        }
         
         // Also save security data
         if (data.containsKey('security_question')) {
@@ -86,8 +96,10 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
           Navigator.pop(context); // Close loading
           GlassDialog.showSuccess(
             context, 
-            "Registration successful! Please login to your account.",
-            onConfirm: () => context.go('/auth/login'),
+            isSocial 
+              ? "Account setup completed successfully!" 
+              : "Registration successful! Please login to your account.",
+            onConfirm: () => isSocial ? context.go('/dashboard') : context.go('/auth/login'),
           );
         }
       } catch (e) {
@@ -99,76 +111,161 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
     }
   }
 
+  Future<void> _handleBackActions() async {
+    if (_step == 2) {
+      setState(() {
+        _step = 1;
+        _confirmPinController.clear();
+        _showMismatchError = false;
+      });
+      _pinFocusNode.requestFocus();
+    } else {
+      final isNewSocial = (widget.signupData['isSocial'] ?? false) && (widget.signupData['isNewUser'] ?? false);
+      if (isNewSocial) {
+        await _authService.deleteAccount();
+      }
+      if (mounted) context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Set Transaction PIN"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const Icon(Icons.lock_person_rounded, size: 80, color: AppTheme.primaryColor)
-                  .animate().scale(delay: 200.ms),
-              const SizedBox(height: 32),
-              Text(
-                "Create a 4-digit PIN for your wallet transactions",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
-                ),
-              ).animate().fadeIn(delay: 400.ms),
-              const SizedBox(height: 48),
-              
-              _buildOtpSection(
-                controller: _pinController,
-                focusNode: _pinFocusNode,
-                label: "Create PIN",
-                isDark: isDark,
-                onComplete: () {
-                  setState(() => _step = 2);
-                  _confirmPinFocusNode.requestFocus();
-                },
-                enabled: _step == 1,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBackActions();
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: isDark ? AppTheme.darkGradient : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppTheme.backgroundColor, Colors.white],
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: Text(
+              "Security Setup",
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            ),
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              onPressed: _handleBackActions,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            ),
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_person_rounded,
+                      size: 64,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  const SizedBox(height: 32),
+                  Text(
+                    _step == 1 ? "Create Transaction PIN" : "Confirm Your PIN",
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+                  const SizedBox(height: 12),
+                  Text(
+                    _step == 1 
+                      ? "Set a 4-digit PIN for secure wallet transactions." 
+                      : "Please re-enter your PIN to confirm.",
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                      height: 1.5,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                  const SizedBox(height: 60),
+                  
+                  if (_step == 1)
+                    _buildOtpSection(
+                      controller: _pinController,
+                      focusNode: _pinFocusNode,
+                      label: "Enter 4-digit PIN",
+                      isDark: isDark,
+                      onComplete: () {
+                        setState(() => _step = 2);
+                        _confirmPinFocusNode.requestFocus();
+                      },
+                      enabled: true,
+                    ).animate().fadeIn().slideX(begin: -0.1, end: 0)
+                  else
+                    _buildOtpSection(
+                      controller: _confirmPinController,
+                      focusNode: _confirmPinFocusNode,
+                      label: "Re-enter PIN",
+                      isDark: isDark,
+                      onComplete: _handleComplete,
+                    ).animate().fadeIn().slideX(begin: 0.1, end: 0),
+
+                  if (_showMismatchError)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: AppTheme.errorColor, size: 16),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "PINs do not match. Try again.",
+                              style: TextStyle(
+                                color: AppTheme.errorColor, 
+                                fontSize: 13, 
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().shake().fadeIn(),
+                    ),
+                  
+                  const SizedBox(height: 80),
+                  ElevatedButton(
+                    onPressed: _handleComplete,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 64),
+                      shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                      elevation: 8,
+                      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                    child: Text(
+                      _step == 2 ? "Finish Setup" : "Continue",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                ],
               ),
-              if (_step == 2) ...[
-                const SizedBox(height: 40),
-                _buildOtpSection(
-                  controller: _confirmPinController,
-                  focusNode: _confirmPinFocusNode,
-                  label: "Confirm PIN",
-                  isDark: isDark,
-                  onComplete: _handleComplete,
-                ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-                if (_showMismatchError)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: const Text(
-                      "PINs do not match. Please try again.",
-                      style: TextStyle(color: AppTheme.errorColor, fontSize: 13, fontWeight: FontWeight.bold),
-                    ).animate().shake(),
-                  ),
-              ],
-              
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: _handleComplete,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 64),
-                  shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
-                ),
-                child: Text(_step == 2 ? "Finish Registration" : "Next"),
-              ).animate().fadeIn(delay: 600.ms),
-            ],
+            ),
           ),
         ),
       ),
@@ -203,10 +300,12 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
               ...List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled)),
             ],
           ),
-          SizedBox(
-            height: 0,
-            width: 0,
-            child: TextField(
+          Opacity(
+            opacity: 0,
+            child: SizedBox(
+              height: 1,
+              width: 1,
+              child: TextField(
               controller: controller,
               focusNode: focusNode,
               autofocus: enabled,
@@ -224,7 +323,8 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
               },
             ),
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
@@ -246,33 +346,35 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
     }
 
     return Container(
-      width: 60,
-      height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
+      width: 65,
+      height: 70,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark 
+            ? AppTheme.surfaceDark.withValues(alpha: 0.5) 
+            : Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isWrong
               ? AppTheme.errorColor
               : (isFocused 
                   ? AppTheme.primaryColor 
-                  : (isDark ? Colors.white10 : Colors.black12)),
+                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05))),
           width: 2,
         ),
         boxShadow: isFocused ? [
           BoxShadow(
-            color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor).withValues(alpha: 0.3),
-            blurRadius: 8,
-            spreadRadius: 1,
+            color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            blurRadius: 12,
+            spreadRadius: 2,
           )
         ] : [],
       ),
       child: Center(
         child: Text(
-          char,
+          char.isNotEmpty ? "•" : "", // Use dots for PIN security
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 32,
             fontWeight: FontWeight.bold,
             color: isWrong ? AppTheme.errorColor : (isDark ? Colors.white : Colors.black),
           ),

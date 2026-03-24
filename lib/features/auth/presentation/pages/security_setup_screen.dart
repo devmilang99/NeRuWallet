@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 
 class SecuritySetupScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _securityAnswerController = TextEditingController();
+  final AuthService _authService = AuthService();
   String? _selectedQuestion;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -99,53 +101,102 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
       'password': _passwordController.text,
       'security_question': _selectedQuestion!,
       'security_answer': _securityAnswerController.text.trim(),
+      'isSocial': widget.isSocialLogin,
     };
 
     if (mounted) {
       context.push(
         '/auth/pin-setup',
-        extra: {'mode': PinMode.set, 'signupData': combinedSignupData},
+        extra: {
+          'mode': PinMode.set, 
+          'signupData': combinedSignupData,
+          'isNewUser': true, // Social or not, it's a new setup
+        },
       );
     }
+  }
+
+  Future<void> _handleBackActions() async {
+    final isNewSocial = widget.isSocialLogin && (widget.signupData?['isNewUser'] ?? false);
+    
+    if (isNewSocial) {
+      // If we're a new social user and haven't finished setup, remove account
+      await _authService.deleteAccount();
+    }
+    if (mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textBodyDark : AppTheme.textBodyColor;
-
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              Text(
-                "Login Password",
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: textColor,
-                ),
-              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
-              const SizedBox(height: 12),
-              Text(
-                    "Set a password to secure your account login.",
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: isDark
-                          ? AppTheme.textSecondaryDark
-                          : AppTheme.textSecondaryColor,
+    
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBackActions();
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: isDark ? AppTheme.darkGradient : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppTheme.backgroundColor, Colors.white],
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              onPressed: _handleBackActions,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            ),
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.security_rounded,
+                        size: 48,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    "Security Setup",
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
                     ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 150.ms, duration: 400.ms)
-                  .slideY(begin: 0.1, end: 0),
-              const SizedBox(height: 40),
-              _buildPasswordStep(isDark),
-              const SizedBox(height: 40),
-            ],
+                  ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Protect your account by setting up a secure password and recovery question.",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                      height: 1.5,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                  const SizedBox(height: 40),
+                  _buildPasswordStep(isDark),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -153,152 +204,178 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   }
 
   Widget _buildPasswordStep(bool isDark) {
-    final titleColor = isDark ? AppTheme.textBodyDark : AppTheme.textBodyColor;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? AppTheme.surfaceDark.withValues(alpha: 0.4) 
+            : Colors.white.withValues(alpha: 0.6),
+        borderRadius: AppTheme.radiusLarge,
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildSectionHeader(
+            "Login Password",
+            "Set a strong password",
+            isDark ? Colors.white : AppTheme.textBodyColor,
+          ),
+          const SizedBox(height: 24),
+          // Password Requirements Checklist
+          _buildRequirementsList(),
+          const SizedBox(height: 24),
+          _buildInputField(
+            controller: _passwordController,
+            label: "Password",
+            errorText: _passwordError,
+            obscureText: _obscurePassword,
+            prefixIcon: Icons.lock_outline_rounded,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            onChanged: (val) {
+              setState(() {
+                if (_passwordError != null) _passwordError = null;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _confirmPasswordController,
+            label: "Confirm Password",
+            errorText: _confirmPasswordError,
+            obscureText: _obscureConfirmPassword,
+            prefixIcon: Icons.lock_clock_outlined,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            ),
+            onChanged: (val) {
+              setState(() {
+                if (_confirmPasswordError != null) _confirmPasswordError = null;
+              });
+            },
+          ),
+          const SizedBox(height: 32),
+          _buildSectionHeader(
+            "Security Question",
+            "Used for account recovery",
+            isDark ? Colors.white : AppTheme.textBodyColor,
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedQuestion,
+            isExpanded: true,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              labelText: "Select Question",
+              errorText: _securityQuestionError,
+              prefixIcon: const Icon(Icons.help_outline, size: 22),
+              filled: true,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+            ),
+            items: _securityQuestions
+                .map(
+                  (q) => DropdownMenuItem(
+                    value: q,
+                    child: Text(q, overflow: TextOverflow.ellipsis),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _selectedQuestion = val;
+                _securityQuestionError = null;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _securityAnswerController,
+            label: "Your Answer",
+            errorText: _securityAnswerError,
+            prefixIcon: Icons.question_answer_outlined,
+            onChanged: (val) {
+              if (_securityAnswerError != null) setState(() => _securityAnswerError = null);
+            },
+          ),
+          const SizedBox(height: 48),
+          ElevatedButton(
+            onPressed: _handleRegister,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 64),
+              shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
+              elevation: 4,
+            ),
+            child: const Text("Next Step", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.05, end: 0);
+  }
 
+  Widget _buildRequirementsList() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _buildRequirementRow("At least 8 characters", _passwordController.text.length >= 8),
+          const SizedBox(height: 8),
+          _buildRequirementRow("One capital letter", _passwordController.text.contains(RegExp(r'[A-Z]'))),
+          const SizedBox(height: 8),
+          _buildRequirementRow("One number", _passwordController.text.contains(RegExp(r'[0-9]'))),
+          const SizedBox(height: 8),
+          _buildRequirementRow("One special character", _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    String? errorText,
+    bool obscureText = false,
+    required IconData prefixIcon,
+    Widget? suffixIcon,
+    Function(String)? onChanged,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
-          children: [
-            // Password Requirements Checklist
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Column(
-                children: [
-                  _buildRequirementRow(
-                    "At least 8 characters",
-                    _passwordController.text.length >= 8,
-                  ),
-                  const SizedBox(height: 6),
-                  _buildRequirementRow(
-                    "At least one capital letter",
-                    _passwordController.text.contains(RegExp(r'[A-Z]')),
-                  ),
-                  const SizedBox(height: 6),
-                  _buildRequirementRow(
-                    "At least one number",
-                    _passwordController.text.contains(RegExp(r'[0-9]')),
-                  ),
-                  const SizedBox(height: 6),
-                  _buildRequirementRow(
-                    "At least one special character",
-                    _passwordController.text.contains(
-                      RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              onChanged: (_) {
-                setState(() {
-                  if (_passwordError != null) _passwordError = null;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: "Password",
-                errorText: _passwordError,
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _confirmPasswordController,
-              obscureText: _obscureConfirmPassword,
-              onChanged: (_) {
-                if (_confirmPasswordError != null) {
-                  setState(() => _confirmPasswordError = null);
-                }
-              },
-              decoration: InputDecoration(
-                labelText: "Confirm Password",
-                errorText: _confirmPasswordError,
-                prefixIcon: const Icon(Icons.lock_clock_outlined),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                  ),
-                  onPressed: () => setState(
-                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            _buildSectionHeader(
-              "Security Question",
-              "Used for account recovery",
-              titleColor,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedQuestion,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: "Select Question",
-                errorText: _securityQuestionError,
-                prefixIcon: const Icon(Icons.help_outline),
-              ),
-              items: _securityQuestions
-                  .map(
-                    (q) => DropdownMenuItem(
-                      value: q,
-                      child: Text(
-                        q,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedQuestion = val;
-                  _securityQuestionError = null;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _securityAnswerController,
-              onChanged: (_) {
-                if (_securityAnswerError != null) {
-                  setState(() => _securityAnswerError = null);
-                }
-              },
-              decoration: InputDecoration(
-                labelText: "Answer",
-                errorText: _securityAnswerError,
-                prefixIcon: const Icon(Icons.question_answer_outlined),
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _handleRegister,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 64),
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppTheme.radiusMedium,
-                ),
-              ),
-              child: const Text("Next"),
-            ),
-          ],
-        )
-        .animate(delay: 300.ms)
-        .fadeIn(duration: 400.ms)
-        .slideY(begin: 0.05, end: 0);
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            labelText: label,
+            errorText: errorText,
+            prefixIcon: Icon(prefixIcon, size: 22),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSectionHeader(String title, String subtitle, Color titleColor) {

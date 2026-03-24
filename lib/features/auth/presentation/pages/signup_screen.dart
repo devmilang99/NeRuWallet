@@ -105,6 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               'isSocial': false,
                               'email': _emailController.text,
                               'name': _nameController.text,
+                              'isNewUser': true,
                             });
                           },
                           style: ElevatedButton.styleFrom(

@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:go_router/go_router.dart';
-import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _biometricsEnabled = false;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -52,9 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       message: 'Are you sure you want to sign out of your NeRuWallet account?',
       confirmText: 'Sign Out',
       isDestructive: true,
-      onConfirm: () {
-        // Mock logout
-        context.go('/auth/login');
+      onConfirm: () async {
+        await _authService.signOut();
+        if (mounted) context.go('/auth/login');
       },
     );
   }
@@ -280,7 +282,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Transaction PIN',
             subtitle: 'Set or reset your security PIN',
             isDark: isDark,
-            onTap: () => context.push('/auth/pin-setup', extra: PinMode.change),
+            // Navigate directly to ChangePinProfileScreen which handles the
+            // full 3-step flow: verify old PIN → new PIN → confirm new PIN.
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ChangePinProfileScreen(),
+              ),
+            ),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,7 @@ import '../widgets/biometric_prompt_sheet.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/pay_tab.dart';
 import 'tabs/history_tab.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -214,30 +216,46 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.backgroundDark
-          : const Color(0xFFF1F5F9),
-      body: IndexedStack(
-        index: _selectedTab,
-        children: [
-          HomeTab(
-            isDark: isDark,
-            balanceVisible: _balanceVisible,
-            isKycVerified: _isKycVerified,
-            onToggleBalance: () =>
-                setState(() => _balanceVisible = !_balanceVisible),
-            onProfileTap: () {
-              context.push('/profile');
-            },
-            transactions: _transactions,
-            quickActions: _quickActions,
-          ),
-          PayTab(isDark: isDark),
-          HistoryTab(isDark: isDark, transactions: _transactions),
-        ],
+    return PopScope(
+      // Prevent the default pop — we handle it ourselves with a dialog.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // Show exit confirmation instead of immediately closing the app.
+        GlassDialog.showConfirm(
+          context,
+          title: 'Exit App',
+          message: 'Are you sure you want to exit NeRuWallet?',
+          confirmText: 'Exit',
+          isDestructive: true,
+          onConfirm: () => SystemNavigator.pop(),
+        );
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppTheme.backgroundDark
+            : const Color(0xFFF1F5F9),
+        body: IndexedStack(
+          index: _selectedTab,
+          children: [
+            HomeTab(
+              isDark: isDark,
+              balanceVisible: _balanceVisible,
+              isKycVerified: _isKycVerified,
+              onToggleBalance: () =>
+                  setState(() => _balanceVisible = !_balanceVisible),
+              onProfileTap: () {
+                context.push('/profile');
+              },
+              transactions: _transactions,
+              quickActions: _quickActions,
+            ),
+            PayTab(isDark: isDark),
+            HistoryTab(isDark: isDark, transactions: _transactions),
+          ],
+        ),
+        bottomNavigationBar: _buildBottomNav(isDark),
       ),
-      bottomNavigationBar: _buildBottomNav(isDark),
     );
   }
 

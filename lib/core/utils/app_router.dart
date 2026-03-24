@@ -19,8 +19,6 @@ import '../../features/exchange/presentation/pages/exchange_rate_screen.dart';
 
 import '../../features/auth/presentation/pages/security_setup_screen.dart';
 import '../../features/auth/presentation/pages/transaction_pin_screen.dart';
-import '../../features/auth/presentation/pages/registration_pin_screen.dart';
-import '../../features/auth/presentation/pages/change_pin_profile_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -40,6 +38,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/auth/login',
+      name: 'login',
       pageBuilder: (context, state) => _buildPageWithFadeTransition(
         child: const LoginScreen(),
       ),
@@ -69,16 +68,16 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         if (state.extra is Map<String, dynamic>) {
           final data = state.extra as Map<String, dynamic>;
-          if (data.containsKey('signupData')) {
-            return RegistrationPinScreen(signupData: data['signupData']);
-          }
-          final mode = data['mode'] as PinMode? ?? PinMode.verify;
-          if (mode == PinMode.change) return const ChangePinProfileScreen();
-          return TransactionPinScreen(mode: mode);
+          final mode = data['mode'] as PinMode? ?? (data.containsKey('signupData') ? PinMode.set : PinMode.verify);
+          
+          return TransactionPinScreen(
+            mode: mode,
+            signupData: data['signupData'],
+            onSuccess: data['onSuccess'] as VoidCallback?,
+          );
         }
         
         final mode = state.extra as PinMode? ?? PinMode.verify;
-        if (mode == PinMode.change) return const ChangePinProfileScreen();
         return TransactionPinScreen(mode: mode);
       },
     ),

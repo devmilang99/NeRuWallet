@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/features/auth/domain/models/user_model.dart';
 
 class AuthService {
@@ -84,5 +85,29 @@ class AuthService {
       profilePicUrl: user.photoURL,
       isNewUser: isNewUser,
     );
+  }
+
+  Future<void> signOut() async {
+    try {
+      await _auth.signOut();
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect(); // Forces account picker next time
+      // Clear remember_me so next launch shows the login screen
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('remember_me');
+    } catch (e) {
+      debugPrint("Error signing out: $e");
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.delete();
+      }
+    } catch (e) {
+      debugPrint("Error deleting account: $e");
+    }
   }
 }

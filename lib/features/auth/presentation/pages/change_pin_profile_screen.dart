@@ -25,6 +25,17 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
   final _confirmPinFocusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    _step = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _oldPinFocusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _oldPinFocusNode.dispose();
     _pinFocusNode.dispose();
@@ -46,7 +57,9 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
         return;
       }
       setState(() => _step = 1);
-      _pinFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pinFocusNode.requestFocus();
+      });
       return;
     }
 
@@ -58,7 +71,9 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
         return;
       }
       setState(() => _step = 2);
-      _confirmPinFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _confirmPinFocusNode.requestFocus();
+      });
       return;
     }
 
@@ -142,9 +157,19 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
                   isDark: isDark,
                   onComplete: () {
                     setState(() => _step = 2);
-                    _confirmPinFocusNode.requestFocus();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _confirmPinFocusNode.requestFocus();
+                    });
                   },
                   enabled: _step == 1,
+                  // If user clicks the first PIN field while on confirm step,
+                  // bring them back to the first step.
+                  onTap: _step == 2 
+                    ? () => setState(() {
+                        _step = 1;
+                        _pinFocusNode.requestFocus();
+                      }) 
+                    : null,
                 ),
                 if (_step == 2) ...[
                   const SizedBox(height: 40),
@@ -154,6 +179,7 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
                     label: "Confirm New PIN",
                     isDark: isDark,
                     onComplete: _handleComplete,
+                    isConfirm: true,
                   ).animate().fadeIn().slideY(begin: 0.2, end: 0),
                   if (_showMismatchError)
                     Padding(
@@ -167,14 +193,7 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
               ],
               
               const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: _handleComplete,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 64),
-                  shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
-                ),
-                child: Text(_step == 2 ? "Update PIN" : "Next"),
-              ).animate().fadeIn(delay: 600.ms),
+              // Manual button removed - auto-submits on 4th digit
             ],
           ),
         ),
@@ -189,10 +208,14 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
     required bool isDark,
     required VoidCallback onComplete,
     bool enabled = true,
+    bool isConfirm = false,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: () {
-        if (enabled) {
+        if (onTap != null) {
+          onTap();
+        } else if (enabled || isConfirm) {
           focusNode.requestFocus();
         }
       },
@@ -207,27 +230,32 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ...List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled)),
+              ...List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled || isConfirm)),
             ],
           ),
-          SizedBox(
-            height: 0, width: 0,
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              autofocus: enabled,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              onChanged: (val) {
-                if (_showMismatchError) {
-                  setState(() => _showMismatchError = false);
-                } else {
-                  setState(() {});
-                }
-                if (val.length == 4) {
-                  onComplete();
-                }
-              },
+          IgnorePointer(
+            child: Opacity(
+              opacity: 0,
+              child: SizedBox(
+                height: 1,
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  autofocus: false,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  onChanged: (val) {
+                    if (_showMismatchError) {
+                      setState(() => _showMismatchError = false);
+                    } else {
+                      setState(() {});
+                    }
+                    if (val.length == 4) {
+                      onComplete();
+                    }
+                  },
+                ),
+              ),
             ),
           ),
         ],
