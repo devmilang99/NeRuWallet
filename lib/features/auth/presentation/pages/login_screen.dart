@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Save 'remember me' preference for splash auto-login
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('remember_me', _rememberMe);
-            context.go('/dashboard');
+            if (mounted) context.go('/dashboard');
           }
         }
       }
@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkAndStartBiometricLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final bool isBiometricEnabled =
-        prefs.getBool('biometrics_enabled') ?? false;
+        prefs.getBool('biometrics_login_enabled') ?? prefs.getBool('biometrics_enabled') ?? false;
 
     if (isBiometricEnabled) {
       final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
+import 'package:neruwallet/features/dashboard/presentation/pages/biometric_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,36 +16,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _biometricsEnabled = false;
   final AuthService _authService = AuthService();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _biometricsEnabled = prefs.getBool('biometrics_enabled') ?? false;
-    });
-  }
-
-  Future<void> _toggleBiometrics(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('biometrics_enabled', value);
-    setState(() {
-      _biometricsEnabled = value;
-    });
-
-    if (mounted) {
-      GlassDialog.showSuccess(
-        context,
-        value ? 'Biometric login has been enabled.' : 'Biometric login has been disabled.',
-      );
-    }
-  }
 
   void _handleLogout() {
     GlassDialog.showConfirm(
@@ -259,13 +230,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _buildSettingTile(
             icon: Icons.fingerprint_rounded,
-            title: 'Biometric Login',
-            subtitle: 'Fingerprint or Face ID',
+            title: 'Biometric Security',
+            subtitle: 'Manage Face ID/Fingerprint',
             isDark: isDark,
-            trailing: Switch.adaptive(
-              value: _biometricsEnabled,
-              onChanged: _toggleBiometrics,
-              activeTrackColor: AppTheme.primaryColor,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BiometricSettingsScreen()),
             ),
           ),
           _buildDivider(isDark),

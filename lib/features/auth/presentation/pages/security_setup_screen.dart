@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 
@@ -117,13 +118,37 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   }
 
   Future<void> _handleBackActions() async {
-    final isNewSocial = widget.isSocialLogin && (widget.signupData?['isNewUser'] ?? false);
-    
+    final isNewSocial =
+        widget.isSocialLogin && (widget.signupData?['isNewUser'] ?? false);
+
     if (isNewSocial) {
-      // If we're a new social user and haven't finished setup, remove account
-      await _authService.deleteAccount();
+      if (!mounted) return;
+      GlassDialog.showConfirm(
+        context,
+        title: "Cancel Registration?",
+        message:
+            "Your account connection is incomplete. If you leave now, your registration will be cancelled.",
+        confirmText: "Yes, Cancel",
+        cancelText: "Stay here",
+        isDestructive: true,
+        onConfirm: () async {
+          // Add a loading indicator while deleting the account
+          GlassDialog.showLoading(context, message: "Cancelling registration...");
+          try {
+            await _authService.deleteAccount();
+          } catch (e) {
+            debugPrint("Error during account cleanup: $e");
+          }
+          if (mounted) {
+            // Close loading and go back to login
+            Navigator.pop(context);
+            context.go('/auth/login');
+          }
+        },
+      );
+    } else {
+      if (mounted) context.pop();
     }
-    if (mounted) context.pop();
   }
 
   @override

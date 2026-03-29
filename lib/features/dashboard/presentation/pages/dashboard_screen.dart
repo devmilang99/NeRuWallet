@@ -187,8 +187,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
         if (availableBiometrics.isNotEmpty && mounted) {
           _hasPromptedThisSession = true;
-          // Mark onboarding as completed so we don't prompt every time
-          await prefs.setBool('biometric_onboarding_completed', true);
 
           if (!mounted) return;
 

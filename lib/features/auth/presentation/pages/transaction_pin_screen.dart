@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 enum PinMode { set, change, verify, reset }
@@ -29,6 +30,7 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
   final AuthService _authService = AuthService();
+  final LocalAuthentication _auth = LocalAuthentication();
 
   int _step = 1; // 1: PIN entry, 2: Confirmation (if setup/reset)
   bool _showMismatchError = false;
@@ -44,10 +46,11 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
     // Using postFrameCallback is the only reliable way to open the keyboard
     // immediately on screens that are pushed onto the navigator stack.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && widget.mode != PinMode.verify) {
+      if (mounted) {
         _pinFocusNode.requestFocus();
-      } else if (mounted) {
-        _pinFocusNode.requestFocus();
+        if (widget.mode == PinMode.verify) {
+          _checkBiometricForVerification();
+        }
       }
     });
   }
@@ -173,6 +176,38 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
     }
   }
 
+
+  /// SCENARIO Biometrics: Check and trigger biometric auth for transactions.
+  Future<void> _checkBiometricForVerification() async {
+    if (widget.mode != PinMode.verify) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final bool isEnabled =
+        prefs.getBool('biometrics_transaction_enabled') ?? false;
+
+    if (isEnabled) {
+      try {
+        final bool authenticated = await _auth.authenticate(
+          localizedReason: 'Confirm this transaction',
+          options: const AuthenticationOptions(
+            stickyAuth: true,
+            biometricOnly: true,
+          ),
+        );
+
+        if (authenticated && mounted) {
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            context.go('/dashboard');
+          }
+        }
+      } catch (e) {
+        debugPrint("Biometric auth failed: $e");
+      }
+    }
+  }
+
   /// SCENARIO 2: Handles PIN change/reset from the profile or security tab.
   /// Navigates back to the dashboard after successful update.
   Future<void> _handleChangePin() async {
@@ -222,6 +257,54 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
     }
   }
 
+  /// Handles back navigation and registration cancellation.
+  Future<void> _handleBackActions() async {
+    if (_step == 2) {
+      setState(() {
+        _step = 1;
+        _confirmPinController.clear();
+        _showMismatchError = false;
+      });
+      _pinFocusNode.requestFocus();
+      return;
+    }
+
+    final isNewSocial =
+        widget.mode == PinMode.set && (widget.signupData?['isSocial'] ?? false);
+
+    if (isNewSocial) {
+      if (!mounted) return;
+      GlassDialog.showConfirm(
+        context,
+        title: "Cancel Registration?",
+        message:
+            "Your account connection is incomplete. If you leave now, your registration will be cancelled.",
+        confirmText: "Yes, Cancel",
+        cancelText: "Stay here",
+        isDestructive: true,
+        onConfirm: () async {
+          // Add a loading indicator while deleting the account
+          GlassDialog.showLoading(
+            context,
+            message: "Cancelling registration...",
+          );
+          try {
+            await _authService.deleteAccount();
+          } catch (e) {
+            debugPrint("Error during account cleanup: $e");
+          }
+          if (mounted) {
+            // Close loading and go back to login
+            Navigator.pop(context);
+            context.go('/auth/login');
+          }
+        },
+      );
+    } else {
+      if (mounted) context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -230,13 +313,23 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
         ? "Authorize this transaction"
         : "Create a 4-digit PIN for security";
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBackActions();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            onPressed: _handleBackActions,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          ),
+        ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -322,12 +415,25 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
                   ),
                   child: const Text("Forgot PIN?"),
                 ),
+              if (widget.mode == PinMode.verify)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.fingerprint_rounded,
+                      size: 48,
+                      color: AppTheme.primaryColor,
+                    ),
+                    onPressed: _checkBiometricForVerification,
+                  ),
+                ).animate().fadeIn(delay: 600.ms).scale(),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOtpSection({
     required TextEditingController controller,

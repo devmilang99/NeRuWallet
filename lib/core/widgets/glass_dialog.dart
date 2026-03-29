@@ -175,6 +175,7 @@ class GlassDialog {
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
     bool isDestructive = false,
+    VoidCallback? onCancel,
   }) {
     showDialog(
       context: context,
@@ -204,7 +205,10 @@ class GlassDialog {
                   children: [
                     Expanded(
                       child: TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (onCancel != null) onCancel();
+                        },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
                         ),

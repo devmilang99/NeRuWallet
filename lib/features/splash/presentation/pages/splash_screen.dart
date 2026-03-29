@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         // Check if user is already authenticated and can skip login
         final destination = await _resolveAuthDestination(prefs);
-        context.go(destination);
+        if (mounted) context.go(destination);
       }
     } catch (e) {
       if (mounted) {
