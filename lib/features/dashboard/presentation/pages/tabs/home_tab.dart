@@ -6,27 +6,26 @@ import '../../widgets/quick_actions_grid.dart';
 import '../../widgets/promo_card.dart';
 import '../../widgets/transaction_tile.dart';
 import '../../../data/models/transaction_model.dart';
-import '../../../data/models/quick_action_model.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class HomeTab extends StatelessWidget {
   final bool isDark;
+  final String userName;
   final bool balanceVisible;
   final bool isKycVerified;
   final VoidCallback onToggleBalance;
   final VoidCallback onProfileTap;
   final List<TransactionModel> transactions;
-  final List<QuickActionModel> quickActions;
 
   const HomeTab({
     super.key,
     required this.isDark,
+    required this.userName,
     required this.balanceVisible,
     required this.isKycVerified,
     required this.onToggleBalance,
     required this.onProfileTap,
     required this.transactions,
-    required this.quickActions,
   });
 
   @override
@@ -35,7 +34,7 @@ class HomeTab extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       slivers: [
         SliverAppBar(
-          expandedHeight: 140,
+          expandedHeight: 110,
           floating: true,
           pinned: false,
           elevation: 0,
@@ -43,7 +42,7 @@ class HomeTab extends StatelessWidget {
           flexibleSpace: FlexibleSpaceBar(
             background: DashboardHeader(
               isDark: isDark,
-              userName: 'Raju Ghimire',
+              userName: userName,
               onProfileTap: onProfileTap,
               onNotificationTap: () {},
             ),
@@ -56,27 +55,31 @@ class HomeTab extends StatelessWidget {
             isDark: isDark,
             isVisible: balanceVisible,
             onToggleVisibility: onToggleBalance,
+            onIncomeTap: () => _showTransactionListBottomSheet(context, 'Income', transactions.where((t) => t.amount > 0).toList()),
+            onExpenseTap: () => _showTransactionListBottomSheet(context, 'Expense', transactions.where((t) => t.amount < 0).toList()),
           ),
         ),
-        SliverToBoxAdapter(child: SizedBox(height: 20)),
+        SliverToBoxAdapter(child: SizedBox(height: 12)),
         SliverToBoxAdapter(
-          child: QuickActionsGrid(isDark: isDark, actions: quickActions),
+          child: QuickActionsGrid(isDark: isDark),
         ),
         SliverToBoxAdapter(child: PromoCard(isDark: isDark)),
         SliverToBoxAdapter(
           child: _buildSectionHeader(context, 'Recent Transactions', isDark),
         ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (ctx, i) => TransactionTile(
-              transaction: transactions[i],
-              isDark: isDark,
-              index: i,
+        SliverPadding(
+          padding: const EdgeInsets.only(bottom: 120),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (ctx, i) => TransactionTile(
+                transaction: transactions[i],
+                isDark: isDark,
+                index: i,
+              ),
+              childCount: transactions.length,
             ),
-            childCount: transactions.length,
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
   }
@@ -188,6 +191,46 @@ class HomeTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+
+  void _showTransactionListBottomSheet(BuildContext context, String title, List<TransactionModel> filteredTransactions) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.surfaceDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            Text(
+              '$title Transactions',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: filteredTransactions.isEmpty 
+                  ? const Center(child: Text('No transactions found'))
+                  : ListView.builder(
+                      itemCount: filteredTransactions.length,
+                      itemBuilder: (context, i) => TransactionTile(
+                        transaction: filteredTransactions[i],
+                        isDark: isDark,
+                        index: i,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

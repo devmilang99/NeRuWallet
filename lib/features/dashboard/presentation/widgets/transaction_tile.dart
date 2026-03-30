@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import '../../data/models/transaction_model.dart';
 
@@ -38,10 +37,10 @@ class TransactionTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: transaction.color.withValues(alpha: 0.12),
+                color: transaction.color.withValues(alpha: 0.1),
                 borderRadius: AppTheme.radiusMedium,
               ),
-              child: Icon(transaction.icon, color: transaction.color, size: 22),
+              child: Icon(transaction.icon, color: transaction.color, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -57,7 +56,7 @@ class TransactionTile extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     transaction.subtitle,
                     maxLines: 1,
@@ -85,7 +84,7 @@ class TransactionTile extends StatelessWidget {
                         : AppTheme.errorColor,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   transaction.time,
                   style: TextStyle(
@@ -99,7 +98,7 @@ class TransactionTile extends StatelessWidget {
             ),
           ],
         ),
-      ).animate(delay: (60 * index).ms).fadeIn().slideX(begin: 0.05, end: 0),
+      ),
     );
   }
 }

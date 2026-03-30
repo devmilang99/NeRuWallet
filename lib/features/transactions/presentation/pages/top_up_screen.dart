@@ -138,7 +138,27 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   curve: Curves.easeOut,
                 )
                 .fadeIn(),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
+            const Text(
+              'Favorite Contacts',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ).animate(delay: 200.ms).fadeIn(),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 100,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildFavoriteItem('Add', Icons.add_rounded, AppTheme.primaryColor),
+                  _buildFavoriteItem('Rajan', Icons.person_rounded, const Color(0xFF6366F1)),
+                  _buildFavoriteItem('Suraj', Icons.person_rounded, const Color(0xFF10B981)),
+                  _buildFavoriteItem('Pratik', Icons.person_rounded, const Color(0xFFF59E0B)),
+                  _buildFavoriteItem('Anisha', Icons.person_rounded, const Color(0xFFEC4899)),
+                ],
+              ),
+            ).animate(delay: 250.ms).fadeIn().slideX(begin: 0.1, end: 0),
+            const SizedBox(height: 32),
             const Text(
               'Select Top Up Method',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -239,6 +259,29 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
             ).animate(delay: 400.ms).fadeIn(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFavoriteItem(String name, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }

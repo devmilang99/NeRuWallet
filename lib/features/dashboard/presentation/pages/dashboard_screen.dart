@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -5,11 +6,10 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import '../../data/models/transaction_model.dart';
-import '../../data/models/quick_action_model.dart';
 import '../../data/models/nav_item_model.dart';
 import '../widgets/biometric_prompt_sheet.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'tabs/home_tab.dart';
-import 'tabs/pay_tab.dart';
 import 'tabs/history_tab.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
@@ -81,43 +81,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     ),
   ];
 
-  static const List<QuickActionModel> _quickActions = [
-    QuickActionModel(
-      label: 'Send',
-      icon: Icons.arrow_upward_rounded,
-      color: Color(0xFF6366F1),
-    ),
-    QuickActionModel(
-      label: 'Receive',
-      icon: Icons.arrow_downward_rounded,
-      color: Color(0xFF10B981),
-    ),
-    QuickActionModel(
-      label: 'Scan QR',
-      icon: Icons.qr_code_scanner_rounded,
-      color: Color(0xFFF59E0B),
-    ),
-    QuickActionModel(
-      label: 'Top Up',
-      icon: Icons.account_balance_wallet_rounded,
-      color: Color(0xFF8B5CF6),
-    ),
-    QuickActionModel(
-      label: 'Pay Bill',
-      icon: Icons.receipt_long_rounded,
-      color: Color(0xFFEC4899),
-    ),
-    QuickActionModel(
-      label: 'Exchange',
-      icon: Icons.currency_exchange_rounded,
-      color: Color(0xFF0EA5E9),
-    ),
-  ];
-
   int _selectedTab = 0;
   bool _balanceVisible = true;
   bool _hasPromptedThisSession = false;
   bool _isKycVerified = false;
+  String _userName = 'User';
   final LocalAuthentication _auth = LocalAuthentication();
 
 
@@ -126,12 +94,22 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadKycStatus();
+    _loadUserName();
     _markOnboardingComplete();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _checkAndPromptBiometrics();
       }
     });
+  }
+
+  void _loadUserName() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && mounted) {
+      setState(() {
+        _userName = user.displayName ?? 'User';
+      });
+    }
   }
 
   Future<void> _markOnboardingComplete() async {
@@ -238,6 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             HomeTab(
               isDark: isDark,
+              userName: _userName,
               balanceVisible: _balanceVisible,
               isKycVerified: _isKycVerified,
               onToggleBalance: () =>
@@ -246,12 +225,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                 context.push('/profile');
               },
               transactions: _transactions,
-              quickActions: _quickActions,
             ),
-            PayTab(isDark: isDark),
-            HistoryTab(isDark: isDark, transactions: _transactions),
+            _selectedTab == 1 
+              ? HistoryTab(isDark: isDark, transactions: _transactions)
+              : const SizedBox.shrink(), // Lazy load HistoryTab
           ],
         ),
+        extendBody: true,
         bottomNavigationBar: _buildBottomNav(isDark),
       ),
     );
@@ -264,37 +244,69 @@ class _DashboardScreenState extends State<DashboardScreen>
       label: 'Home',
     ),
     NavItemModel(
-      activeIcon: Icons.send_rounded,
-      inactiveIcon: Icons.send_outlined,
-      label: 'Pay',
-    ),
-    NavItemModel(
       activeIcon: Icons.receipt_long_rounded,
       inactiveIcon: Icons.receipt_long_outlined,
       label: 'History',
     ),
   ];
 
+
+
   Widget _buildBottomNav(bool isDark) {
     return Container(
-      padding: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark 
+            ? AppTheme.surfaceDark.withValues(alpha: 0.95) 
+            : Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withValues(alpha: 0.05) 
+              : Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
       ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(
-            _navItems.length,
-            (i) => _buildNavItem(_navItems[i], i, isDark),
-          ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(_navItems[0], 0, isDark),
+          _buildScanButton(isDark),
+          _buildNavItem(_navItems[1], 1, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScanButton(bool isDark) {
+    return GestureDetector(
+      onTap: () => context.push('/qr-pay'), // Navigate directly to QR pay
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.qr_code_scanner_rounded,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );

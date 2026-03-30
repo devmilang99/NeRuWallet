@@ -10,7 +10,6 @@ import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
 import '../../features/dashboard/presentation/pages/profile_screen.dart';
 import '../../features/dashboard/presentation/pages/qr_scanner_screen.dart';
-import '../../features/transactions/presentation/pages/send_money_screen.dart';
 import '../../features/transactions/presentation/pages/receive_money_screen.dart';
 import '../../features/transactions/presentation/pages/top_up_screen.dart';
 import '../../features/transactions/presentation/pages/pay_bill_screen.dart';
@@ -91,12 +90,6 @@ final GoRouter appRouter = GoRouter(
       path: '/qr-pay',
       pageBuilder: (context, state) => _buildPageWithSlideTransition(
         child: const QrScannerScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/transfer',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const SendMoneyScreen(),
       ),
     ),
     GoRoute(
