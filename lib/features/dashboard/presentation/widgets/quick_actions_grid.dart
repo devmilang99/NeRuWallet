@@ -59,7 +59,8 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => QuickActionsManagerScreen(isDark: isDark),
+                        builder: (context) =>
+                            QuickActionsManagerScreen(isDark: isDark),
                       ),
                     );
                   },
@@ -81,13 +82,15 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
               padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, // Sticking to 3 as it fits 6 items perfectly in 2 rows
-                mainAxisSpacing: 10,
+                crossAxisCount:
+                    3, // Sticking to 3 as it fits 6 items perfectly in 2 rows
+                mainAxisSpacing: 4,
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.1,
               ),
               itemCount: displayedActions.length,
-              itemBuilder: (ctx, i) => _buildQuickActionItem(context, displayedActions[i], i),
+              itemBuilder: (ctx, i) =>
+                  _buildQuickActionItem(context, displayedActions[i], i),
             ),
           ],
         ),
@@ -103,18 +106,51 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
     final isDark = widget.isDark;
     return InkWell(
       onTap: () {
-        if (action.label == 'Exchange') {
-          context.push('/exchange-rates');
-        } else if (action.label == 'Scan QR') {
-          context.push('/qr-pay');
-        } else if (action.label == 'Top Up') {
-          context.push('/top-up');
-        } else if (action.label == 'Pay Bill' || action.category == 'Bills') {
-          context.push('/pay-bill');
-        } else if (action.label == 'Fine Payment') {
-          context.push('/fine-payment');
-        } else if (action.label == 'Gov Services') {
-          context.push('/gov-services');
+        switch (action.label) {
+          case 'Exchange':
+            context.push('/exchange-rates');
+          case 'Scan QR':
+            context.push('/qr-pay');
+          case 'Top Up':
+            context.push('/top-up');
+          case 'Withdraw':
+            context.push('/withdraw');
+          case 'Pay Bill':
+            context.push('/pay-bill');
+          case 'Electricity':
+            context.push('/electricity');
+          case 'Water':
+            context.push('/water');
+          case 'Internet':
+            context.push('/internet');
+          case 'TV':
+            context.push('/tv');
+          case 'Education':
+            context.push('/education');
+          case 'Insurance':
+            context.push('/insurance');
+          case 'Fine Payment':
+            context.push('/fine-payment');
+          case 'Gov Services':
+            context.push('/gov-services');
+          case 'Tax Payment':
+            context.push('/tax-payment');
+          case 'Tickets':
+            context.push('/tickets');
+          case 'Food':
+            context.push('/food');
+          case 'Shopping':
+            context.push('/shopping');
+          case 'Rewards':
+            context.push('/rewards');
+          case 'Referral':
+            context.push('/referral');
+          case 'Support':
+            context.push('/support');
+          default:
+            if (action.category == 'Bills') {
+              context.push('/pay-bill');
+            }
         }
       },
       borderRadius: AppTheme.radiusMedium,
