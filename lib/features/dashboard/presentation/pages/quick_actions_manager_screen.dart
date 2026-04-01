@@ -58,11 +58,11 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
             child: Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Text(
-                '${selectedActions.length}/6 Selected',
+                '${selectedActions.length}/8 Selected',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: selectedActions.length >= 6 ? Colors.orange : AppTheme.primaryColor,
+                  color: selectedActions.length >= 8 ? Colors.orange : AppTheme.primaryColor,
                 ),
               ),
             ),

@@ -93,19 +93,73 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         ),
         const SizedBox(height: 32),
         ServiceInputSection(
-          label: 'Amount to Withdraw',
-          child: TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              hintText: '0.00',
-              prefixText: 'Rs ',
-              fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
-            ),
+          label: 'Withdrawal Information',
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: AppTheme.radiusMedium,
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Daily Limit: Rs. 50,000.00 | Remaining: Rs. 42,500.00',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.orange[200] : Colors.orange[800],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: '0.00',
+                  prefixText: 'Rs ',
+                  fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 32),
+        if (_selectedMethodIndex == 0) ...[
+          ServiceInputSection(
+            label: 'Bank Account Details',
+            child: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Account Number',
+                    prefixIcon: const Icon(Icons.numbers_rounded),
+                    fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Bank Name',
+                    prefixIcon: const Icon(Icons.account_balance_rounded),
+                    fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+          const SizedBox(height: 32),
+        ],
         ServiceInputSection(
           label: 'Select Withdrawal Method',
           child: Column(
@@ -164,11 +218,67 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             }),
           ),
         ),
+        const SizedBox(height: 32),
+        
+        ListenableBuilder(
+          listenable: _amountController,
+          builder: (context, _) {
+            final val = _amountController.text.trim();
+            if (val.isEmpty || double.tryParse(val) == 0) return const SizedBox.shrink();
+            final amount = double.tryParse(val) ?? 0;
+            
+            return Column(
+              children: [
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                    borderRadius: AppTheme.radiusLarge,
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInfoRow('Service Tax', 'Rs. 10.00', isDark),
+                      const Divider(height: 24),
+                      _buildInfoRow('Total Payable', 'Rs. ${(amount + 10).toStringAsFixed(2)}', isDark, isTotal: true),
+                    ],
+                  ),
+                ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+              ],
+            );
+          },
+        ),
+
         const SizedBox(height: 40),
         ElevatedButton(
           onPressed: _onWithdraw,
           child: const Text('Withdraw Now'),
         ).animate(delay: 400.ms).fadeIn(),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, bool isDark, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+            fontSize: isTotal ? 16 : 14,
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: isTotal ? 18 : 14,
+            color: isTotal ? AppTheme.primaryColor : (isDark ? Colors.white : Colors.black),
+          ),
+        ),
       ],
     );
   }

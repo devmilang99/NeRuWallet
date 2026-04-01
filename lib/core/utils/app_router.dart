@@ -8,27 +8,25 @@ import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
-import '../../features/dashboard/presentation/pages/profile_screen.dart';
 import '../../features/dashboard/presentation/pages/qr_scanner_screen.dart';
-import '../../features/services/presentation/pages/finance/receive_money_screen.dart';
+import '../../features/dashboard/presentation/pages/profile_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
 import '../../features/auth/presentation/pages/security_setup_screen.dart';
 import '../../features/auth/presentation/pages/transaction_pin_screen.dart';
 
 // Service Screens
-import '../../features/services/presentation/pages/finance/top_up_screen.dart';
-import '../../features/services/presentation/pages/finance/withdraw_screen.dart';
-import '../../features/services/presentation/pages/finance/exchange_rate_screen.dart';
 import '../../features/services/presentation/pages/bills/bill_payment_screen.dart';
 import '../../features/services/presentation/pages/government/fine_payment_screen.dart';
-import '../../features/services/presentation/pages/government/gov_services_screen.dart';
-import '../../features/services/presentation/pages/government/tax_payment_screen.dart';
 import '../../features/services/presentation/pages/merchant/tickets_screen.dart';
 import '../../features/services/presentation/pages/merchant/food_delivery_screen.dart';
 import '../../features/services/presentation/pages/merchant/shopping_screen.dart';
-import '../../features/services/presentation/pages/other/rewards_screen.dart';
-import '../../features/services/presentation/pages/other/referral_screen.dart';
-import '../../features/services/presentation/pages/other/support_screen.dart';
+
+// Finance Screens
+import '../../features/services/presentation/pages/finance/top_up_screen.dart';
+import '../../features/services/presentation/pages/finance/withdraw_screen.dart';
+import '../../features/services/presentation/pages/finance/exchange_rate_screen.dart';
+import '../../features/services/presentation/pages/finance/send_money_screen.dart';
+import '../../features/services/presentation/pages/all_services_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -97,18 +95,6 @@ final GoRouter appRouter = GoRouter(
         child: const DashboardScreen(),
       ),
     ),
-    GoRoute(
-      path: '/qr-pay',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const QrScannerScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/receive',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const ReceiveMoneyScreen(),
-      ),
-    ),
     
     // Finance Routes
     GoRoute(
@@ -129,19 +115,20 @@ final GoRouter appRouter = GoRouter(
         child: const ExchangeRateScreen(),
       ),
     ),
-
-    // Bills Routes
     GoRoute(
-      path: '/pay-bill',
+      path: '/qr-pay',
       pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const BillPaymentScreen(
-          billType: 'Utility',
-          icon: Icons.receipt_long_rounded,
-          color: Colors.blue,
-          label: 'Customer',
-        ),
+        child: const QrScannerScreen(),
       ),
     ),
+    GoRoute(
+      path: '/send-money',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const SendMoneyScreen(),
+      ),
+    ),
+    
+    // Bills Routes
     GoRoute(
       path: '/electricity',
       pageBuilder: (context, state) => _buildPageWithSlideTransition(
@@ -175,57 +162,12 @@ final GoRouter appRouter = GoRouter(
         ),
       ),
     ),
-    GoRoute(
-      path: '/tv',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const BillPaymentScreen(
-          billType: 'TV',
-          icon: Icons.tv_rounded,
-          color: Colors.purple,
-          label: 'Smart Card',
-        ),
-      ),
-    ),
-    GoRoute(
-      path: '/education',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const BillPaymentScreen(
-          billType: 'Education',
-          icon: Icons.school_rounded,
-          color: Colors.green,
-          label: 'Student',
-        ),
-      ),
-    ),
-    GoRoute(
-      path: '/insurance',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const BillPaymentScreen(
-          billType: 'Insurance',
-          icon: Icons.security_rounded,
-          color: Colors.indigo,
-          label: 'Policy',
-        ),
-      ),
-    ),
 
     // Government Routes
     GoRoute(
       path: '/fine-payment',
       pageBuilder: (context, state) => _buildPageWithSlideTransition(
         child: const FinePaymentScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/gov-services',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const GovServicesScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/tax-payment',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const TaxPaymentScreen(),
       ),
     ),
 
@@ -248,26 +190,13 @@ final GoRouter appRouter = GoRouter(
         child: const ShoppingScreen(),
       ),
     ),
+    GoRoute(
+      path: '/all-services',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const AllServicesScreen(),
+      ),
+    ),
 
-    // Other Routes
-    GoRoute(
-      path: '/rewards',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const RewardsScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/referral',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const ReferralScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/support',
-      pageBuilder: (context, state) => _buildPageWithSlideTransition(
-        child: const SupportScreen(),
-      ),
-    ),
     GoRoute(
       path: '/profile',
       pageBuilder: (context, state) => _buildPageWithSlideTransition(

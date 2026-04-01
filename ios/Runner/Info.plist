@@ -72,5 +72,7 @@
 	<string>NeRuWallet needs FaceID for secure login.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NeRuWallet needs access to your photos to upload profile pictures.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>NeRuWallet needs access to your contacts to let you send money easily.</string>
 </dict>
 </plist>

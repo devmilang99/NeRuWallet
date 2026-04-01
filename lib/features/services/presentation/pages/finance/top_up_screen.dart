@@ -106,22 +106,66 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
         const SizedBox(height: 32),
         ServiceInputSection(
           label: 'Amount to Deposit',
-          child: TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              hintText: '0.00',
-              prefixText: 'Rs ',
-              fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+          child: Column(
+            children: [
+              TextField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: '0.00',
+                  prefixText: 'Rs ',
+                  fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: ['500', '1000', '2000', '5000'].map((amt) {
+                  return InkWell(
+                    onTap: () => setState(() => _amountController.text = amt),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        'Rs $amt',
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        ServiceInputSection(
+          label: 'Saved Sources',
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildSavedSource('HBL **** 8821', Icons.account_balance_rounded, isDark),
+                const SizedBox(width: 12),
+                _buildSavedSource('VISA **** 4490', Icons.payment_rounded, isDark),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 32),
         ServiceInputSection(
-          label: 'Select Payment Method',
+          label: 'Select Other Payment Method',
           child: Column(
             children: List.generate(_methods.length, (i) {
+// ... rest of methods
               final selected = _selectedMethodIndex == i;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -168,12 +212,90 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
             }),
           ),
         ),
+        const SizedBox(height: 32),
+        
+        ListenableBuilder(
+          listenable: _amountController,
+          builder: (context, _) {
+            final val = _amountController.text.trim();
+            if (val.isEmpty || double.tryParse(val) == 0) return const SizedBox.shrink();
+            final amount = double.tryParse(val) ?? 0;
+            
+            return Column(
+              children: [
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                    borderRadius: AppTheme.radiusLarge,
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInfoRow('Service Tax', 'Rs. 0.00', isDark),
+                      const Divider(height: 24),
+                      _buildInfoRow('Total Payable', 'Rs. ${(amount).toStringAsFixed(2)}', isDark, isTotal: true),
+                    ],
+                  ),
+                ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+              ],
+            );
+          },
+        ),
+
         const SizedBox(height: 40),
         ElevatedButton(
           onPressed: _onTopUp,
           child: const Text('Top Up Now'),
         ).animate(delay: 400.ms).fadeIn(),
       ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, bool isDark, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+            fontSize: isTotal ? 16 : 14,
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: isTotal ? 18 : 14,
+            color: isTotal ? AppTheme.primaryColor : (isDark ? Colors.white : Colors.black),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSavedSource(String label, IconData icon, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: AppTheme.primaryColor),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+        ],
+      ),
     );
   }
 }

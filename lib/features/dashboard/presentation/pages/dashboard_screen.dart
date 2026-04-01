@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../../data/models/transaction_model.dart';
 import '../../data/models/nav_item_model.dart';
 import '../widgets/biometric_prompt_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/history_tab.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
@@ -86,7 +88,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _isKycVerified = false;
   String _userName = 'User';
   final LocalAuthentication _auth = LocalAuthentication();
-
 
   @override
   void initState() {
@@ -210,28 +211,43 @@ class _DashboardScreenState extends State<DashboardScreen>
         backgroundColor: isDark
             ? AppTheme.backgroundDark
             : const Color(0xFFF1F5F9),
-        body: IndexedStack(
-          index: _selectedTab,
+        body: Stack(
           children: [
-            HomeTab(
-              isDark: isDark,
-              userName: _userName,
-              balanceVisible: _balanceVisible,
-              isKycVerified: _isKycVerified,
-              onToggleBalance: () =>
-                  setState(() => _balanceVisible = !_balanceVisible),
-              onProfileTap: () {
-                context.push('/profile');
-              },
-              transactions: _transactions,
+            IndexedStack(
+              index: _selectedTab,
+              children: [
+                HomeTab(
+                  isDark: isDark,
+                  userName: _userName,
+                  balanceVisible: _balanceVisible,
+                  isKycVerified: _isKycVerified,
+                  onToggleBalance: () =>
+                      setState(() => _balanceVisible = !_balanceVisible),
+                  onProfileTap: () {
+                    context.push('/profile');
+                  },
+                  transactions: _transactions,
+                ),
+                _selectedTab == 1
+                    ? HistoryTab(isDark: isDark, transactions: _transactions)
+                    : const SizedBox.shrink(), // Lazy load HistoryTab
+              ],
             ),
-            _selectedTab == 1 
-              ? HistoryTab(isDark: isDark, transactions: _transactions)
-              : const SizedBox.shrink(), // Lazy load HistoryTab
+            // Floating Bottom Nav
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildBottomNav(isDark),
+            ),
+            // Floating Scan Button
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 25), // Adjusted position
+                child: _buildScanButton(isDark),
+              ),
+            ),
           ],
         ),
-        extendBody: true,
-        bottomNavigationBar: _buildBottomNav(isDark),
       ),
     );
   }
@@ -249,68 +265,80 @@ class _DashboardScreenState extends State<DashboardScreen>
     ),
   ];
 
-
-
   Widget _buildBottomNav(bool isDark) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark 
-            ? AppTheme.surfaceDark.withValues(alpha: 0.95) 
-            : Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+      height: 68,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: (isDark ? AppTheme.surfaceDark : Colors.white).withValues(
+                alpha: 0.7,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: 0.1,
+                ),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(_navItems[0], 0, isDark),
+                const SizedBox(width: 40), // Gap for the FAB
+                _buildNavItem(_navItems[1], 1, isDark),
+              ],
+            ),
           ),
-        ],
-        border: Border.all(
-          color: isDark 
-              ? Colors.white.withValues(alpha: 0.05) 
-              : Colors.black.withValues(alpha: 0.05),
-          width: 0.5,
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(_navItems[0], 0, isDark),
-          _buildScanButton(isDark),
-          _buildNavItem(_navItems[1], 1, isDark),
-        ],
       ),
     );
   }
 
   Widget _buildScanButton(bool isDark) {
-    return GestureDetector(
-      onTap: () => context.push('/qr-pay'), // Navigate directly to QR pay
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 70,
+          width: 70,
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/qr-pay'),
+              borderRadius: BorderRadius.circular(20),
+              child: const Icon(
+                Icons.qr_code_scanner_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
             ),
-          ],
+          ),
         ),
-        child: const Icon(
-          Icons.qr_code_scanner_rounded,
-          color: Colors.white,
-          size: 24,
-        ),
-      ),
+      ],
+    ).animate().scale(
+      delay: 500.ms,
+      duration: 400.ms,
+      curve: Curves.easeOutBack,
     );
   }
-
 
   Widget _buildNavItem(NavItemModel item, int i, bool isDark) {
     final isActive = _selectedTab == i;
@@ -319,7 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -331,14 +359,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                 color: isActive
                     ? AppTheme.primaryColor
                     : (isDark ? AppTheme.textHintDark : AppTheme.textHintColor),
-                size: 26,
+                size: 24,
               ),
             ),
             const SizedBox(height: 4),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: isActive
                     ? AppTheme.primaryColor

@@ -28,7 +28,21 @@ class ExchangeRateScreen extends StatelessWidget {
           .fadeIn(delay: 200.ms)
           .scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOutBack),
         
-        const SizedBox(height: 40),
+        const SizedBox(height: 32),
+        
+        ElevatedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.notifications_active_outlined, size: 18),
+          label: const Text('Set Rate Alert'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
+            foregroundColor: const Color(0xFF0EA5E9),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ).animate(delay: 300.ms).fadeIn(),
+
+        const SizedBox(height: 32),
         
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -43,7 +57,7 @@ class ExchangeRateScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {},
-              child: const Text("See All"),
+              child: const Text("Compare"),
             ),
           ],
         ).animate().fadeIn(delay: 400.ms),

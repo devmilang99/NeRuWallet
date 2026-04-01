@@ -6,6 +6,7 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/providers/quick_actions_provider.dart';
 import '../../data/models/quick_action_model.dart';
 import '../pages/quick_actions_manager_screen.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class QuickActionsGrid extends ConsumerStatefulWidget {
   final bool isDark;
@@ -17,12 +18,14 @@ class QuickActionsGrid extends ConsumerStatefulWidget {
 }
 
 class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
+  bool _isAdjusting = false;
+
   @override
   Widget build(BuildContext context) {
     final actions = ref.watch(quickActionsProvider);
     final isDark = widget.isDark;
 
-    final displayedActions = actions.take(6).toList();
+    final displayedActions = actions.take(8).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -54,41 +57,74 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            QuickActionsManagerScreen(isDark: isDark),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => context.push('/all-services'),
+                      icon: Icon(
+                        Icons.apps_rounded,
+                        size: 18,
+                        color: isDark ? Colors.white38 : Colors.black26,
                       ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: isDark ? Colors.white38 : Colors.black26,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Customize',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'All Services',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => setState(() => _isAdjusting = !_isAdjusting),
+                      icon: Icon(
+                        _isAdjusting ? Icons.check_circle_outline_rounded : Icons.reorder_rounded,
+                        size: 18,
+                        color: _isAdjusting ? AppTheme.primaryColor : (isDark ? Colors.white38 : Colors.black26),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Adjust Order',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                QuickActionsManagerScreen(isDark: isDark),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: isDark ? Colors.white38 : Colors.black26,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Customize',
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            GridView.builder(
+            ReorderableGridView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount:
-                    3, // Sticking to 3 as it fits 6 items perfectly in 2 rows
+                crossAxisCount: 4,
                 mainAxisSpacing: 4,
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.1,
               ),
               itemCount: displayedActions.length,
+              onReorder: (oldIndex, newIndex) {
+                ref.read(quickActionsProvider.notifier).reorderActions(oldIndex, newIndex);
+              },
               itemBuilder: (ctx, i) =>
                   _buildQuickActionItem(context, displayedActions[i], i),
             ),
@@ -104,80 +140,75 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
     int index,
   ) {
     final isDark = widget.isDark;
-    return InkWell(
-      onTap: () {
-        switch (action.label) {
-          case 'Exchange':
-            context.push('/exchange-rates');
-          case 'Scan QR':
-            context.push('/qr-pay');
-          case 'Top Up':
-            context.push('/top-up');
-          case 'Withdraw':
-            context.push('/withdraw');
-          case 'Pay Bill':
-            context.push('/pay-bill');
-          case 'Electricity':
-            context.push('/electricity');
-          case 'Water':
-            context.push('/water');
-          case 'Internet':
-            context.push('/internet');
-          case 'TV':
-            context.push('/tv');
-          case 'Education':
-            context.push('/education');
-          case 'Insurance':
-            context.push('/insurance');
-          case 'Fine Payment':
-            context.push('/fine-payment');
-          case 'Gov Services':
-            context.push('/gov-services');
-          case 'Tax Payment':
-            context.push('/tax-payment');
-          case 'Tickets':
-            context.push('/tickets');
-          case 'Food':
-            context.push('/food');
-          case 'Shopping':
-            context.push('/shopping');
-          case 'Rewards':
-            context.push('/rewards');
-          case 'Referral':
-            context.push('/referral');
-          case 'Support':
-            context.push('/support');
-          default:
-            if (action.category == 'Bills') {
-              context.push('/pay-bill');
-            }
-        }
-      },
-      borderRadius: AppTheme.radiusMedium,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: action.color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(action.icon, color: action.color, size: 20),
+    return Container(
+      key: ValueKey(action.label),
+      child: InkWell(
+        onTap: _isAdjusting
+            ? null
+            : () {
+                switch (action.label) {
+                  case 'Top Up':
+                    context.push('/top-up');
+                  case 'Withdraw':
+                    context.push('/withdraw');
+                  case 'Exchange':
+                    context.push('/exchange-rates');
+                  case 'Send Money':
+                    context.push('/send-money');
+                  case 'Electricity':
+                    context.push('/electricity');
+                  case 'Water':
+                    context.push('/water');
+                  case 'Internet':
+                    context.push('/internet');
+                  case 'Fine Payment':
+                    context.push('/fine-payment');
+                  case 'Tickets':
+                    context.push('/tickets');
+                  case 'Food':
+                    context.push('/food');
+                  case 'Shopping':
+                    context.push('/shopping');
+                }
+              },
+        borderRadius: AppTheme.radiusMedium,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            border: _isAdjusting
+                ? Border.all(
+                    color: action.color.withValues(alpha: 0.3),
+                    width: 1.5,
+                  )
+                : null,
+            borderRadius: AppTheme.radiusMedium,
           ),
-          const SizedBox(height: 4),
-          Text(
-            action.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-              color: isDark ? Colors.white : AppTheme.textBodyColor,
-            ),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: action.color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(action.icon, color: action.color, size: 20),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                action.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: isDark ? Colors.white : AppTheme.textBodyColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

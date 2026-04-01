@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -316,7 +317,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                 child: _buildActionBtn(
                   icon: Icons.share_rounded,
                   label: 'Share QR',
-                  onTap: () {},
+                  onTap: () {
+                    Share.share('My NeRuWallet ID: $walletId');
+                  },
                   isDark: isDark,
                 ),
               ),
