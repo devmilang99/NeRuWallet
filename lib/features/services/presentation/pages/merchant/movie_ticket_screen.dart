@@ -42,17 +42,19 @@ Future<void> _downloadTicket(BuildContext context, {required String provider, Ma
     ),
   );
 
-  Future.delayed(const Duration(seconds: 2), () {
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Movie ticket downloaded! Save it to your gallery.'),
-        backgroundColor: Colors.green[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusSmall),
-      ),
-    );
-  });
+  await Future.delayed(const Duration(seconds: 2));
+  
+  if (!context.mounted) return;
+  
+  Navigator.pop(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: const Text('Movie ticket downloaded! Save it to your gallery.'),
+      backgroundColor: Colors.green[700],
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusSmall),
+    ),
+  );
 }
 
 void _shareTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) {
