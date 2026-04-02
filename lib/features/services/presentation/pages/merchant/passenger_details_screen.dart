@@ -75,6 +75,7 @@ class _PassengerDetailsScreenState extends State<PassengerDetailsScreen> {
             'Class': widget.searchData['class'],
             'Total Fare': 'Rs. $totalAmount',
           },
+          passengers: allPassengers.map((p) => '${p['title']} ${p['name']}').toList(),
           amount: totalAmount,
           onConfirm: () {
             Navigator.push(
