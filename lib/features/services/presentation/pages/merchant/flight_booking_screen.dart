@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
-import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:intl/intl.dart';
-import 'flight_ticket_screen.dart';
+import 'flight_selection_screen.dart';
 
 class FlightBookingScreen extends StatefulWidget {
   const FlightBookingScreen({super.key});
@@ -16,14 +14,15 @@ class FlightBookingScreen extends StatefulWidget {
 
 class _FlightBookingScreenState extends State<FlightBookingScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _passengerNameController;
-  late TextEditingController _passengerAgeController;
   late TextEditingController _departureController;
   late TextEditingController _arrivalController;
   late TextEditingController _dateController;
   late TextEditingController _returnDateController;
   late TextEditingController _seatController;
   late TextEditingController _priceController;
+  
+  int _adults = 1;
+  int _children = 0;
 
   bool _isRoundTrip = false;
 
@@ -42,20 +41,24 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   @override
   void initState() {
     super.initState();
-    _passengerNameController = TextEditingController();
-    _passengerAgeController = TextEditingController();
     _departureController = TextEditingController(text: _departments[0]);
     _arrivalController = TextEditingController(text: _arrivals[0]);
     _dateController = TextEditingController();
     _returnDateController = TextEditingController();
     _seatController = TextEditingController(text: _seatClasses[0]);
-    _priceController = TextEditingController(text: '8500');
+    _priceController = TextEditingController(text: '');
+    _updatePrice();
+  }
+
+  void _updatePrice() {
+    int basePrice = _seatController.text == 'Premium Economy' ? 11500 : (_seatController.text == 'Business' ? 18000 : 8500);
+    if (_isRoundTrip) basePrice = (basePrice * 1.8).round();
+    int total = basePrice * (_adults + _children);
+    _priceController.text = total.toString();
   }
 
   @override
   void dispose() {
-    _passengerNameController.dispose();
-    _passengerAgeController.dispose();
     _departureController.dispose();
     _arrivalController.dispose();
     _dateController.dispose();
@@ -87,113 +90,26 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     });
   }
 
-  void _initiateVerification() {
+  void _initiateSearch() {
     if (_formKey.currentState!.validate()) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => BookingVerificationSheet(
-          title: 'Flight',
-          provider: 'Nepal Airways',
-          color: const Color(0xFF10B981),
-          details: {
-            'Passenger': _passengerNameController.text,
-            'Route': '${_departureController.text} → ${_arrivalController.text}',
-            'Type': _isRoundTrip ? 'Round Trip' : 'One Way',
-            'Travel Date': _dateController.text,
-            if (_isRoundTrip) 'Return Date': _returnDateController.text,
-            'Class': _seatController.text,
-            'Fare': 'Rs. ${_priceController.text}',
-          },
-          amount: double.parse(_priceController.text.replaceAll(',', '')),
-          onConfirm: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TransactionPinScreen(
-                  mode: PinMode.verify,
-                  onSuccess: _completeBooking,
-                ),
-              ),
-            );
-          },
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FlightSelectionScreen(
+            searchData: {
+              'from': _departureController.text,
+              'to': _arrivalController.text,
+              'departureDate': _dateController.text,
+              'returnDate': _isRoundTrip ? _returnDateController.text : null,
+              'isRoundTrip': _isRoundTrip,
+              'adults': _adults,
+              'children': _children,
+              'class': _seatController.text,
+            },
+          ),
         ),
       );
     }
-  }
-
-  void _completeBooking() {
-    // Current PIN screen is on stack, pop it
-    Navigator.pop(context);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 20,
-        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF10B981)),
-            const SizedBox(height: 32),
-            const Text(
-              'Issuing your flight ticket...',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your transaction is successful. Please wait.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
-
-      Map<String, dynamic> ticketData = {
-        'pnr': 'PNR${DateTime.now().millisecondsSinceEpoch % 1000000}',
-        'airline': 'Nepal Airways',
-        'flightNumber': 'NA${(DateTime.now().millisecond % 900 + 100).toString()}',
-        'departureCity': _departureController.text.split('(')[0].trim(),
-        'departureCode': _departureController.text.contains('(') ? _departureController.text.split('(')[1].replaceAll(')', '') : 'N/A',
-        'arrivalCity': _arrivalController.text.split('(')[0].trim(),
-        'arrivalCode': _arrivalController.text.contains('(') ? _arrivalController.text.split('(')[1].replaceAll(')', '') : 'N/A',
-        'departureDate': _dateController.text,
-        'returnDate': _isRoundTrip ? _returnDateController.text : null,
-        'isRoundTrip': _isRoundTrip,
-        'departureTime': '08:15 AM',
-        'arrivalTime': '02:30 PM',
-        'duration': '6h 15m',
-        'passengerName': _passengerNameController.text,
-        'passengerAge': _passengerAgeController.text,
-        'seatNumber': 'A${12 + (DateTime.now().millisecond % 30)}',
-        'seatClass': _seatController.text,
-        'aircraft': 'Airbus A320',
-        'baggage': '20 kg',
-        'gate': 'A-${(DateTime.now().millisecond % 20 + 1).toString()}',
-        'terminal': 'Terminal 1',
-        'boardingTime': '07:45 AM',
-        'totalPrice': 'Rs ${_priceController.text}',
-        'status': 'Confirmed',
-      };
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FlightTicketScreenWithData(ticketData: ticketData),
-        ),
-      );
-    });
   }
 
   @override
@@ -288,42 +204,20 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 24),
 
+              const Text('Passengers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    flex: 2,
-                    child: ServiceInputSection(
-                      label: 'Full Name',
-                      child: TextFormField(
-                        controller: _passengerNameController,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.person_outline_rounded),
-                          hintText: 'Passanger Name',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                        ),
-                        validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
-                      ),
-                    ),
+                    child: _buildCounter('Adults', '12+ years', _adults, (val) => setState(() => _adults = val), isDark),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: ServiceInputSection(
-                      label: 'Age',
-                      child: TextFormField(
-                        controller: _passengerAgeController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.calendar_today_rounded),
-                          hintText: 'Age',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                        ),
-                        validator: (value) => (value?.isEmpty ?? true) ? 'Req' : null,
-                      ),
-                    ),
+                    child: _buildCounter('Children', '2-12 years', _children, (val) => setState(() => _children = val), isDark),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               Row(
                 children: [
@@ -374,9 +268,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                     onTap: () {
                       setState(() {
                         _seatController.text = sClass;
-                        int basePrice = sClass == 'Premium Economy' ? 11500 : (sClass == 'Business' ? 18000 : 8500);
-                        if (_isRoundTrip) basePrice = (basePrice * 1.8).round();
-                        _priceController.text = basePrice.toString();
+                        _updatePrice();
                       });
                     },
                     child: AnimatedContainer(
@@ -405,7 +297,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               const SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _initiateVerification,
+                onPressed: _initiateSearch,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: providerColor,
                   minimumSize: const Size(double.infinity, 56),
@@ -416,9 +308,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.airplane_ticket_rounded, size: 20, color: Colors.white),
+                    Icon(Icons.search_rounded, size: 20, color: Colors.white),
                     SizedBox(width: 12),
-                    Text('Check Selection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('Search Flights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ],
                 ),
               ).animate().shimmer(delay: 2.seconds, duration: 1.5.seconds),
@@ -437,9 +329,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
         onTap: () {
           setState(() {
             _isRoundTrip = label == 'Round Trip';
-            int basePrice = _seatController.text == 'Premium Economy' ? 11500 : (_seatController.text == 'Business' ? 18000 : 8500);
-            if (_isRoundTrip) basePrice = (basePrice * 1.8).round();
-            _priceController.text = basePrice.toString();
+            _updatePrice();
           });
         },
         child: Container(
@@ -562,6 +452,59 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     );
   }
 
+  Widget _buildCounter(String title, String subtitle, int value, Function(int) onChanged, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: AppTheme.radiusLarge,
+        border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(subtitle, style: TextStyle(color: Colors.grey, fontSize: 10)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _counterButton(Icons.remove, () {
+                if (title == 'Adults' && value > 1) {
+                  onChanged(value - 1);
+                  _updatePrice();
+                }
+                if (title == 'Children' && value > 0) {
+                  onChanged(value - 1);
+                  _updatePrice();
+                }
+              }, isDark),
+              Text('$value', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              _counterButton(Icons.add, () {
+                onChanged(value + 1);
+                _updatePrice();
+              }, isDark),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _counterButton(IconData icon, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white : Colors.black),
+      ),
+    );
+  }
+
   void _showSelectionDialog(String title, List<String> options, Function(String) onSelect) {
     showModalBottomSheet(
       context: context,
@@ -601,4 +544,3 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     );
   }
 }
-

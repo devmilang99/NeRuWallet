@@ -110,7 +110,7 @@ class TicketsScreen extends StatelessWidget {
   Widget _buildFeaturedSection(BuildContext context, bool isDark) {
     return Container(
       width: double.infinity,
-      height: 180,
+      height: 200,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,

@@ -97,6 +97,7 @@ class _FlightTicketScreenState extends State<FlightTicketScreen> {
     'totalFare': 'Rs 8,500',
     'status': 'Confirmed',
     'baggageAllowance': '15 kg',
+    'travelerCategory': 'Single Rider',
   };
 
   @override
@@ -451,6 +452,13 @@ class _FlightTicketScreenState extends State<FlightTicketScreen> {
                       'Age',
                       '${_flightData['passengerAge']} years',
                       Icons.cake_rounded,
+                      isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                      'Category',
+                      _flightData['travelerCategory'] ?? 'Single Rider',
+                      Icons.category_rounded,
                       isDark,
                     ),
 
@@ -1010,6 +1018,13 @@ class _FlightTicketScreenWithDataState
                           'Age',
                           widget.ticketData['passengerAge'] ?? 'Age',
                           Icons.info_rounded,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildDetailRow(
+                          'Category',
+                          widget.ticketData['travelerCategory'] ?? 'Single Rider',
+                          Icons.category_rounded,
                           isDark,
                         ),
                       ],
