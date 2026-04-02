@@ -5,7 +5,7 @@ import 'package:neruwallet/core/utils/permission_utils.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
-Future<void> _downloadTicket(BuildContext context, {Map<String, dynamic>? data}) async {
+Future<void> _downloadTicket(BuildContext context) async {
   final bool hasPermission = await PermissionUtils.requestStoragePermission();
   
   if (!hasPermission) {

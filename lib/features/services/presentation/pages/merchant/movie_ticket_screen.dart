@@ -57,7 +57,7 @@ Future<void> _downloadTicket(BuildContext context, {required String provider, Ma
 
 void _shareTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) {
   final String text = data != null 
-    ? "My Movie Ticket (${provider}):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
+    ? "My Movie Ticket ($provider):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
     : "My Movie Ticket details are attached. Shared via NeRuWallet";
     
   Share.share(text);
