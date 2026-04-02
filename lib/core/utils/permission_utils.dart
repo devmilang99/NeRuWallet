@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionUtils {
@@ -7,6 +9,18 @@ class PermissionUtils {
   }
 
   static Future<bool> requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      final deviceInfo = await DeviceInfoPlugin().androidInfo;
+      if (deviceInfo.version.sdkInt >= 33) {
+        // Android 13+ handles storage differently
+        final statuses = await [
+          Permission.photos,
+          Permission.videos,
+        ].request();
+        return statuses[Permission.photos]!.isGranted || statuses[Permission.videos]!.isGranted;
+      }
+    }
+    
     PermissionStatus status = await Permission.storage.request();
     if (status.isPermanentlyDenied) {
       await openAppSettings();
@@ -21,11 +35,24 @@ class PermissionUtils {
   }
 
   static Future<void> checkInitialPermissions() async {
-    // Request multiple permissions initially if needed
-    await [
+    int androidVersion = 0;
+    if (Platform.isAndroid) {
+      final deviceInfo = await DeviceInfoPlugin().androidInfo;
+      androidVersion = deviceInfo.version.sdkInt;
+    }
+
+    final List<Permission> permissions = [
       Permission.camera,
-      Permission.storage,
       Permission.notification,
-    ].request();
+    ];
+
+    if (Platform.isAndroid && androidVersion >= 33) {
+      permissions.add(Permission.photos);
+      permissions.add(Permission.videos);
+    } else {
+      permissions.add(Permission.storage);
+    }
+
+    await permissions.request();
   }
 }

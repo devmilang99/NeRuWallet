@@ -280,7 +280,7 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
         ServiceInputSection(
           label: label,
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             hint: Text(hint, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)),
             items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: onChanged,

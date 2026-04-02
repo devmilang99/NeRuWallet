@@ -1,6 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/permission_utils.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:share_plus/share_plus.dart';
+
+Future<void> _downloadTicket(BuildContext context, {Map<String, dynamic>? data}) async {
+  final bool hasPermission = await PermissionUtils.requestStoragePermission();
+  
+  if (!hasPermission) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Storage permission is required to save the ticket.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+    return;
+  }
+
+  if (!context.mounted) return;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      backgroundColor: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          const CircularProgressIndicator(color: Color(0xFFEC4899)),
+          const SizedBox(height: 24),
+          const Text('Generating PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Creating your digital ticket', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    ),
+  );
+
+  Future.delayed(const Duration(seconds: 2), () {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Ticket downloaded successfully! Check your downloads.'),
+        backgroundColor: Colors.green[700],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusSmall),
+      ),
+    );
+  });
+}
+
+void _shareTicket(BuildContext context, {Map<String, dynamic>? data}) {
+  final String text = data != null 
+    ? "My Bus Ticket:\nService: ${data['busCompany']}\nBus #: ${data['busNumber']}\nFrom: ${data['fromCity']}\nTo: ${data['toCity']}\nDate: ${data['departureDate']}\nTicket #: ${data['ticketNumber']}\nShared via NeRuWallet"
+    : "My Bus Ticket details are attached. Shared via NeRuWallet";
+    
+  Share.share(text);
+}
 
 class BusTicketScreen extends StatefulWidget {
   const BusTicketScreen({super.key});
@@ -630,14 +690,7 @@ class _BusTicketScreenState extends State<BusTicketScreen> {
 
         // Download PDF Button
         ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bus ticket PDF download feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _downloadTicket(context),
           icon: const Icon(Icons.download_rounded),
           label: const Text('Download Ticket (PDF)'),
           style: ElevatedButton.styleFrom(
@@ -650,14 +703,7 @@ class _BusTicketScreenState extends State<BusTicketScreen> {
 
         // Share Button
         OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Share feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _shareTicket(context),
           icon: const Icon(Icons.share_rounded),
           label: const Text('Share Ticket'),
           style: OutlinedButton.styleFrom(

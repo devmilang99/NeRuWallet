@@ -9,14 +9,13 @@ val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
         .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val isPlugin = project.projectDir.path.contains("Pub\\Cache") || 
-                   project.projectDir.path.contains(".pub-cache") ||
-                   project.projectDir.path.contains("flutter_tools")
-                   
-    if (!isPlugin) {
+    val projectRoot = project.projectDir.toPath().root
+    val buildRoot = newBuildDir.asFile.toPath().root
+    
+    // Only relocate build directory if project and build dir are on the same drive
+    if (projectRoot == buildRoot) {
         val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
         project.layout.buildDirectory.value(newSubprojectBuildDir)
     }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:intl/intl.dart';
 import 'bus_ticket_screen.dart';
 
@@ -20,8 +22,11 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
   late TextEditingController _departureController;
   late TextEditingController _arrivalController;
   late TextEditingController _dateController;
+  late TextEditingController _returnDateController;
   late TextEditingController _seatController;
   late TextEditingController _priceController;
+
+  bool _isRoundTrip = false;
 
   final List<String> _departures = ['Kathmandu', 'Pokhara', 'Bhairahawa'];
   final List<String> _arrivals = ['Chitwan', 'Narayanghat', 'Ilam'];
@@ -41,6 +46,7 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
     _departureController = TextEditingController(text: _departures[0]);
     _arrivalController = TextEditingController(text: _arrivals[0]);
     _dateController = TextEditingController();
+    _returnDateController = TextEditingController();
     _seatController = TextEditingController(text: _seatTypes[1]);
     _priceController = TextEditingController(text: '650');
   }
@@ -53,95 +59,139 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
     _departureController.dispose();
     _arrivalController.dispose();
     _dateController.dispose();
+    _returnDateController.dispose();
     _seatController.dispose();
     _priceController.dispose();
     super.dispose();
   }
 
-  void _selectDate() async {
+  void _selectDate(TextEditingController controller, {DateTime? firstDate}) async {
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
+      initialDate: firstDate ?? DateTime.now(),
+      firstDate: firstDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 60)),
     );
     if (picked != null) {
       setState(() {
-        _dateController.text = DateFormat('dd MMM yyyy').format(picked);
+        controller.text = DateFormat('dd MMM yyyy').format(picked);
       });
     }
   }
 
-  void _processPayment() {
+  void _swapRoute() {
+    setState(() {
+      final temp = _departureController.text;
+      _departureController.text = _arrivalController.text;
+      _arrivalController.text = temp;
+    });
+  }
+
+  void _initiateVerification() {
     if (_formKey.currentState!.validate()) {
-      showDialog(
+      showModalBottomSheet(
         context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          elevation: 20,
-          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFEC4899)),
-              const SizedBox(height: 32),
-              const Text(
-                'Confirming Bus Route...',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => BookingVerificationSheet(
+          title: 'Bus',
+          provider: 'Nepal Bus Service',
+          color: const Color(0xFFEC4899),
+          details: {
+            'Passenger': _passengerNameController.text,
+            'ID/Citizenship': _passengerIDController.text,
+            'Route': '${_departureController.text} → ${_arrivalController.text}',
+            'Type': _isRoundTrip ? 'Round Trip' : 'One Way',
+            'Travel Date': _dateController.text,
+            if (_isRoundTrip) 'Return Date': _returnDateController.text,
+            'Seat Type': _seatController.text,
+            'Fare': 'Rs. ${_priceController.text}',
+          },
+          amount: double.parse(_priceController.text.replaceAll(',', '')),
+          onConfirm: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TransactionPinScreen(
+                  mode: PinMode.verify,
+                  onSuccess: _completeBooking,
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Securing your preferred seat. One moment.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          },
         ),
       );
-
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        Navigator.pop(context);
-
-        Map<String, dynamic> ticketData = {
-          'ticketNumber':
-              'BUS${DateTime.now().millisecondsSinceEpoch % 1000000}',
-          'busCompany': 'Nepal Bus Service',
-          'busLine':
-              '${_departureController.text} - ${_arrivalController.text}',
-          'busNumber':
-              'NBS-${(DateTime.now().millisecond % 100 + 100).toString()}',
-          'departureCity': _departureController.text,
-          'arrivalCity': _arrivalController.text,
-          'travelDate': _dateController.text,
-          'departureTime': '06:00 AM',
-          'arrivalTime': '12:00 PM',
-          'duration': '6h',
-          'passengerName': _passengerNameController.text,
-          'passengerAge': _passengerAgeController.text,
-          'passengerID': _passengerIDController.text,
-          'seatNumber': 'A${12 + (DateTime.now().millisecond % 20)}',
-          'seatType': _seatController.text,
-          'amenities': ['WiFi', 'Air Conditioning', 'Blanket', 'Mineral Water'],
-          'pricePerSeat': 'Rs ${_priceController.text}',
-          'totalFare': 'Rs ${_priceController.text}',
-          'supportContact': '+977-1-4123456',
-          'status': 'Confirmed',
-        };
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                BusTicketScreenWithData(ticketData: ticketData),
-          ),
-        );
-      });
     }
+  }
+
+  void _completeBooking() {
+    Navigator.pop(context); // Pop PIN screen
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        elevation: 20,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFEC4899)),
+            const SizedBox(height: 32),
+            const Text(
+              'Confirming Bus Route...',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Payment successful. Booking your seat.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      Map<String, dynamic> ticketData = {
+        'ticketNumber': 'BUS${DateTime.now().millisecondsSinceEpoch % 1000000}',
+        'busCompany': 'Nepal Bus Service',
+        'busLine': '${_departureController.text} - ${_arrivalController.text}',
+        'busNumber': 'NBS-${(DateTime.now().millisecond % 100 + 100).toString()}',
+        'departureCity': _departureController.text,
+        'arrivalCity': _arrivalController.text,
+        'travelDate': _dateController.text,
+        'returnDate': _isRoundTrip ? _returnDateController.text : null,
+        'isRoundTrip': _isRoundTrip,
+        'departureTime': '06:00 AM',
+        'arrivalTime': '12:00 PM',
+        'duration': '6h',
+        'passengerName': _passengerNameController.text,
+        'passengerAge': _passengerAgeController.text,
+        'passengerID': _passengerIDController.text,
+        'seatNumber': 'A${12 + (DateTime.now().millisecond % 20)}',
+        'seatType': _seatController.text,
+        'amenities': ['WiFi', 'Air Conditioning', 'Blanket', 'Mineral Water'],
+        'pricePerSeat': 'Rs ${_priceController.text}',
+        'totalFare': 'Rs ${_priceController.text}',
+        'supportContact': '+977-1-4123456',
+        'status': 'Confirmed',
+      };
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BusTicketScreenWithData(ticketData: ticketData),
+        ),
+      );
+    });
   }
 
   @override
@@ -165,40 +215,79 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Route Selection Group
               Container(
+                margin: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.surfaceDark : Colors.white,
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[200],
                   borderRadius: AppTheme.radiusLarge,
-                  border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
                 ),
-                child: Column(
+                child: Row(
                   children: [
-                    _routeInput(
-                      label: 'Departure',
-                      value: _departureController.text,
-                      icon: Icons.my_location_rounded,
-                      color: providerColor,
-                      onTap: () => _showSelectionDialog('Departure City', _departures, (val) {
-                        setState(() => _departureController.text = val);
-                      }),
-                    ),
-                    const Divider(height: 1, indent: 60),
-                    _routeInput(
-                      label: 'Destination',
-                      value: _arrivalController.text,
-                      icon: Icons.location_on_rounded,
-                      color: providerColor,
-                      onTap: () => _showSelectionDialog('Arrival City', _arrivals, (val) {
-                        setState(() => _arrivalController.text = val);
-                      }),
-                    ),
+                    _buildTripTypeButton('One Way', !_isRoundTrip, isDark, providerColor),
+                    _buildTripTypeButton('Round Trip', _isRoundTrip, isDark, providerColor),
                   ],
                 ),
               ),
+
+              Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppTheme.surfaceDark : Colors.white,
+                      borderRadius: AppTheme.radiusLarge,
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        _routeInput(
+                          label: 'Departure',
+                          value: _departureController.text,
+                          icon: Icons.my_location_rounded,
+                          color: providerColor,
+                          onTap: () => _showSelectionDialog('Departure City', _departures, (val) {
+                            setState(() => _departureController.text = val);
+                          }),
+                        ),
+                        const Divider(height: 1, indent: 60),
+                        _routeInput(
+                          label: 'Destination',
+                          value: _arrivalController.text,
+                          icon: Icons.location_on_rounded,
+                          color: providerColor,
+                          onTap: () => _showSelectionDialog('Arrival City', _arrivals, (val) {
+                            setState(() => _arrivalController.text = val);
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 20,
+                    child: GestureDetector(
+                      onTap: _swapRoute,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: providerColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: providerColor.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.swap_vert_rounded, color: Colors.white, size: 20),
+                      ),
+                    ).animate().rotate(duration: 300.ms),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
 
-              // Passenger Details Row
               Row(
                 children: [
                   Expanded(
@@ -236,7 +325,6 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
               ),
               const SizedBox(height: 16),
 
-              // ID Row
               ServiceInputSection(
                 label: 'Citizenship / ID Number',
                 child: TextFormField(
@@ -245,29 +333,50 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
                     prefixIcon: Icon(Icons.badge_outlined),
                     hintText: 'Enter ID number',
                   ),
-                  validator: (value) => (value?.isEmpty ?? true) ? 'ID is required for travel' : null,
+                  validator: (value) => (value?.isEmpty ?? true) ? 'ID is required' : null,
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Travel Date
-              ServiceInputSection(
-                label: 'Journey Date',
-                child: TextFormField(
-                  controller: _dateController,
-                  readOnly: true,
-                  onTap: _selectDate,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.calendar_month_rounded),
-                    suffixIcon: Icon(Icons.keyboard_arrow_right_rounded),
-                    hintText: 'Select journey date',
+              Row(
+                children: [
+                  Expanded(
+                    child: ServiceInputSection(
+                      label: 'Journey Date',
+                      child: TextFormField(
+                        controller: _dateController,
+                        readOnly: true,
+                        onTap: () => _selectDate(_dateController),
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.calendar_month_rounded),
+                          hintText: 'Date',
+                        ),
+                        validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+                      ),
+                    ),
                   ),
-                  validator: (value) => (value?.isEmpty ?? true) ? 'Please select date' : null,
-                ),
+                  if (_isRoundTrip) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ServiceInputSection(
+                        label: 'Return Date',
+                        child: TextFormField(
+                          controller: _returnDateController,
+                          readOnly: true,
+                          onTap: () => _selectDate(_returnDateController),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.event_repeat_rounded),
+                            hintText: 'Date',
+                          ),
+                          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 24),
 
-              // Seat Type Chips
               const Text('Seat Preference', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 12),
               Wrap(
@@ -279,10 +388,9 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
                     onTap: () {
                       setState(() {
                         _seatController.text = sType;
-                        if (sType == 'First Seat') _priceController.text = '800';
-                        else if (sType == 'Sleeper') _priceController.text = '1000';
-                        else if (sType == 'Window Seat') _priceController.text = '750';
-                        else _priceController.text = '650';
+                        int price = sType == 'First Seat' ? 800 : (sType == 'Sleeper' ? 1000 : (sType == 'Window Seat' ? 750 : 650));
+                        if (_isRoundTrip) price = (price * 1.8).round();
+                        _priceController.text = price.toString();
                       });
                     },
                     child: AnimatedContainer(
@@ -307,13 +415,11 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Summary Receipt
               _buildSummaryCard(providerColor, isDark),
               const SizedBox(height: 32),
 
-              // Proceed Button
               ElevatedButton(
-                onPressed: _processPayment,
+                onPressed: _initiateVerification,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: providerColor,
                   minimumSize: const Size(double.infinity, 56),
@@ -324,9 +430,9 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.qr_code_scanner_rounded, size: 20, color: Colors.white),
+                    Icon(Icons.directions_bus_rounded, size: 20, color: Colors.white),
                     SizedBox(width: 12),
-                    Text('Secure Checkout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('Check Selection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ],
                 ),
               ).animate().shimmer(delay: 2.seconds, duration: 1.5.seconds),
@@ -336,6 +442,38 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
 
         const SizedBox(height: 48),
       ],
+    );
+  }
+
+  Widget _buildTripTypeButton(String label, bool isSelected, bool isDark, Color color) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _isRoundTrip = label == 'Round Trip';
+            int price = _seatController.text == 'First Seat' ? 800 : (_seatController.text == 'Sleeper' ? 1000 : (_seatController.text == 'Window Seat' ? 750 : 650));
+            if (_isRoundTrip) price = (price * 1.8).round();
+            _priceController.text = price.toString();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white) : Colors.transparent,
+            borderRadius: AppTheme.radiusLarge,
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+              color: isSelected ? color : (isDark ? Colors.grey[400] : Colors.grey[600]),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -477,3 +615,4 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
     );
   }
 }
+

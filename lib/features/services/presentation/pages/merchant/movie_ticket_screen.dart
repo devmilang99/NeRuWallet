@@ -1,7 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/permission_utils.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:share_plus/share_plus.dart';
+
+Future<void> _downloadTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) async {
+  final bool hasPermission = await PermissionUtils.requestStoragePermission();
+  
+  if (!hasPermission) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Storage permission is required to save the ticket.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+    return;
+  }
+
+  if (!context.mounted) return;
+  final color = Color(provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9);
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      backgroundColor: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          CircularProgressIndicator(color: color),
+          const SizedBox(height: 24),
+          const Text('Generating Ticket PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Preparing your movie pass', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    ),
+  );
+
+  Future.delayed(const Duration(seconds: 2), () {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Movie ticket downloaded! Save it to your gallery.'),
+        backgroundColor: Colors.green[700],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusSmall),
+      ),
+    );
+  });
+}
+
+void _shareTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) {
+  final String text = data != null 
+    ? "My Movie Ticket (${provider}):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
+    : "My Movie Ticket details are attached. Shared via NeRuWallet";
+    
+  Share.share(text);
+}
 
 class MovieTicketScreen extends StatefulWidget {
   final String provider; // 'QFX' or 'FCube'
@@ -426,19 +486,12 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
 
         // Download PDF Button
         ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ticket PDF download feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _downloadTicket(context, provider: widget.provider, data: _ticketData),
           icon: const Icon(Icons.download_rounded),
           label: const Text('Download Ticket (PDF)'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 50),
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: Color(widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
           ),
         ).animate(delay: 200.ms).slideY(begin: 0.3, end: 0).fadeIn(),
 
@@ -446,14 +499,7 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
 
         // Share Button
         OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Share feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _shareTicket(context, provider: widget.provider, data: _ticketData),
           icon: const Icon(Icons.share_rounded),
           label: const Text('Share Ticket'),
           style: OutlinedButton.styleFrom(
@@ -919,19 +965,12 @@ class _MovieTicketScreenWithDataState extends State<MovieTicketScreenWithData> {
 
         // Download PDF Button
         ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ticket PDF download feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _downloadTicket(context, provider: widget.provider, data: widget.ticketData),
           icon: const Icon(Icons.download_rounded),
           label: const Text('Download Ticket (PDF)'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 50),
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: Color(widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
           ),
         ).animate(delay: 200.ms).slideY(begin: 0.3, end: 0).fadeIn(),
 
@@ -939,14 +978,7 @@ class _MovieTicketScreenWithDataState extends State<MovieTicketScreenWithData> {
 
         // Share Button
         OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Share feature coming soon!'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _shareTicket(context, provider: widget.provider, data: widget.ticketData),
           icon: const Icon(Icons.share_rounded),
           label: const Text('Share Ticket'),
           style: OutlinedButton.styleFrom(

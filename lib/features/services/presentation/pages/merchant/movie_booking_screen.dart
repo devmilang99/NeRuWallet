@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:intl/intl.dart';
 import 'movie_ticket_screen.dart';
 
@@ -85,6 +87,7 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
     return seats * price;
   }
 
+
   void _processPayment() {
     if (_formKey.currentState!.validate()) {
       if (_selectedTime == null) {
@@ -94,75 +97,114 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
         return;
       }
 
-      showDialog(
+      final providerColor = widget.provider == 'QFX'
+          ? const Color(0xFF6366F1)
+          : const Color(0xFF0EA5E9);
+
+      showModalBottomSheet(
         context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          elevation: 20,
-          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(strokeWidth: 3),
-              const SizedBox(height: 32),
-              Text(
-                'Securing your seats...',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => BookingVerificationSheet(
+          title: 'Movie',
+          provider: '${widget.provider} Cinemas',
+          color: providerColor,
+          details: {
+            'Movie': _movies[_selectedMovieIndex],
+            'Cinema': _cinemas[_selectedCinemaIndex],
+            'Show': '${DateFormat('dd MMM').format(_dates[_selectedDateIndex])}, $_selectedTime',
+            'Seats': _seatsController.text,
+            'Rate': 'Rs ${_pricePerSeatController.text}/seat',
+          },
+          amount: _totalPrice,
+          onConfirm: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TransactionPinScreen(
+                  mode: PinMode.verify,
+                  onSuccess: _completeBooking,
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Confirming payment for ${_movies[_selectedMovieIndex]}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-            ],
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  void _completeBooking() {
+    Navigator.pop(context); // Pop PIN screen
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        elevation: 20,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 20),
+            CircularProgressIndicator(strokeWidth: 3, color: widget.provider == 'QFX' ? const Color(0xFF6366F1) : const Color(0xFF0EA5E9)),
+            const SizedBox(height: 32),
+            Text(
+              'Securing your seats...',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Confirming payment for ${_movies[_selectedMovieIndex]}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      Map<String, dynamic> ticketData = {
+        'bookingRef': 'MOV${DateTime.now().millisecondsSinceEpoch % 1000000}',
+        'movieName': _movies[_selectedMovieIndex],
+        'cinema': _cinemas[_selectedCinemaIndex],
+        'screen': _screens[_selectedScreenIndex],
+        'date': DateFormat('dd MMM yyyy').format(_dates[_selectedDateIndex]),
+        'time': _selectedTime,
+        'duration': '2h 45m',
+        'genre': 'Action/Adventure',
+        'language': 'English',
+        'format': '4K IMAX',
+        'seatsBooked': List.generate(
+          int.parse(_seatsController.text),
+          (i) => String.fromCharCode(65 + (i ~/ 5)) + (12 + (i % 5)).toString(),
+        ),
+        'totalSeats': int.parse(_seatsController.text),
+        'pricePerSeat': 'Rs ${_pricePerSeatController.text}',
+        'totalPrice': 'Rs ${_totalPrice.toStringAsFixed(0)}',
+        'bookingDate': DateFormat('dd MMM yyyy').format(DateTime.now()),
+        'status': 'Confirmed',
+      };
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MovieTicketScreenWithData(
+            provider: widget.provider,
+            ticketData: ticketData,
           ),
         ),
       );
-
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        Navigator.pop(context);
-
-        Map<String, dynamic> ticketData = {
-          'bookingRef': 'MOV${DateTime.now().millisecondsSinceEpoch % 1000000}',
-          'movieName': _movies[_selectedMovieIndex],
-          'cinema': _cinemas[_selectedCinemaIndex],
-          'screen': _screens[_selectedScreenIndex],
-          'date': DateFormat('dd MMM yyyy').format(_dates[_selectedDateIndex]),
-          'time': _selectedTime,
-          'duration': '2h 45m',
-          'genre': 'Action/Adventure',
-          'language': 'English',
-          'format': '4K IMAX',
-          'seatsBooked': List.generate(
-            int.parse(_seatsController.text),
-            (i) => String.fromCharCode(65 + (i ~/ 5)) + (12 + (i % 5)).toString(),
-          ),
-          'totalSeats': int.parse(_seatsController.text),
-          'pricePerSeat': 'Rs ${_pricePerSeatController.text}',
-          'totalPrice': 'Rs ${_totalPrice.toStringAsFixed(0)}',
-          'bookingDate': DateFormat('dd MMM yyyy').format(DateTime.now()),
-          'status': 'Confirmed',
-        };
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MovieTicketScreenWithData(
-              provider: widget.provider,
-              ticketData: ticketData,
-            ),
-          ),
-        );
-      });
-    }
+    });
   }
+
 
   int _selectedMovieIndex = 0;
   int _selectedCinemaIndex = 0;

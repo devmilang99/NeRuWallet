@@ -23,7 +23,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     {'name': 'eSewa Wallet', 'icon': Icons.account_balance_wallet_rounded},
   ];
 
-  int _selectedMethodIndex = 0;
+  final int _selectedMethodIndex = 0;
   Map<String, String>? _selectedSavedSource;
 
   final List<Map<String, String>> _savedPaymentMethods = [
@@ -783,8 +783,9 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0)
+            if (val.isEmpty || double.tryParse(val) == 0) {
               return const SizedBox.shrink();
+            }
             final amount = double.tryParse(val) ?? 0;
 
             return Column(
