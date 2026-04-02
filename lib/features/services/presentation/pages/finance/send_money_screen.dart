@@ -20,7 +20,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   final _phoneController = TextEditingController();
   final _amountController = TextEditingController();
   final _messageController = TextEditingController();
-  
+
   String _selectedPurpose = 'Family Expenses';
   final List<String> _purposes = [
     'Family Expenses',
@@ -28,25 +28,40 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     'Gift',
     'Repayment',
     'Rent',
-    'Other'
+    'Other',
   ];
 
   Future<void> _pickContact() async {
     try {
-      if (await FlutterContacts.requestPermission()) {
-        final contact = await FlutterContacts.openExternalPick();
-        if (contact != null && contact.phones.isNotEmpty) {
-          _setPhone(contact.phones.first.number);
-        } else if (contact == null) {
-          // Fallback: show a simple search dialog if external pick returns nothing or fails
-          _showInternalContactPicker();
+      // Request permission first
+      bool? granted = await FlutterContacts.requestPermission();
+
+      if (granted == true) {
+        try {
+          final contact = await FlutterContacts.openExternalPick();
+          if (contact != null && contact.phones.isNotEmpty) {
+            _setPhone(contact.phones.first.number);
+            return;
+          }
+        } catch (e) {
+          // External picker failed, continue to internal picker
         }
+
+        // Fallback to internal picker
+        await _showInternalContactPicker();
       } else {
         if (!mounted) return;
-        GlassDialog.showError(context, 'Contact permission is required to pick a number.');
+        GlassDialog.showError(
+          context,
+          'Contact permission is required to pick a number.',
+        );
       }
     } catch (e) {
-      _showInternalContactPicker();
+      if (!mounted) return;
+      GlassDialog.showError(
+        context,
+        'Error accessing contacts: ${e.toString()}',
+      );
     }
   }
 
@@ -76,10 +91,20 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             const Padding(
               padding: EdgeInsets.all(24),
-              child: Text('Select Contact', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Select Contact',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
             Expanded(
               child: ListView.builder(
@@ -111,7 +136,10 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     final amount = double.tryParse(amountText) ?? 0;
 
     if (phone.length < 10) {
-      GlassDialog.showError(context, 'Please enter a valid 10-digit phone number.');
+      GlassDialog.showError(
+        context,
+        'Please enter a valid 10-digit phone number.',
+      );
       return;
     }
 
@@ -152,11 +180,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
 
     GlassDialog.showLoading(context, message: 'Processing Transfer...');
 
-    await ref.read(transactionProvider.notifier).processTransaction(
-      type: 'Transfer',
-      amount: amount,
-      target: phone,
-    );
+    await ref
+        .read(transactionProvider.notifier)
+        .processTransaction(type: 'Transfer', amount: amount, target: phone);
 
     if (!mounted) return;
     Navigator.pop(context); // Close loading
@@ -186,12 +212,14 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       children: [
         const ServiceHeader(
           title: 'Transfer Funds',
-          subtitle: 'Send money instantly to any NeRuWallet user via phone number.',
+          subtitle:
+              'Send money instantly to any NeRuWallet user via phone number.',
           icon: Icons.send_rounded,
           color: AppTheme.accentColor,
         ),
+        const SizedBox(height: 10),
+        _buildInfoBox(isDark),
         const SizedBox(height: 32),
-        
         ServiceInputSection(
           label: 'Recipient Phone Number',
           child: TextField(
@@ -210,9 +238,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         ServiceInputSection(
           label: 'Amount to Send',
           child: TextField(
@@ -226,14 +254,16 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         ServiceInputSection(
           label: 'Transaction Purpose',
           child: DropdownButtonFormField<String>(
-            value: _selectedPurpose,
-            items: _purposes.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+            initialValue: _selectedPurpose,
+            items: _purposes
+                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                .toList(),
             onChanged: (val) => setState(() => _selectedPurpose = val!),
             decoration: InputDecoration(
               fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
@@ -243,9 +273,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             borderRadius: AppTheme.radiusMedium,
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         ServiceInputSection(
           label: 'Optional Message',
           child: TextField(
@@ -257,16 +287,17 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 40),
-        
+
         ListenableBuilder(
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0) return const SizedBox.shrink();
+            if (val.isEmpty || double.tryParse(val) == 0)
+              return const SizedBox.shrink();
             final amount = double.tryParse(val) ?? 0;
-            
+
             return Column(
               children: [
                 const SizedBox(height: 32),
@@ -275,13 +306,22 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
-                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Column(
                     children: [
                       _buildInfoRow('Service Tax', 'Rs. 5.00', isDark),
                       const Divider(height: 24),
-                      _buildInfoRow('Total Payable', 'Rs. ${(amount + 5).toStringAsFixed(2)}', isDark, isTotal: true),
+                      _buildInfoRow(
+                        'Total Payable',
+                        'Rs. ${(amount + 5).toStringAsFixed(2)}',
+                        isDark,
+                        isTotal: true,
+                      ),
                     ],
                   ),
                 ).animate().fadeIn().slideY(begin: 0.1, end: 0),
@@ -289,22 +329,24 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             );
           },
         ),
-
-        const SizedBox(height: 32),
-        
-        ElevatedButton(
-          onPressed: _onSendMoney,
-          child: const Text('Send Money Now'),
-        ).animate(delay: 600.ms).fadeIn(),
-        
-        const SizedBox(height: 24),
-        
-        _buildInfoBox(isDark),
+        SizedBox(
+          height: 50,
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _onSendMoney,
+            child: const Text('Send Money '),
+          ).animate(delay: 600.ms).fadeIn(),
+        ),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value, bool isDark, {bool isTotal = false}) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    bool isDark, {
+    bool isTotal = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -321,7 +363,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: isTotal ? 18 : 14,
-            color: isTotal ? AppTheme.primaryColor : (isDark ? Colors.white : Colors.black),
+            color: isTotal
+                ? AppTheme.primaryColor
+                : (isDark ? Colors.white : Colors.black),
           ),
         ),
       ],
@@ -338,7 +382,11 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor, size: 20),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
