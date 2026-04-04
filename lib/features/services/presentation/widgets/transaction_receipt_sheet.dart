@@ -7,6 +7,7 @@ class TransactionReceiptSheet extends StatelessWidget {
   final String target;
   final double amount;
   final double fee;
+  final double tax;
   final VoidCallback onConfirm;
 
   const TransactionReceiptSheet({
@@ -14,14 +15,15 @@ class TransactionReceiptSheet extends StatelessWidget {
     required this.title,
     required this.target,
     required this.amount,
-    this.fee = 5.0,
+    this.fee = 0.0,
+    this.tax = 0.0,
     required this.onConfirm,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final total = amount + fee;
+    final total = amount + fee + tax;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -72,9 +74,11 @@ class TransactionReceiptSheet extends StatelessWidget {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 20),
-          _buildReceiptRow("Amount", "Rs. ${amount.toStringAsFixed(2)}", isDark),
+          _buildReceiptRow("Base Amount", "Rs. ${amount.toStringAsFixed(2)}", isDark),
           const SizedBox(height: 12),
           _buildReceiptRow("Service Fee", "Rs. ${fee.toStringAsFixed(2)}", isDark),
+          const SizedBox(height: 12),
+          _buildReceiptRow("Service Tax (VAT)", "Rs. ${tax.toStringAsFixed(2)}", isDark),
           const SizedBox(height: 24),
           
           // Total Amount
@@ -89,14 +93,14 @@ class TransactionReceiptSheet extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Total Transfer",
+                  "Total Payable",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
                   "Rs. ${total.toStringAsFixed(2)}",
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 20,
+                    fontSize: 22,
                     color: AppTheme.primaryColor,
                   ),
                 ),
@@ -116,17 +120,25 @@ class TransactionReceiptSheet extends StatelessWidget {
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+              elevation: 4,
             ),
-            child: const Text(
-              "Confirm & Authenticate",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  "Confirm & Authenticate",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
           
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: const Text("Modify Details"),
           ),
           const SizedBox(height: 16),
         ],

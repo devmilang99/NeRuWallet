@@ -8,6 +8,8 @@ class BookingVerificationSheet extends StatelessWidget {
   final Map<String, String> details;
   final List<String>? passengers;
   final double amount;
+  final double fee;
+  final double tax;
   final Color color;
   final VoidCallback onConfirm;
 
@@ -18,6 +20,8 @@ class BookingVerificationSheet extends StatelessWidget {
     required this.details,
     this.passengers,
     required this.amount,
+    this.fee = 0.0,
+    this.tax = 0.0,
     required this.color,
     required this.onConfirm,
   });
@@ -25,6 +29,7 @@ class BookingVerificationSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final total = amount + fee + tax;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -126,7 +131,7 @@ class BookingVerificationSheet extends StatelessWidget {
               
               const SizedBox(height: 24),
               
-              // Total Amount
+              // Total Amount Breakdown
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -134,20 +139,33 @@ class BookingVerificationSheet extends StatelessWidget {
                   borderRadius: AppTheme.radiusLarge,
                   border: Border.all(color: color.withValues(alpha: 0.1)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    const Text(
-                      "Total Fare",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    _buildRow("Ticket Fare", "Rs. ${amount.toStringAsFixed(2)}", isDark),
+                    const SizedBox(height: 8),
+                    _buildRow("Service Charge", "Rs. ${fee.toStringAsFixed(2)}", isDark),
+                    const SizedBox(height: 8),
+                    _buildRow("Service Tax (VAT)", "Rs. ${tax.toStringAsFixed(2)}", isDark),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(height: 1),
                     ),
-                    Text(
-                      "Rs. ${amount.toStringAsFixed(0)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        color: color,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Total Payable",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          "Rs. ${total.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                            color: color,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -171,7 +189,7 @@ class BookingVerificationSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.lock_outline_rounded, size: 20),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Text(
                       "Confirm & Pay",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

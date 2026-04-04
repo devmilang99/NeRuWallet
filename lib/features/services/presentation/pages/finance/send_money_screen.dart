@@ -6,6 +6,8 @@ import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
@@ -157,7 +159,8 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
         title: 'Send Money',
         target: 'To: $phone',
         amount: amount,
-        fee: 0, // Transfer is often free within wallet
+        fee: TransactionService.getServiceCharge(TransactionType.sendMoney, amount),
+        tax: TransactionService.getTax(TransactionType.sendMoney, amount),
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -180,9 +183,24 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
 
     GlassDialog.showLoading(context, message: 'Processing Transfer...');
 
-    await ref
-        .read(transactionProvider.notifier)
-        .processTransaction(type: 'Transfer', amount: amount, target: phone);
+    // Deduct balance here upon successful PIN verification
+    ref.read(balanceProvider.notifier).deductQuickAction(
+      title: 'Send Money',
+      amount: amount,
+      fee: TransactionService.getServiceCharge(TransactionType.sendMoney, amount),
+      tax: TransactionService.getTax(TransactionType.sendMoney, amount),
+      icon: Icons.send_rounded,
+      color: AppTheme.accentColor,
+      category: 'Transfer',
+      metadata: {
+        'to': phone,
+        'purpose': _selectedPurpose,
+        'message': _messageController.text,
+      },
+    );
+
+    // Close PIN screen
+    Navigator.pop(context);
 
     if (!mounted) return;
     Navigator.pop(context); // Close loading
@@ -315,11 +333,13 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Tax', 'Rs. 5.00', isDark),
+                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.sendMoney, amount).toStringAsFixed(2)}', isDark),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Service Tax', 'Rs. ${TransactionService.getTax(TransactionType.sendMoney, amount).toStringAsFixed(2)}', isDark),
                       const Divider(height: 24),
                       _buildInfoRow(
                         'Total Payable',
-                        'Rs. ${(amount + 5).toStringAsFixed(2)}',
+                        'Rs. ${TransactionService.getTotalPayable(TransactionType.sendMoney, amount).toStringAsFixed(2)}',
                         isDark,
                         isTotal: true,
                       ),

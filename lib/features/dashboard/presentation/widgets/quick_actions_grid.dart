@@ -165,8 +165,6 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
                     context.push('/fine-payment');
                   case 'Tickets':
                     context.push('/tickets');
-                  case 'Food':
-                    context.push('/food');
                   case 'Shopping':
                     context.push('/shopping');
                 }

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/utils/permission_utils.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
-Future<void> _downloadTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) async {
+Future<void> _downloadTicket(
+  BuildContext context, {
+  required String provider,
+  Map<String, dynamic>? data,
+}) async {
   final bool hasPermission = await PermissionUtils.requestStoragePermission();
-  
+
   if (!hasPermission) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -34,18 +39,24 @@ Future<void> _downloadTicket(BuildContext context, {required String provider, Ma
           const SizedBox(height: 16),
           CircularProgressIndicator(color: color),
           const SizedBox(height: 24),
-          const Text('Generating Ticket PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Generating Ticket PDF...',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('Preparing your movie pass', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'Preparing your movie pass',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     ),
   );
 
   await Future.delayed(const Duration(seconds: 2));
-  
+
   if (!context.mounted) return;
-  
+
   Navigator.pop(context);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -57,11 +68,15 @@ Future<void> _downloadTicket(BuildContext context, {required String provider, Ma
   );
 }
 
-void _shareTicket(BuildContext context, {required String provider, Map<String, dynamic>? data}) {
-  final String text = data != null 
-    ? "My Movie Ticket ($provider):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
-    : "My Movie Ticket details are attached. Shared via NeRuWallet";
-    
+void _shareTicket(
+  BuildContext context, {
+  required String provider,
+  Map<String, dynamic>? data,
+}) {
+  final String text = data != null
+      ? "My Movie Ticket ($provider):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
+      : "My Movie Ticket details are attached. Shared via NeRuWallet";
+
   Share.share(text);
 }
 
@@ -75,7 +90,6 @@ class MovieTicketScreen extends StatefulWidget {
 }
 
 class _MovieTicketScreenState extends State<MovieTicketScreen> {
-  // Sample ticket data
   final Map<String, dynamic> _ticketData = {
     'bookingRef': 'MOV2024041230',
     'movieName': 'The Ultimate Adventure',
@@ -110,485 +124,19 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
         ),
         const SizedBox(height: 32),
 
-        // Main Ticket Card
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(
-                  widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                ).withValues(alpha: 0.1),
-                Color(
-                  widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                ).withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Color(
-                widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-              ).withValues(alpha: 0.3),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Header with logo and provider
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Color(
-                    widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      widget.provider,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _ticketData['status'],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        _buildTicketCard(context, isDark, widget.provider, _ticketData),
 
-              // Movie Details
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Movie Name
-                    Text(
-                      _ticketData['movieName'],
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
+        const SizedBox(height: 40),
 
-                    // Genre, Language, Format
-                    Row(
-                      children: [
-                        _buildBadge(
-                          _ticketData['genre'],
-                          const Color(0xFF10B981),
-                          isDark,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildBadge(
-                          _ticketData['language'],
-                          const Color(0xFFF59E0B),
-                          isDark,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    _buildBadge(
-                      _ticketData['format'],
-                      Color(widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
-                      isDark,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Divider with dashed line
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Cinema & Location Details
-                    _buildDetailRow(
-                      'Cinema',
-                      _ticketData['cinema'],
-                      Icons.location_on_rounded,
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDetailRow(
-                      'Screen',
-                      '${_ticketData['screen']} (${_ticketData['format']})',
-                      Icons.tv_rounded,
-                      isDark,
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Date & Time
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDark
-                                        ? Colors.white54
-                                        : Colors.black54,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _ticketData['date'],
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Time',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDark
-                                        ? Colors.white54
-                                        : Colors.black54,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _ticketData['time'],
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Duration',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDark
-                                        ? Colors.white54
-                                        : Colors.black54,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _ticketData['duration'],
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Seats Booked
-                    _buildDetailRow(
-                      'Seats',
-                      _ticketData['seatsBooked'].join(', '),
-                      Icons.event_seat_rounded,
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDetailRow(
-                      'Total Seats',
-                      '${_ticketData['totalSeats']} seats',
-                      Icons.confirmation_number_rounded,
-                      isDark,
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Price Details
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Price per Seat',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: isDark ? Colors.white70 : Colors.black54,
-                              ),
-                        ),
-                        Text(
-                          _ticketData['pricePerSeat'],
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Total Price',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                        ),
-                        Text(
-                          _ticketData['totalPrice'],
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Color(
-                                  widget.provider == 'QFX'
-                                      ? 0xFF6366F1
-                                      : 0xFF0EA5E9,
-                                ),
-                                fontSize: 16,
-                              ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Booking Reference
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Booking Reference',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.black54,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _ticketData['bookingRef'],
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(
-                                    widget.provider == 'QFX'
-                                        ? 0xFF6366F1
-                                        : 0xFF0EA5E9,
-                                  ),
-                                  letterSpacing: 1,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // QR Code placeholder
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[900] : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.grey[700]!
-                                    : Colors.grey[300]!,
-                              ),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.qr_code_2_rounded,
-                                    size: 60,
-                                    color: isDark
-                                        ? Colors.grey[600]
-                                        : Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'QR Code',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isDark
-                                          ? Colors.grey[600]
-                                          : Colors.grey[400],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Show this QR code at the cinema',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.black54,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ).animate().slideY(begin: 0.3, end: 0).fadeIn(),
-
-        const SizedBox(height: 24),
-
-        // Download PDF Button
-        ElevatedButton.icon(
-          onPressed: () => _downloadTicket(context, provider: widget.provider, data: _ticketData),
-          icon: const Icon(Icons.download_rounded),
-          label: const Text('Download Ticket (PDF)'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-            backgroundColor: Color(widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
-          ),
-        ).animate(delay: 200.ms).slideY(begin: 0.3, end: 0).fadeIn(),
-
-        const SizedBox(height: 16),
-
-        // Share Button
-        OutlinedButton.icon(
-          onPressed: () => _shareTicket(context, provider: widget.provider, data: _ticketData),
-          icon: const Icon(Icons.share_rounded),
-          label: const Text('Share Ticket'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-        ).animate(delay: 250.ms).slideY(begin: 0.3, end: 0).fadeIn(),
+        _buildHomeButton(context, widget.provider),
 
         const SizedBox(height: 32),
       ],
     );
   }
-
-  Widget _buildBadge(String text, Color color, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashedDivider(bool isDark) {
-    return Row(
-      children: List.generate(
-        40,
-        (index) => Expanded(
-          child: Container(
-            height: 1,
-            color: index.isEven
-                ? (isDark ? Colors.white12 : Colors.black12)
-                : Colors.transparent,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    IconData icon,
-    bool isDark,
-  ) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: AppTheme.primaryColor.withValues(alpha: 0.7),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isDark ? Colors.white54 : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 }
 
-// Alternative constructor: Pass ticket data from booking screen
-class MovieTicketScreenWithData extends StatefulWidget {
+class MovieTicketScreenWithData extends StatelessWidget {
   final String provider;
   final Map<String, dynamic> ticketData;
 
@@ -599,17 +147,11 @@ class MovieTicketScreenWithData extends StatefulWidget {
   });
 
   @override
-  State<MovieTicketScreenWithData> createState() =>
-      _MovieTicketScreenWithDataState();
-}
-
-class _MovieTicketScreenWithDataState extends State<MovieTicketScreenWithData> {
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BaseServicePage(
-      title: '${widget.provider} Tickets',
+      title: '$provider Tickets',
       children: [
         const ServiceHeader(
           title: 'Movie Ticket',
@@ -619,339 +161,170 @@ class _MovieTicketScreenWithDataState extends State<MovieTicketScreenWithData> {
         ),
         const SizedBox(height: 32),
 
-        // Main Ticket Card
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(
-                  widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                ).withValues(alpha: 0.1),
-                Color(
-                  widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                ).withValues(alpha: 0.05),
-              ],
+        _buildTicketCard(context, isDark, provider, ticketData),
+
+        const SizedBox(height: 40),
+
+        _buildHomeButton(context, provider),
+
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+}
+
+Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<String, dynamic> data) {
+  return Stack(
+    children: [
+      Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Color(
-                widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-              ).withValues(alpha: 0.3),
-            ),
-          ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
           child: Column(
             children: [
-              // Header with logo and provider
+              // Header with Poster-style Gradient
               Container(
-                padding: const EdgeInsets.all(20),
+                height: 200,
                 decoration: BoxDecoration(
-                  color: Color(
-                    widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
+                      Color(provider == 'QFX' ? 0xFF4338CA : 0xFF0284C7),
+                    ],
                   ),
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    Text(
-                      widget.provider,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: TicketPatternPainter(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.ticketData['status'] ?? 'Confirmed',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  provider,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  _buildTopIconButton(
+                                    icon: Icons.download_rounded,
+                                    onTap: () => _downloadTicket(context, provider: provider, data: data),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _buildTopIconButton(
+                                    icon: Icons.share_rounded,
+                                    onTap: () => _shareTicket(context, provider: provider, data: data),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Text(
+                            data['movieName'] ?? 'Movie Name',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _buildModernBadge(data['genre'] ?? 'Genre', Colors.white24),
+                              const SizedBox(width: 8),
+                              _buildModernBadge(data['format'] ?? 'Format', Colors.white24),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Movie Details
+              // Ticket Body
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Movie Name
-                    Text(
-                      widget.ticketData['movieName'] ?? 'Movie Name',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Cinema & Location Details
-                    _buildDetailRow(
-                      'Cinema',
-                      widget.ticketData['cinema'] ?? 'Cinema Name',
-                      Icons.location_on_rounded,
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDetailRow(
-                      'Screen',
-                      '${widget.ticketData['screen'] ?? 'Screen 1'} (${widget.ticketData['format'] ?? '2D'})',
-                      Icons.tv_rounded,
-                      isDark,
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Date & Time
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDark
-                                        ? Colors.white54
-                                        : Colors.black54,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.ticketData['date'] ?? 'Date',
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Time',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDark
-                                        ? Colors.white54
-                                        : Colors.black54,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.ticketData['time'] ?? 'Time',
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
-                          ],
-                        ),
+                        _buildTicketInfo(context, 'DATE', data['date'] ?? 'N/A', Icons.calendar_today_rounded, isDark),
+                        _buildTicketInfo(context, 'TIME', data['time'] ?? 'N/A', Icons.access_time_rounded, isDark),
+                        _buildTicketInfo(context, 'SCREEN', data['screen'] ?? 'N/A', Icons.tv_rounded, isDark),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Seats Information
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Seats Booked',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: isDark ? Colors.white54 : Colors.black54,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            for (String seat
-                                in (widget.ticketData['seatsBooked'] as List? ??
-                                    []))
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    widget.provider == 'QFX'
-                                        ? 0xFF6366F1
-                                        : 0xFF0EA5E9,
-                                  ).withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Color(
-                                      widget.provider == 'QFX'
-                                          ? 0xFF6366F1
-                                          : 0xFF0EA5E9,
-                                    ).withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                child: Text(
-                                  seat,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(
-                                      widget.provider == 'QFX'
-                                          ? 0xFF6366F1
-                                          : 0xFF0EA5E9,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Price
+                    const SizedBox(height: 32),
+                    _buildModernDashedDivider(isDark),
+                    const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Total Amount',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                        ),
-                        Text(
-                          widget.ticketData['totalPrice'] ?? 'Rs 0',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Color(
-                                  widget.provider == 'QFX'
-                                      ? 0xFF6366F1
-                                      : 0xFF0EA5E9,
-                                ),
-                                fontSize: 16,
-                              ),
-                        ),
+                        _buildTicketInfo(context, 'SEATS', (data['seatsBooked'] as List?)?.join(', ') ?? 'N/A', Icons.event_seat_rounded, isDark),
+                        _buildTicketInfo(context, 'TOTAL', data['totalPrice'] ?? 'N/A', Icons.payments_rounded, isDark),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-                    _buildDashedDivider(isDark),
-                    const SizedBox(height: 20),
-
-                    // Booking Reference
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Booking Reference',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.black54,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            widget.ticketData['bookingRef'] ?? 'REF123456',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(
-                                    widget.provider == 'QFX'
-                                        ? 0xFF6366F1
-                                        : 0xFF0EA5E9,
-                                  ),
-                                  letterSpacing: 1,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // QR Code placeholder
+                    const SizedBox(height: 40),
+                    // QR Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[900] : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(16),
+                        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
                         children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.grey[700]!
-                                    : Colors.grey[300]!,
-                              ),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.qr_code_2_rounded,
-                                    size: 60,
-                                    color: isDark
-                                        ? Colors.grey[600]
-                                        : Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'QR Code',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isDark
-                                          ? Colors.grey[600]
-                                          : Colors.grey[400],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 140,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           Text(
-                            'Show this QR code at the cinema',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.black54,
-                                ),
+                            data['bookingRef'] ?? 'REF-000000',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 4,
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
                           ),
                         ],
                       ),
@@ -961,88 +334,157 @@ class _MovieTicketScreenWithDataState extends State<MovieTicketScreenWithData> {
               ),
             ],
           ),
-        ).animate().slideY(begin: 0.3, end: 0).fadeIn(),
-
-        const SizedBox(height: 24),
-
-        // Download PDF Button
-        ElevatedButton.icon(
-          onPressed: () => _downloadTicket(context, provider: widget.provider, data: widget.ticketData),
-          icon: const Icon(Icons.download_rounded),
-          label: const Text('Download Ticket (PDF)'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-            backgroundColor: Color(widget.provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
-          ),
-        ).animate(delay: 200.ms).slideY(begin: 0.3, end: 0).fadeIn(),
-
-        const SizedBox(height: 16),
-
-        // Share Button
-        OutlinedButton.icon(
-          onPressed: () => _shareTicket(context, provider: widget.provider, data: widget.ticketData),
-          icon: const Icon(Icons.share_rounded),
-          label: const Text('Share Ticket'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-        ).animate(delay: 250.ms).slideY(begin: 0.3, end: 0).fadeIn(),
-
-        const SizedBox(height: 32),
-      ],
-    );
-  }
-
-  Widget _buildDashedDivider(bool isDark) {
-    return Row(
-      children: List.generate(
-        40,
-        (index) => Expanded(
-          child: Container(
-            height: 1,
-            color: index.isEven
-                ? (isDark ? Colors.white12 : Colors.black12)
-                : Colors.transparent,
+        ),
+      ),
+      // Ticket Side Cutouts
+      Positioned(
+        left: -15,
+        top: 185,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            shape: BoxShape.circle,
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    IconData icon,
-    bool isDark,
-  ) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: AppTheme.primaryColor.withValues(alpha: 0.7),
+      Positioned(
+        right: -15,
+        top: 185,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            shape: BoxShape.circle,
+          ),
         ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isDark ? Colors.white54 : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ],
+      ),
+    ],
+  ).animate().slideY(begin: 0.2, end: 0).fadeIn(duration: 600.ms);
+}
+
+Widget _buildHomeButton(BuildContext context, String provider) {
+  return ElevatedButton(
+    onPressed: () => context.go('/dashboard'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color(provider == 'QFX' ? 0xFF6366F1 : 0xFF0EA5E9),
+      foregroundColor: Colors.white,
+      minimumSize: const Size(double.infinity, 60),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 0,
+    ),
+    child: const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.home_rounded),
+        SizedBox(width: 12),
+        Text(
+          'Continue to Home',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
-    );
+    ),
+  ).animate(delay: 400.ms).fadeIn().scale();
+}
+
+Widget _buildTopIconButton({required IconData icon, required VoidCallback onTap}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: Colors.white, size: 20),
+    ),
+  );
+}
+
+Widget _buildModernBadge(String text, Color color) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      text,
+      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+    ),
+  );
+}
+
+Widget _buildTicketInfo(BuildContext context, String label, String value, IconData icon, bool isDark) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Icon(icon, size: 14, color: AppTheme.primaryColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white54 : Colors.black54,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 4),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildModernDashedDivider(bool isDark) {
+  return Row(
+    children: List.generate(
+      30,
+      (index) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          height: 2,
+          decoration: BoxDecoration(
+            color: index.isEven 
+              ? (isDark ? Colors.white12 : Colors.black12) 
+              : Colors.transparent,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class TicketPatternPainter extends CustomPainter {
+  final Color color;
+  TicketPatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    for (var i = 0; i < size.width; i += 20) {
+      canvas.drawLine(Offset(i.toDouble(), 0), Offset(i.toDouble() + 10, size.height), paint);
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

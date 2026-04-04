@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
@@ -6,7 +7,6 @@ import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
-import 'package:neruwallet/features/dashboard/presentation/pages/biometric_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,6 +17,22 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  bool _isKycVerified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadKycStatus();
+  }
+
+  Future<void> _loadKycStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isKycVerified = prefs.getBool('is_kyc_verified') ?? false;
+      });
+    }
+  }
 
   void _handleLogout() {
     GlassDialog.showConfirm(
@@ -136,18 +152,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.accentColor,
-                    shape: BoxShape.circle,
+              if (_isKycVerified)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.verified_rounded, color: Colors.white, size: 16),
                   ),
-                  child: const Icon(Icons.verified_rounded, color: Colors.white, size: 16),
                 ),
-              ),
             ],
           ),
           const SizedBox(width: 20),
@@ -187,14 +204,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: AppTheme.radiusFull,
                       border: Border.all(color: Colors.white38),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.shield_rounded, color: Colors.white, size: 14),
-                        SizedBox(width: 6),
+                        Icon(
+                          _isKycVerified ? Icons.verified_user_rounded : Icons.shield_rounded, 
+                          color: Colors.white, 
+                          size: 14
+                        ),
+                        const SizedBox(width: 6),
                         Text(
-                          'Verified Account',
-                          style: TextStyle(
+                          _isKycVerified ? 'Verified Account' : 'Verify Your Account',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -233,10 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Biometric Security',
             subtitle: 'Manage Face ID/Fingerprint',
             isDark: isDark,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BiometricSettingsScreen()),
-            ),
+            onTap: () => context.push('/profile/biometric-settings'),
           ),
           _buildDivider(isDark),
           _buildSettingTile(
@@ -276,16 +294,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Personal Information',
             subtitle: 'Name, email, and phone',
             isDark: isDark,
-            onTap: () {},
+            onTap: () => context.push('/profile/personal-info'),
           ),
           _buildDivider(isDark),
-          _buildSettingTile(
-            icon: Icons.notifications_none_rounded,
-            title: 'Notifications',
-            subtitle: 'Alerts and push preferences',
-            isDark: isDark,
-            onTap: () {},
-          ),
+          /* Removed Notifications item as requested */
         ],
       ),
     ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05, end: 0);
@@ -300,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Help & Support',
             subtitle: 'FAQs and direct contact',
             isDark: isDark,
-            onTap: () {},
+            onTap: () => context.push('/profile/help-support'),
           ),
           _buildDivider(isDark),
           _buildSettingTile(
@@ -308,7 +320,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Privacy Policy',
             subtitle: 'How we protect your data',
             isDark: isDark,
-            onTap: () {},
+            onTap: () => context.push('/profile/privacy-policy'),
           ),
         ],
       ),

@@ -1,14 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
-class PromoCard extends StatelessWidget {
+class PromoCard extends StatefulWidget {
   final bool isDark;
 
   const PromoCard({
     super.key,
     required this.isDark,
   });
+
+  @override
+  State<PromoCard> createState() => _PromoCardState();
+}
+
+class _PromoCardState extends State<PromoCard> {
+  bool _isClaimed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkClaimStatus();
+  }
+
+  Future<void> _checkClaimStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isClaimed = prefs.getBool('voucher_active') ?? false;
+    });
+  }
+
+  Future<void> _handleClaim() async {
+    if (_isClaimed) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('voucher_active', true);
+    await prefs.setInt('voucher_limit', 3);
+    
+    // Success Dialog
+    if (mounted) {
+      GlassDialog.showSuccess(
+        context,
+        'Voucher Active! Your next 3 transactions are free of service charges.',
+        onConfirm: () => setState(() => _isClaimed = true),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +89,11 @@ class PromoCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Zero fees on all\ntransfers this week!',
-                    style: TextStyle(
+                  Text(
+                    _isClaimed 
+                      ? 'Enjoy your free\ntransfers today!' 
+                      : 'Zero fees on all\ntransfers this week!',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -61,20 +102,20 @@ class PromoCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: _handleClaim,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _isClaimed ? Colors.white.withValues(alpha: 0.3) : Colors.white,
                         borderRadius: AppTheme.radiusFull,
                       ),
-                      child: const Text(
-                        'Claim Now',
+                      child: Text(
+                        _isClaimed ? 'Claimed' : 'Claim Now',
                         style: TextStyle(
-                          color: Color(0xFF10B981),
+                          color: _isClaimed ? Colors.white : const Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),

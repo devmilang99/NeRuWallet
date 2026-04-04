@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'flight_ticket_screen.dart';
 
-class PassengerDetailsScreen extends StatefulWidget {
+class PassengerDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> searchData;
   final Map<String, dynamic> flightData;
 
   const PassengerDetailsScreen({super.key, required this.searchData, required this.flightData});
 
   @override
-  State<PassengerDetailsScreen> createState() => _PassengerDetailsScreenState();
+  ConsumerState<PassengerDetailsScreen> createState() => _PassengerDetailsScreenState();
 }
 
-class _PassengerDetailsScreenState extends State<PassengerDetailsScreen> {
+class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   late List<PassengerController> _adultControllers;
   late List<PassengerController> _childControllers;
@@ -77,6 +80,8 @@ class _PassengerDetailsScreenState extends State<PassengerDetailsScreen> {
           },
           passengers: allPassengers.map((p) => '${p['title']} ${p['name']}').toList(),
           amount: totalAmount,
+          fee: TransactionService.getServiceCharge(TransactionType.flight, totalAmount),
+          tax: TransactionService.getTax(TransactionType.flight, totalAmount),
           onConfirm: () {
             Navigator.push(
               context,
@@ -95,6 +100,21 @@ class _PassengerDetailsScreenState extends State<PassengerDetailsScreen> {
 
   void _completeBooking(List<Map<String, String>> passengers, double amount) {
     Navigator.pop(context); // Close PIN screen
+
+    // Deduct balance here (as the flight booking transaction is now completed successfully)
+    ref.read(balanceProvider.notifier).deductTravelTicket(
+      mode: 'Flight',
+      amount: amount,
+      ref: 'FLI${DateTime.now().millisecondsSinceEpoch % 1000000}',
+      fee: TransactionService.getServiceCharge(TransactionType.flight, amount),
+      tax: TransactionService.getTax(TransactionType.flight, amount),
+      metadata: {
+        'from': widget.searchData['from'],
+        'to': widget.searchData['to'],
+        'date': widget.searchData['departureDate'],
+        'passengers': passengers.map((p) => p['name']).toList(),
+      },
+    );
 
     showDialog(
       context: context,

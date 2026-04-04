@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:intl/intl.dart';
 import 'bus_ticket_screen.dart';
 
-class BusBookingScreen extends StatefulWidget {
+class BusBookingScreen extends ConsumerStatefulWidget {
   const BusBookingScreen({super.key});
 
   @override
-  State<BusBookingScreen> createState() => _BusBookingScreenState();
+  ConsumerState<BusBookingScreen> createState() => _BusBookingScreenState();
 }
 
-class _BusBookingScreenState extends State<BusBookingScreen> {
+class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _passengerNameController;
   late TextEditingController _passengerAgeController;
@@ -126,6 +129,22 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
 
   void _completeBooking() {
     Navigator.pop(context); // Pop PIN screen
+
+    final double amount = double.parse(_priceController.text.replaceAll(',', ''));
+    
+    // Deduct balance here upon successful PIN verification
+    ref.read(balanceProvider.notifier).deductTravelTicket(
+      mode: 'Bus',
+      amount: amount,
+      ref: 'BUS${DateTime.now().millisecondsSinceEpoch % 1000000}',
+      fee: TransactionService.getServiceCharge(TransactionType.bus, amount),
+      tax: TransactionService.getTax(TransactionType.bus, amount),
+      metadata: {
+        'from': _departureController.text,
+        'to': _arrivalController.text,
+        'busType': _seatController.text,
+      },
+    );
 
     showDialog(
       context: context,
@@ -615,4 +634,3 @@ class _BusBookingScreenState extends State<BusBookingScreen> {
     );
   }
 }
-

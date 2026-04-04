@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 
-class WithdrawScreen extends StatefulWidget {
+class WithdrawScreen extends ConsumerStatefulWidget {
   const WithdrawScreen({super.key});
 
   @override
-  State<WithdrawScreen> createState() => _WithdrawScreenState();
+  ConsumerState<WithdrawScreen> createState() => _WithdrawScreenState();
 }
 
-class _WithdrawScreenState extends State<WithdrawScreen> {
+class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
   final _amountController = TextEditingController();
   final List<Map<String, dynamic>> _methods = [
     {'name': 'Bank Account', 'icon': Icons.account_balance_rounded, 'color': AppTheme.primaryColor},
@@ -42,7 +45,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         title: 'Withdrawal',
         target: target,
         amount: amount,
-        fee: 10.0, // Withdrawal often has higher fee
+        fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
+        tax: TransactionService.getTax(TransactionType.withdraw, amount),
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -60,6 +64,18 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }
 
   void _executeWithdrawal(double amount, String target) {
+    // Deduct balance here upon successful PIN verification
+    ref.read(balanceProvider.notifier).deductQuickAction(
+      title: 'Withdrawal',
+      amount: amount,
+      fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
+      tax: TransactionService.getTax(TransactionType.withdraw, amount),
+      icon: Icons.account_balance_wallet_rounded,
+      color: Colors.redAccent,
+      category: 'Withdraw',
+      metadata: {'method': target},
+    );
+
     // Close PIN screen
     Navigator.pop(context);
 
@@ -239,9 +255,11 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Tax', 'Rs. 10.00', isDark),
+                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Processing Fee', 'Rs. ${TransactionService.getTax(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark),
                       const Divider(height: 24),
-                      _buildInfoRow('Total Payable', 'Rs. ${(amount + 10).toStringAsFixed(2)}', isDark, isTotal: true),
+                      _buildInfoRow('Total Payable', 'Rs. ${TransactionService.getTotalPayable(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark, isTotal: true),
                     ],
                   ),
                 ).animate().fadeIn().slideY(begin: 0.1, end: 0),

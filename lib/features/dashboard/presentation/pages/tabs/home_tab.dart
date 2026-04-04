@@ -16,6 +16,8 @@ class HomeTab extends StatelessWidget {
   final VoidCallback onToggleBalance;
   final VoidCallback onProfileTap;
   final List<TransactionModel> transactions;
+  final double totalBalance;
+  final double totalExpenses;
 
   const HomeTab({
     super.key,
@@ -26,6 +28,8 @@ class HomeTab extends StatelessWidget {
     required this.onToggleBalance,
     required this.onProfileTap,
     required this.transactions,
+    required this.totalBalance,
+    required this.totalExpenses,
   });
 
   @override
@@ -54,6 +58,8 @@ class HomeTab extends StatelessWidget {
           child: BalanceCard(
             isDark: isDark,
             isVisible: balanceVisible,
+            balance: totalBalance,
+            totalExpenses: totalExpenses,
             onToggleVisibility: onToggleBalance,
             onIncomeTap: () => _showTransactionListBottomSheet(context, 'Income', transactions.where((t) => t.amount > 0).toList()),
             onExpenseTap: () => _showTransactionListBottomSheet(context, 'Expense', transactions.where((t) => t.amount < 0).toList()),
@@ -69,16 +75,55 @@ class HomeTab extends StatelessWidget {
         ),
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 120),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (ctx, i) => TransactionTile(
-                transaction: transactions[i],
-                isDark: isDark,
-                index: i,
-              ),
-              childCount: transactions.length,
-            ),
-          ),
+          sliver: transactions.isEmpty
+              ? SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppTheme.surfaceDark : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.history_rounded,
+                            size: 40,
+                            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No Recent Transactions',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Transactions you make will appear here.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => TransactionTile(
+                      transaction: transactions[i],
+                      isDark: isDark,
+                      index: i,
+                    ),
+                    childCount: transactions.length,
+                  ),
+                ),
         ),
       ],
     );

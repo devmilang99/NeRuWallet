@@ -6,6 +6,8 @@ import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 
 class TopUpScreen extends ConsumerStatefulWidget {
@@ -591,7 +593,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
         title: 'Wallet Top Up',
         target: target,
         amount: amount,
-        fee: 0, // Top up is usually free
+        fee: TransactionService.getServiceCharge(TransactionType.topUp, amount),
+        tax: TransactionService.getTax(TransactionType.topUp, amount),
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -609,6 +612,9 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
   }
 
   void _executeTransaction(double amount, String target) async {
+    // Add funds here upon successful PIN verification
+    ref.read(balanceProvider.notifier).addFunds(amount, target);
+
     // Close the PIN screen first
     Navigator.pop(context);
 
@@ -804,11 +810,13 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Tax', 'Rs. 0.00', isDark),
+                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.topUp, amount).toStringAsFixed(2)}', isDark),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Service Tax', 'Rs. ${TransactionService.getTax(TransactionType.topUp, amount).toStringAsFixed(2)}', isDark),
                       const Divider(height: 24),
                       _buildInfoRow(
                         'Total Payable',
-                        'Rs. ${(amount).toStringAsFixed(2)}',
+                        'Rs. ${TransactionService.getTotalPayable(TransactionType.topUp, amount).toStringAsFixed(2)}',
                         isDark,
                         isTotal: true,
                       ),

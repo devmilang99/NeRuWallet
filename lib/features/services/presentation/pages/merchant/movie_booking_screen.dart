@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:intl/intl.dart';
 import 'movie_ticket_screen.dart';
 
-class MovieBookingScreen extends StatefulWidget {
+class MovieBookingScreen extends ConsumerStatefulWidget {
   final String provider; // 'QFX' or 'FCube'
 
   const MovieBookingScreen({super.key, required this.provider});
 
   @override
-  State<MovieBookingScreen> createState() => _MovieBookingScreenState();
+  ConsumerState<MovieBookingScreen> createState() => _MovieBookingScreenState();
 }
 
-class _MovieBookingScreenState extends State<MovieBookingScreen> {
+class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _movieNameController;
-  late TextEditingController _cinemaController;
-  late TextEditingController _screenController;
   late TextEditingController _seatsController;
   late TextEditingController _pricePerSeatController;
 
@@ -62,9 +62,6 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
   @override
   void initState() {
     super.initState();
-    _movieNameController = TextEditingController();
-    _cinemaController = TextEditingController();
-    _screenController = TextEditingController();
     _seatsController = TextEditingController(text: '1');
     _pricePerSeatController = TextEditingController(text: '450');
     _dates = List.generate(7, (index) => DateTime.now().add(Duration(days: index)));
@@ -73,9 +70,6 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
 
   @override
   void dispose() {
-    _movieNameController.dispose();
-    _cinemaController.dispose();
-    _screenController.dispose();
     _seatsController.dispose();
     _pricePerSeatController.dispose();
     super.dispose();
@@ -86,7 +80,6 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
     double price = double.tryParse(_pricePerSeatController.text) ?? 450;
     return seats * price;
   }
-
 
   void _processPayment() {
     if (_formKey.currentState!.validate()) {
@@ -117,6 +110,8 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
             'Rate': 'Rs ${_pricePerSeatController.text}/seat',
           },
           amount: _totalPrice,
+          fee: TransactionService.getServiceCharge(TransactionType.movie, _totalPrice),
+          tax: TransactionService.getTax(TransactionType.movie, _totalPrice),
           onConfirm: () {
             Navigator.push(
               context,
@@ -135,6 +130,23 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
 
   void _completeBooking() {
     Navigator.pop(context); // Pop PIN screen
+
+    // Deduct balance here (as the transaction is now completed successfully)
+    ref.read(balanceProvider.notifier).deductQuickAction(
+      title: '${widget.provider} Ticket',
+      amount: _totalPrice,
+      fee: TransactionService.getServiceCharge(TransactionType.movie, _totalPrice),
+      tax: TransactionService.getTax(TransactionType.movie, _totalPrice),
+      icon: Icons.movie_rounded,
+      color: widget.provider == 'QFX' ? const Color(0xFF6366F1) : const Color(0xFF0EA5E9),
+      category: 'Movie',
+      metadata: {
+        'movie': _movies[_selectedMovieIndex],
+        'cinema': _cinemas[_selectedCinemaIndex],
+        'seats': _seatsController.text,
+        'showTime': _selectedTime,
+      },
+    );
 
     showDialog(
       context: context,
@@ -654,4 +666,3 @@ class _MovieBookingScreenState extends State<MovieBookingScreen> {
     );
   }
 }
-

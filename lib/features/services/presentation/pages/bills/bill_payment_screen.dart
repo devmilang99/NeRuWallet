@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
 
-class BillPaymentScreen extends StatefulWidget {
+class BillPaymentScreen extends ConsumerStatefulWidget {
   final String billType;
   final IconData icon;
   final Color color;
@@ -21,10 +24,10 @@ class BillPaymentScreen extends StatefulWidget {
   });
 
   @override
-  State<BillPaymentScreen> createState() => _BillPaymentScreenState();
+  ConsumerState<BillPaymentScreen> createState() => _BillPaymentScreenState();
 }
 
-class _BillPaymentScreenState extends State<BillPaymentScreen> {
+class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
   final _customerIdController = TextEditingController();
   final _amountController = TextEditingController();
 
@@ -88,7 +91,8 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
         title: '${widget.billType} Payment',
         target: customerId,
         amount: amount,
-        fee: 5.0, // Updated fixed fee
+        fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
+        tax: TransactionService.getTax(TransactionType.utility, amount),
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -108,6 +112,22 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
   void _executePayment(double amount, String customerId) {
     // Close PIN screen
     Navigator.pop(context);
+
+    // Deduct balance here (as the utility transaction is now completed successfully)
+    ref.read(balanceProvider.notifier).deductQuickAction(
+      title: '${widget.billType} Bill',
+      amount: amount,
+      fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
+      tax: TransactionService.getTax(TransactionType.utility, amount),
+      icon: widget.icon,
+      color: widget.color,
+      category: 'Utility',
+      metadata: {
+        'customerId': customerId,
+        'type': widget.billType,
+        'center': _selectedCenter,
+      },
+    );
 
     GlassDialog.showLoading(context, message: 'Processing Bill Payment...');
     
@@ -245,9 +265,11 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Tax', 'Rs. 5.00'),
+                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Service Tax (VAT)', 'Rs. ${TransactionService.getTax(TransactionType.utility, amount).toStringAsFixed(2)}'),
                       const Divider(height: 24),
-                      _buildInfoRow('Total Payable', 'Rs. ${(amount + 5).toStringAsFixed(2)}', isTotal: true),
+                      _buildInfoRow('Total Payable', 'Rs. ${TransactionService.getTotalPayable(TransactionType.utility, amount).toStringAsFixed(2)}', isTotal: true),
                     ],
                   ),
                 ).animate().fadeIn().slideY(begin: 0.1, end: 0),

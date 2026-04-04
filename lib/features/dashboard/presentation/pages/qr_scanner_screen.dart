@@ -5,15 +5,19 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
 
-class QrScannerScreen extends StatefulWidget {
+class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
   @override
-  State<QrScannerScreen> createState() => _QrScannerScreenState();
+  ConsumerState<QrScannerScreen> createState() => _QrScannerScreenState();
 }
 
-class _QrScannerScreenState extends State<QrScannerScreen>
+class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final MobileScannerController _scannerController = MobileScannerController();
@@ -223,8 +227,30 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  _scannerController.start();
+                  final amount = 1250.00; // Mock base amount
+                  Navigator.pop(context); // Close scan result
+                  
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => TransactionReceiptSheet(
+                      title: 'QR Payment',
+                      target: code,
+                      amount: amount,
+                      fee: TransactionService.getServiceCharge(TransactionType.qrPayment, amount),
+                      tax: TransactionService.getTax(TransactionType.qrPayment, amount),
+                      onConfirm: () {
+                        ref.read(balanceProvider.notifier).recordQrPayment(
+                          amount: amount,
+                          merchant: code,
+                          fee: TransactionService.getServiceCharge(TransactionType.qrPayment, amount),
+                          tax: TransactionService.getTax(TransactionType.qrPayment, amount),
+                        );
+                        Navigator.pop(context); // Go back to dashboard
+                      },
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
@@ -234,7 +260,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Continue'),
+                child: const Text('Proceed to Payment'),
               ),
             ),
           ],

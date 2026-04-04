@@ -61,10 +61,26 @@ class DashboardHeader extends ConsumerWidget {
                 },
               ),
               const SizedBox(width: 8),
-              _buildIconButton(
-                context,
-                Icons.notifications_outlined,
-                onNotificationTap,
+              Stack(
+                children: [
+                  _buildIconButton(
+                    context,
+                    Icons.notifications_outlined,
+                    () => Navigator.pushNamed(context, '/notifications'),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.errorColor,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 8),
               GestureDetector(

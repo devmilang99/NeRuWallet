@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import '../../data/models/transaction_model.dart';
 import '../../data/models/nav_item_model.dart';
 import '../widgets/biometric_prompt_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,73 +13,18 @@ import 'tabs/home_tab.dart';
 import 'tabs/history_tab.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
-class DashboardScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen>
+class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
-  static const List<TransactionModel> _transactions = [
-    TransactionModel(
-      title: 'Merchant Payment',
-      subtitle: 'Pizza Palace',
-      amount: -1250.00,
-      icon: Icons.restaurant_rounded,
-      color: Color(0xFFFF6B6B),
-      time: '10:32 AM',
-    ),
-    TransactionModel(
-      title: 'Money Received',
-      subtitle: 'Rajan Sharma',
-      amount: 5000.00,
-      icon: Icons.arrow_downward_rounded,
-      color: Color(0xFF10B981),
-      time: 'Yesterday',
-    ),
-    TransactionModel(
-      title: 'Utility Bill',
-      subtitle: 'NEA Electricity',
-      amount: -850.00,
-      icon: Icons.bolt_rounded,
-      color: Color(0xFFF59E0B),
-      time: 'Feb 28',
-    ),
-    TransactionModel(
-      title: 'QR Transfer',
-      subtitle: 'Suraj Tamang',
-      amount: -2000.00,
-      icon: Icons.qr_code_rounded,
-      color: Color(0xFF6366F1),
-      time: 'Feb 27',
-    ),
-    TransactionModel(
-      title: 'Top-up ',
-      subtitle: 'eSewa Wallet',
-      amount: 10000.00,
-      icon: Icons.account_balance_wallet_rounded,
-      color: Color(0xFF10B981),
-      time: 'Feb 26',
-    ),
-    TransactionModel(
-      title: 'Mobile Recharge',
-      subtitle: 'Ncell Postpaid',
-      amount: -500.00,
-      icon: Icons.phone_android_rounded,
-      color: Color(0xFF8B5CF6),
-      time: 'Feb 25',
-    ),
-    TransactionModel(
-      title: 'Internet Bill',
-      subtitle: 'WorldLink ISP',
-      amount: -999.00,
-      icon: Icons.wifi_rounded,
-      color: Color(0xFF0EA5E9),
-      time: 'Feb 24',
-    ),
-  ];
 
   int _selectedTab = 0;
   bool _balanceVisible = true;
@@ -93,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initializeSession();
     _loadKycStatus();
     _loadUserName();
     _markOnboardingComplete();
@@ -101,6 +46,13 @@ class _DashboardScreenState extends State<DashboardScreen>
         _checkAndPromptBiometrics();
       }
     });
+  }
+
+  Future<void> _initializeSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Unique session ID for voucher management
+    final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    await prefs.setString('voucher_session_id', sessionId);
   }
 
   void _loadUserName() {
@@ -164,6 +116,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             .getAvailableBiometrics();
 
         if (availableBiometrics.isNotEmpty && mounted) {
+          // Strictly mark onboarding as completed the first time we show it (or attempt to)
+          await prefs.setBool('biometric_onboarding_completed', true);
           _hasPromptedThisSession = true;
 
           if (!mounted) return;
@@ -191,6 +145,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final balanceState = ref.watch(balanceProvider);
+    final transactions = balanceState.transactions;
 
     return PopScope(
       // Prevent the default pop — we handle it ourselves with a dialog.
@@ -226,10 +183,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onProfileTap: () {
                     context.push('/profile');
                   },
-                  transactions: _transactions,
+                  transactions: transactions,
+                  totalBalance: balanceState.totalBalance,
+                  totalExpenses: balanceState.totalExpenses,
                 ),
                 _selectedTab == 1
-                    ? HistoryTab(isDark: isDark, transactions: _transactions)
+                    ? HistoryTab(isDark: isDark, transactions: transactions)
                     : const SizedBox.shrink(), // Lazy load HistoryTab
               ],
             ),

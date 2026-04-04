@@ -10,6 +10,11 @@ import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/pages/dashboard_screen.dart';
 import '../../features/dashboard/presentation/pages/qr_scanner_screen.dart';
 import '../../features/dashboard/presentation/pages/profile_screen.dart';
+import '../../features/dashboard/presentation/pages/personal_info_screen.dart';
+import '../../features/dashboard/presentation/pages/notification_screen.dart';
+import '../../features/dashboard/presentation/pages/help_support_screen.dart';
+import '../../features/dashboard/presentation/pages/privacy_policy_screen.dart';
+import '../../features/dashboard/presentation/pages/biometric_settings_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
 import '../../features/auth/presentation/pages/security_setup_screen.dart';
 import '../../features/auth/presentation/pages/transaction_pin_screen.dart';
@@ -93,6 +98,12 @@ final GoRouter appRouter = GoRouter(
       path: '/dashboard',
       pageBuilder: (context, state) => _buildPageWithFadeTransition(
         child: const DashboardScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/notifications',
+      pageBuilder: (context, state) => _buildPageWithSlideTransition(
+        child: const NotificationScreen(),
       ),
     ),
     
@@ -202,6 +213,24 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => _buildPageWithSlideTransition(
         child: const ProfileScreen(),
       ),
+      routes: [
+        GoRoute(
+          path: 'personal-info',
+          builder: (context, state) => const PersonalInformationScreen(),
+        ),
+        GoRoute(
+          path: 'help-support',
+          builder: (context, state) => const HelpSupportScreen(),
+        ),
+        GoRoute(
+          path: 'privacy-policy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        GoRoute(
+          path: 'biometric-settings',
+          builder: (context, state) => const BiometricSettingsScreen(),
+        ),
+      ],
     ),
     ...kyc.kycRoutes,
   ],
