@@ -189,7 +189,7 @@ class BookingVerificationSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.lock_outline_rounded, size: 20),
-                    const SizedBox(width: 12),
+                     SizedBox(width: 12),
                     Text(
                       "Confirm & Pay",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

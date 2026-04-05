@@ -34,19 +34,34 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       return;
     }
 
+    final double fee = TransactionService.getServiceCharge(TransactionType.withdraw, amount);
+    final double tax = TransactionService.getTax(TransactionType.withdraw, amount);
+    final double totalPayable = amount + fee + tax;
+    final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+    if (totalPayable > currentBalance) {
+      GlassDialog.showError(
+        context,
+        'Insufficient balance for withdrawal.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+      );
+      return;
+    }
+
     final target = _methods[_selectedMethodIndex]['name'];
 
     // 1. Show Receipt Preview
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => TransactionReceiptSheet(
         title: 'Withdrawal',
         target: target,
         amount: amount,
-        fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
-        tax: TransactionService.getTax(TransactionType.withdraw, amount),
+        fee: fee,
+        tax: tax,
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -86,10 +101,13 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Pop loading
       
-      GlassDialog.showSuccess(
-        context, 
-        'Rs. ${amount.toStringAsFixed(2)} successfully withdrawn via $target.',
-        onConfirm: () => Navigator.pop(context),
+      TransactionReceiptSheet.showSuccess(
+        context: context,
+        title: 'Withdrawal',
+        target: target,
+        amount: amount,
+        fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
+        tax: TransactionService.getTax(TransactionType.withdraw, amount),
       );
     });
   }

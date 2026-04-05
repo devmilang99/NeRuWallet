@@ -158,8 +158,10 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final bool isEnabled = prefs.getBool('biometrics_transaction_enabled') ?? false;
+    final bool isFirstTime = prefs.getBool('is_first_time') ?? false;
 
-    if (!isEnabled) {
+
+    if (!isEnabled && isFirstTime) {
       final bool canCheck = await _auth.canCheckBiometrics;
       final bool isSupported = await _auth.isDeviceSupported();
       

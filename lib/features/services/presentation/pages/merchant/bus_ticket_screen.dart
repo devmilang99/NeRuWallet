@@ -156,41 +156,57 @@ Widget _buildTicketCard(BuildContext context, bool isDark, Map<String, dynamic> 
 
   return Container(
     decoration: BoxDecoration(
-      color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
-      borderRadius: BorderRadius.circular(32),
+      color: isDark ? const Color(0xFF131517) : Colors.white,
+      borderRadius: BorderRadius.circular(28),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
-          blurRadius: 40,
-          offset: const Offset(0, 20),
+          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+          blurRadius: 30,
+          offset: const Offset(0, 15),
         ),
       ],
     ),
     child: ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(28),
       child: Column(
         children: [
-          // Header
+          // Header - More compact
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [color, Color(0xFFDB2777)]),
+              gradient: LinearGradient(
+                colors: [color, Color(0xFFDB2777)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data['busCompany'] ?? 'Bus Service',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      data['busLine'] ?? 'Luxury Coach',
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['busCompany'] ?? 'Bus Service',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        data['busLine'] ?? 'LUXURY COACH',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Row(
                   children: [
@@ -198,7 +214,7 @@ Widget _buildTicketCard(BuildContext context, bool isDark, Map<String, dynamic> 
                       icon: Icons.download_rounded,
                       onTap: () => _downloadTicket(context, data: data),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     _buildTopIconButton(
                       icon: Icons.share_rounded,
                       onTap: () => _shareTicket(context, data: data),
@@ -211,67 +227,122 @@ Widget _buildTicketCard(BuildContext context, bool isDark, Map<String, dynamic> 
 
           // Body
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildRouteInfo(data['fromCity'] ?? 'From', isDark),
-                    Icon(Icons.trending_flat_rounded, color: color, size: 32),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.directions_bus_rounded, color: color, size: 24),
+                    ),
                     _buildRouteInfo(data['toCity'] ?? 'To', isDark),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 _buildModernDashedDivider(isDark),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 2,
-                  childAspectRatio: 3,
-                  mainAxisSpacing: 16,
+                  childAspectRatio: 2.2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
                   children: [
                     _buildInfoItem('PASSENGER', data['passengerName'] ?? 'Guest', isDark),
                     _buildInfoItem('TICKET NO', data['ticketNumber'] ?? 'N/A', isDark),
-                    _buildInfoItem('DEPARTURE', data['departureTime'] ?? 'N/A', isDark, color: color),
-                    _buildInfoItem('SEAT NO', data['seatNumber'] ?? 'N/A', isDark, color: color),
+                    _buildInfoItem('DEPARTURE', data['departureTime'] ?? 'N/A', isDark, color: color, isBold: true),
+                    _buildInfoItem('SEAT NO', data['seatNumber'] ?? 'N/A', isDark, color: color, isBold: true),
                   ],
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 
-                // Amenities
+                // Amenities - Cleaner layout
                 if (data['amenities'] != null)
-                  Wrap(
-                    spacing: 8,
-                    children: (data['amenities'] as List).map((a) => _buildAmenityBadge(a.toString(), isDark)).toList(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.center,
+                      children: (data['amenities'] as List).map((a) => _buildAmenityBadge(a.toString(), isDark)).toList(),
+                    ),
                   ),
                 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 
-                // Footer QR Code
+                // Footer QR Code Section - More integrated
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                    color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.qr_code_2_rounded, size: 80, color: isDark ? Colors.white70 : Colors.black87),
-                      const SizedBox(width: 20),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.qr_code_2_rounded, size: 50, color: Colors.black87),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('BOARDING PASS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                            const SizedBox(height: 4),
-                            Text(data['ticketNumber'] ?? 'REF-000', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text('Show this at boarding', style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.black54)),
+                            Text(
+                              'BOARDING PASS',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              data['ticketNumber'] ?? 'REF-000',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Scan at boarding gate',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: isDark ? Colors.white30 : Colors.black45,
+                              ),
+                            ),
                           ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'VALID',
+                          style: TextStyle(
+                            color: AppTheme.successColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
@@ -283,7 +354,7 @@ Widget _buildTicketCard(BuildContext context, bool isDark, Map<String, dynamic> 
         ],
       ),
     ),
-  ).animate().slideY(begin: 0.2, end: 0).fadeIn(duration: 600.ms);
+  ).animate().slideY(begin: 0.1, end: 0).fadeIn(duration: 400.ms);
 }
 
 Widget _buildHomeButton(BuildContext context) {
@@ -322,14 +393,42 @@ Widget _buildRouteInfo(String city, bool isDark) {
   );
 }
 
-Widget _buildInfoItem(String label, String value, bool isDark, {Color? color}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? Colors.white24 : Colors.black26)),
-      const SizedBox(height: 2),
-      Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color ?? (isDark ? Colors.white : Colors.black87))),
-    ],
+Widget _buildInfoItem(String label, String value, bool isDark, {Color? color, bool isBold = false}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]!,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white24 : Colors.black26,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
+            color: color ?? (isDark ? Colors.white : Colors.black87),
+          ),
+        ),
+      ],
+    ),
   );
 }
 

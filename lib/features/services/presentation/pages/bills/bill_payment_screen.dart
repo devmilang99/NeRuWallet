@@ -82,17 +82,32 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
       return;
     }
 
+    final double fee = TransactionService.getServiceCharge(TransactionType.utility, amount);
+    final double tax = TransactionService.getTax(TransactionType.utility, amount);
+    final double totalPayable = amount + fee + tax;
+    final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+    if (totalPayable > currentBalance) {
+      GlassDialog.showError(
+        context,
+        'Insufficient balance for ${widget.billType} payment.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+      );
+      return;
+    }
+
     // 1. Show Receipt Preview
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => TransactionReceiptSheet(
         title: '${widget.billType} Payment',
         target: customerId,
         amount: amount,
-        fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
-        tax: TransactionService.getTax(TransactionType.utility, amount),
+        fee: fee,
+        tax: tax,
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -136,10 +151,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Pop loading
       
-      GlassDialog.showSuccess(
-        context, 
-        '${widget.billType} bill of Rs. ${amount.toStringAsFixed(2)} for ID $customerId successfully paid!',
-        onConfirm: () => Navigator.pop(context),
+      TransactionReceiptSheet.showSuccess(
+        context: context,
+        title: '${widget.billType} Payment',
+        target: customerId,
+        amount: amount,
+        fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
+        tax: TransactionService.getTax(TransactionType.utility, amount),
       );
     });
   }

@@ -18,8 +18,18 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
   final List<String> _selectedAirlines = [];
   final List<String> _selectedPlanes = [];
 
-  final List<String> _airlines = ['Nepal Airways', 'Himalaya Airlines', 'Buddha Air', 'Yeti Airlines'];
-  final List<String> _planes = ['Airbus A320', 'Boeing 737', 'ATR 72', 'Bombardier Q400'];
+  final List<String> _airlines = [
+    'Nepal Airways',
+    'Himalaya Airlines',
+    'Buddha Air',
+    'Yeti Airlines',
+  ];
+  final List<String> _planes = [
+    'Airbus A320',
+    'Boeing 737',
+    'ATR 72',
+    'Bombardier Q400',
+  ];
 
   late List<Map<String, dynamic>> _flights;
 
@@ -46,8 +56,10 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
   List<Map<String, dynamic>> get _filteredFlights {
     return _flights.where((f) {
       final priceMatch = f['price'] <= _maxPrice;
-      final airlineMatch = _selectedAirlines.isEmpty || _selectedAirlines.contains(f['airline']);
-      final planeMatch = _selectedPlanes.isEmpty || _selectedPlanes.contains(f['plane']);
+      final airlineMatch =
+          _selectedAirlines.isEmpty || _selectedAirlines.contains(f['airline']);
+      final planeMatch =
+          _selectedPlanes.isEmpty || _selectedPlanes.contains(f['plane']);
       return priceMatch && airlineMatch && planeMatch;
     }).toList();
   }
@@ -56,6 +68,8 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
@@ -71,12 +85,21 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Filters', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  const Text(
+                    'Filters',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Max Price', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Max Price',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               Slider(
                 value: _maxPrice,
                 min: 5000,
@@ -90,19 +113,30 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              const Text('Airlines', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Airlines',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 children: _airlines.map((a) {
                   final isSelected = _selectedAirlines.contains(a);
                   return FilterChip(
-                    label: Text(a, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+                    label: Text(
+                      a,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? Colors.white : null,
+                      ),
+                    ),
                     selected: isSelected,
                     selectedColor: const Color(0xFF10B981),
                     onSelected: (val) {
                       setModalState(() {
-                        val ? _selectedAirlines.add(a) : _selectedAirlines.remove(a);
+                        val
+                            ? _selectedAirlines.add(a)
+                            : _selectedAirlines.remove(a);
                       });
                       setState(() {});
                     },
@@ -110,19 +144,30 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-              const Text('Planes', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Planes',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 children: _planes.map((p) {
                   final isSelected = _selectedPlanes.contains(p);
                   return FilterChip(
-                    label: Text(p, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+                    label: Text(
+                      p,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? Colors.white : null,
+                      ),
+                    ),
                     selected: isSelected,
                     selectedColor: const Color(0xFF10B981),
                     onSelected: (val) {
                       setModalState(() {
-                        val ? _selectedPlanes.add(p) : _selectedPlanes.remove(p);
+                        val
+                            ? _selectedPlanes.add(p)
+                            : _selectedPlanes.remove(p);
                       });
                       setState(() {});
                     },
@@ -135,9 +180,17 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppTheme.radiusLarge,
+                  ),
                 ),
-                child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Apply Filters',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
             ],
@@ -155,7 +208,10 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
     return BaseServicePage(
       title: 'Select Flight',
       actions: [
-        IconButton(onPressed: _showFilters, icon: const Icon(Icons.filter_list_rounded)),
+        IconButton(
+          onPressed: _showFilters,
+          icon: const Icon(Icons.filter_list_rounded),
+        ),
       ],
       children: [
         Container(
@@ -165,16 +221,25 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
             borderRadius: AppTheme.radiusLarge,
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${widget.searchData['from']} to ${widget.searchData['to']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('${widget.searchData['departureDate']} • ${widget.searchData['adults']} Adult, ${widget.searchData['children']} Child', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    '${widget.searchData['from']} to ${widget.searchData['to']}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${widget.searchData['departureDate']} • ${widget.searchData['adults']} Adult, ${widget.searchData['children']} Child',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
-              Text(widget.searchData['class'], style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+              Text(
+                widget.searchData['class'],
+                style: TextStyle(fontWeight: FontWeight.bold, color: color),
+              ),
             ],
           ),
         ),
@@ -184,14 +249,24 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 48),
-                Icon(Icons.search_off_rounded, size: 64, color: Colors.grey[400]),
+                Icon(
+                  Icons.search_off_rounded,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
                 const SizedBox(height: 16),
-                const Text('No flights match your filters', style: TextStyle(color: Colors.grey)),
-                TextButton(onPressed: () => setState(() {
-                  _maxPrice = 25000;
-                  _selectedAirlines.clear();
-                  _selectedPlanes.clear();
-                }), child: const Text('Reset Filters')),
+                const Text(
+                  'No flights match your filters',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                TextButton(
+                  onPressed: () => setState(() {
+                    _maxPrice = 25000;
+                    _selectedAirlines.clear();
+                    _selectedPlanes.clear();
+                  }),
+                  child: const Text('Reset Filters'),
+                ),
               ],
             ),
           )
@@ -203,91 +278,170 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
             itemBuilder: (context, index) {
               final flight = _filteredFlights[index];
               return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppTheme.surfaceDark : Colors.white,
-                  borderRadius: AppTheme.radiusLarge,
-                  border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PassengerDetailsScreen(
-                          searchData: widget.searchData,
-                          flightData: flight,
-                        ),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppTheme.surfaceDark : Colors.white,
+                      borderRadius: AppTheme.radiusLarge,
+                      border: Border.all(
+                        color: isDark ? Colors.white12 : Colors.grey[200]!,
                       ),
-                    );
-                  },
-                  borderRadius: AppTheme.radiusLarge,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PassengerDetailsScreen(
+                              searchData: widget.searchData,
+                              flightData: flight,
+                            ),
+                          ),
+                        );
+                      },
+                      borderRadius: AppTheme.radiusLarge,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: AppTheme.radiusSmall),
-                                  child: Icon(Icons.flight_rounded, color: color, size: 16),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.1),
+                                        borderRadius: AppTheme.radiusSmall,
+                                      ),
+                                      child: Icon(
+                                        Icons.flight_rounded,
+                                        color: color,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      flight['airline'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 12),
-                                Text(flight['airline'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            Text('Rs. ${flight['price']}', style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 16)),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(flight['departure'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                Text(widget.searchData['from'].split('(').last.replaceAll(')', ''), style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                Text(flight['duration'], style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                                Container(
-                                  width: 80,
-                                  height: 1,
-                                  color: Colors.grey[300],
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
+                                Text(
+                                  'Rs. ${flight['price']}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: color,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                                Icon(Icons.flight_takeoff_rounded, size: 14, color: color.withValues(alpha: 0.5)),
                               ],
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(flight['arrival'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                Text(widget.searchData['to'].split('(').last.replaceAll(')', ''), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      flight['departure'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.searchData['from']
+                                          .split('(')
+                                          .last
+                                          .replaceAll(')', ''),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Text(
+                                      flight['duration'],
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 80,
+                                      height: 1,
+                                      color: Colors.grey[300],
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.flight_takeoff_rounded,
+                                      size: 14,
+                                      color: color.withValues(alpha: 0.5),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      flight['arrival'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.searchData['to']
+                                          .split('(')
+                                          .last
+                                          .replaceAll(')', ''),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  flight['plane'],
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                Text(
+                                  'Non-stop',
+                                  style: TextStyle(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(flight['plane'], style: TextStyle(color: Colors.grey, fontSize: 11)),
-                            Text('Non-stop', style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 11)),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ).animate().fadeIn(delay: (index * 100).ms).slideX(begin: 0.1, end: 0);
+                  )
+                  .animate()
+                  .fadeIn(delay: (index * 100).ms)
+                  .slideX(begin: 0.1, end: 0);
             },
           ),
       ],

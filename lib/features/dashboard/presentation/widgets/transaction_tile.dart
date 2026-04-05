@@ -41,6 +41,8 @@ class TransactionTile extends StatelessWidget {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                isDismissible: false,
+                enableDrag: false,
                 backgroundColor: Colors.transparent,
                 builder: (context) => TransactionDetailSheet(
                   transaction: transaction,

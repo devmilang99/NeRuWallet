@@ -47,6 +47,8 @@ class _ConverterCardState extends State<ConverterCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => CurrencySelectorSheet(
         currencies: Currency.currencies,

@@ -8,6 +8,7 @@ import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'flight_ticket_screen.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class PassengerDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> searchData;
@@ -59,10 +60,24 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
       }
 
       final double totalAmount = (widget.flightData['price'] as int) * (allPassengers.length).toDouble();
+      final double fee = TransactionService.getServiceCharge(TransactionType.flight, totalAmount);
+      final double tax = TransactionService.getTax(TransactionType.flight, totalAmount);
+      final double totalPayable = totalAmount + fee + tax;
+      final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+      if (totalPayable > currentBalance) {
+        GlassDialog.showError(
+          context,
+          'Insufficient balance for flight booking.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+        );
+        return;
+      }
 
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
         backgroundColor: Colors.transparent,
         builder: (context) => BookingVerificationSheet(
           title: 'Flight',
@@ -80,8 +95,8 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
           },
           passengers: allPassengers.map((p) => '${p['title']} ${p['name']}').toList(),
           amount: totalAmount,
-          fee: TransactionService.getServiceCharge(TransactionType.flight, totalAmount),
-          tax: TransactionService.getTax(TransactionType.flight, totalAmount),
+          fee: fee,
+          tax: tax,
           onConfirm: () {
             Navigator.push(
               context,

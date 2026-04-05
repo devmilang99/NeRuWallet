@@ -83,6 +83,8 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
@@ -101,11 +103,20 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Select Contact',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Select Contact',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -150,17 +161,38 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       return;
     }
 
+    final double totalPayable = amount;
+    final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+    if (totalPayable > currentBalance) {
+      GlassDialog.showError(
+        context,
+        'Insufficient balance for transfer.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+      );
+      return;
+    }
+
     // 1. Show Receipt Preview
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => TransactionReceiptSheet(
         title: 'Send Money',
         target: 'To: $phone',
         amount: amount,
-        fee: TransactionService.getServiceCharge(TransactionType.sendMoney, amount),
+        fee: TransactionService.getServiceCharge(
+          TransactionType.sendMoney,
+          amount,
+        ),
         tax: TransactionService.getTax(TransactionType.sendMoney, amount),
+        metadata: {
+          'Purpose': _selectedPurpose,
+          if (_messageController.text.isNotEmpty)
+            'Message': _messageController.text,
+        },
         onConfirm: () {
           // 2. Trigger Security Validation
           Navigator.push(
@@ -178,46 +210,66 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   }
 
   void _executeTransaction(double amount, String phone) async {
-    // Close PIN screen
-    Navigator.pop(context);
+    // 1. Close PIN screen first
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
+    // 2. Show processing state
     GlassDialog.showLoading(context, message: 'Processing Transfer...');
 
-    // Deduct balance here upon successful PIN verification
-    ref.read(balanceProvider.notifier).deductQuickAction(
-      title: 'Send Money',
-      amount: amount,
-      fee: TransactionService.getServiceCharge(TransactionType.sendMoney, amount),
-      tax: TransactionService.getTax(TransactionType.sendMoney, amount),
-      icon: Icons.send_rounded,
-      color: AppTheme.accentColor,
-      category: 'Transfer',
-      metadata: {
-        'to': phone,
-        'purpose': _selectedPurpose,
-        'message': _messageController.text,
-      },
-    );
-
-    // Close PIN screen
-    Navigator.pop(context);
-
-    if (!mounted) return;
-    Navigator.pop(context); // Close loading
+    // 3. Process Transaction via Provider (includes mock delay)
+    await ref.read(transactionProvider.notifier).processTransaction(
+          type: 'Send Money',
+          amount: amount,
+          target: phone,
+        );
 
     final state = ref.read(transactionProvider);
 
     if (state.isSuccess) {
-      GlassDialog.showSuccess(
-        context,
-        'Successfully sent Rs. ${amount.toStringAsFixed(2)} to $phone.',
-        onConfirm: () {
-          // GlassDialog already pops once for the dialog, so one more pop returns to dashboard
-          Navigator.pop(context);
+      // 4. Perform actual balance deduction on success
+      final fee = TransactionService.getServiceCharge(TransactionType.sendMoney, amount);
+      final tax = TransactionService.getTax(TransactionType.sendMoney, amount);
+
+      ref.read(balanceProvider.notifier).deductQuickAction(
+            title: 'Send Money',
+            amount: amount,
+            fee: fee,
+            tax: tax,
+            icon: Icons.send_rounded,
+            color: AppTheme.accentColor,
+            category: 'Transfer',
+            metadata: {
+              'to': phone,
+              'purpose': _selectedPurpose,
+              'message': _messageController.text,
+            },
+          );
+
+      if (!mounted) return;
+      
+      // 5. Close loading dialog & Show Receipt
+      Navigator.pop(context); 
+      TransactionReceiptSheet.showSuccess(
+        context: context,
+        title: 'Send Money',
+        target: 'To: $phone',
+        amount: amount,
+        fee: fee,
+        tax: tax,
+        metadata: {
+          'Purpose': _selectedPurpose,
+          if (_messageController.text.isNotEmpty)
+            'Message': _messageController.text,
         },
       );
-    } else if (state.error != null) {
-      GlassDialog.showError(context, state.error!);
+    } else {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      if (state.error != null) {
+        GlassDialog.showError(context, state.error!);
+      }
     }
   }
 
@@ -308,48 +360,6 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
 
         const SizedBox(height: 40),
 
-        ListenableBuilder(
-          listenable: _amountController,
-          builder: (context, _) {
-            final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0) {
-              return const SizedBox.shrink();
-            }
-            final amount = double.tryParse(val) ?? 0;
-
-            return Column(
-              children: [
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                    borderRadius: AppTheme.radiusLarge,
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.sendMoney, amount).toStringAsFixed(2)}', isDark),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Service Tax', 'Rs. ${TransactionService.getTax(TransactionType.sendMoney, amount).toStringAsFixed(2)}', isDark),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        'Total Payable',
-                        'Rs. ${TransactionService.getTotalPayable(TransactionType.sendMoney, amount).toStringAsFixed(2)}',
-                        isDark,
-                        isTotal: true,
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn().slideY(begin: 0.1, end: 0),
-              ],
-            );
-          },
-        ),
         SizedBox(
           height: 50,
           width: double.infinity,

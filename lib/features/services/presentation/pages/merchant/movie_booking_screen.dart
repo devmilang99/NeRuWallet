@@ -9,6 +9,7 @@ import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:intl/intl.dart';
 import 'movie_ticket_screen.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class MovieBookingScreen extends ConsumerStatefulWidget {
   final String provider; // 'QFX' or 'FCube'
@@ -94,9 +95,24 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
           ? const Color(0xFF6366F1)
           : const Color(0xFF0EA5E9);
 
+      final double fee = TransactionService.getServiceCharge(TransactionType.movie, _totalPrice);
+      final double tax = TransactionService.getTax(TransactionType.movie, _totalPrice);
+      final double totalPayable = _totalPrice + fee + tax;
+      final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+      if (totalPayable > currentBalance) {
+        GlassDialog.showError(
+          context,
+          'Insufficient balance to complete this transaction.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+        );
+        return;
+      }
+
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
         backgroundColor: Colors.transparent,
         builder: (context) => BookingVerificationSheet(
           title: 'Movie',
@@ -110,8 +126,8 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
             'Rate': 'Rs ${_pricePerSeatController.text}/seat',
           },
           amount: _totalPrice,
-          fee: TransactionService.getServiceCharge(TransactionType.movie, _totalPrice),
-          tax: TransactionService.getTax(TransactionType.movie, _totalPrice),
+          fee: fee,
+          tax: tax,
           onConfirm: () {
             Navigator.push(
               context,
@@ -597,6 +613,9 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
   void _showSelectionDialog(String title, List<String> options, int current, Function(int) onSelect) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -609,8 +628,17 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
             const SizedBox(height: 12),
             Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),

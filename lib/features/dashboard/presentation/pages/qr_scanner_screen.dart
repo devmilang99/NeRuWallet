@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -187,6 +188,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   void _showScanResult(String code) {
     showModalBottomSheet(
       context: context,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
@@ -223,45 +226,77 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  final amount = 1250.00; // Mock base amount
-                  Navigator.pop(context); // Close scan result
-                  
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => TransactionReceiptSheet(
-                      title: 'QR Payment',
-                      target: code,
-                      amount: amount,
-                      fee: TransactionService.getServiceCharge(TransactionType.qrPayment, amount),
-                      tax: TransactionService.getTax(TransactionType.qrPayment, amount),
-                      onConfirm: () {
-                        ref.read(balanceProvider.notifier).recordQrPayment(
-                          amount: amount,
-                          merchant: code,
-                          fee: TransactionService.getServiceCharge(TransactionType.qrPayment, amount),
-                          tax: TransactionService.getTax(TransactionType.qrPayment, amount),
-                        );
-                        Navigator.pop(context); // Go back to dashboard
-                      },
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
                   ),
                 ),
-                child: const Text('Proceed to Payment'),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final double amount = 1250.00; // Mock base amount
+                      final double fee = TransactionService.getServiceCharge(
+                        TransactionType.qrPayment,
+                        amount,
+                      );
+                      final double tax = TransactionService.getTax(
+                        TransactionType.qrPayment,
+                        amount,
+                      );
+                      final double totalPayable = amount + fee + tax;
+                      final double currentBalance =
+                          ref.read(balanceProvider).totalBalance;
+
+                      if (totalPayable > currentBalance) {
+                        GlassDialog.showError(
+                          context,
+                          'Insufficient balance for QR payment.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+                        );
+                        return;
+                      }
+
+                      Navigator.pop(context); // Close scan result
+
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        isDismissible: false,
+                        enableDrag: false,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => TransactionReceiptSheet(
+                          title: 'QR Payment',
+                          target: code,
+                          amount: amount,
+                          fee: fee,
+                          tax: tax,
+                          onConfirm: () {
+                            ref.read(balanceProvider.notifier).recordQrPayment(
+                                  amount: amount,
+                                  merchant: code,
+                                  fee: fee,
+                                  tax: tax,
+                                );
+                            Navigator.pop(context); // Go back to dashboard
+                          },
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Proceed to Payment'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

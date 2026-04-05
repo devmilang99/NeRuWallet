@@ -6,9 +6,12 @@ import 'package:neruwallet/core/utils/permission_utils.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
-Future<void> _downloadTicket(BuildContext context, {Map<String, dynamic>? data}) async {
+Future<void> _downloadTicket(
+  BuildContext context, {
+  Map<String, dynamic>? data,
+}) async {
   final bool hasPermission = await PermissionUtils.requestStoragePermission();
-  
+
   if (!hasPermission) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -34,22 +37,30 @@ Future<void> _downloadTicket(BuildContext context, {Map<String, dynamic>? data})
           const SizedBox(height: 16),
           const CircularProgressIndicator(color: Color(0xFF10B981)),
           const SizedBox(height: 24),
-          const Text('Generating PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Generating PDF...',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('Creating your digital ticket', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'Creating your digital ticket',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     ),
   );
 
   await Future.delayed(const Duration(seconds: 2));
-  
+
   if (!context.mounted) return;
-  
+
   Navigator.pop(context);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: const Text('Ticket downloaded successfully! Check your downloads.'),
+      content: const Text(
+        'Ticket downloaded successfully! Check your downloads.',
+      ),
       backgroundColor: Colors.green[700],
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusSmall),
@@ -58,10 +69,10 @@ Future<void> _downloadTicket(BuildContext context, {Map<String, dynamic>? data})
 }
 
 void _shareTicket(BuildContext context, {Map<String, dynamic>? data}) {
-  final String text = data != null 
-    ? "My Flight Ticket:\nAirline: ${data['airline']}\nFlight: ${data['flightNumber']}\nFrom: ${data['departureCity']}\nTo: ${data['arrivalCity']}\nDate: ${data['departureDate']}\nPNR: ${data['pnr']}\nShared via NeRuWallet"
-    : "My Flight Ticket details are attached. Shared via NeRuWallet";
-    
+  final String text = data != null
+      ? "My Flight Ticket:\nAirline: ${data['airline']}\nFlight: ${data['flightNumber']}\nFrom: ${data['departureCity']}\nTo: ${data['arrivalCity']}\nDate: ${data['departureDate']}\nPNR: ${data['pnr']}\nShared via NeRuWallet"
+      : "My Flight Ticket details are attached. Shared via NeRuWallet";
+
   Share.share(text);
 }
 
@@ -154,7 +165,11 @@ class FlightTicketScreenWithData extends StatelessWidget {
   }
 }
 
-Widget _buildBoardingPass(BuildContext context, bool isDark, Map<String, dynamic> data) {
+Widget _buildBoardingPass(
+  BuildContext context,
+  bool isDark,
+  Map<String, dynamic> data,
+) {
   final color = const Color(0xFF10B981);
 
   return Container(
@@ -177,9 +192,7 @@ Widget _buildBoardingPass(BuildContext context, bool isDark, Map<String, dynamic
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withRed(150)],
-              ),
+              gradient: LinearGradient(colors: [color, color.withRed(150)]),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,7 +210,10 @@ Widget _buildBoardingPass(BuildContext context, bool isDark, Map<String, dynamic
                     ),
                     Text(
                       'FLIGHT ${data['flightNumber'] ?? 'N/A'}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
                     ),
                   ],
                 ),
@@ -226,51 +242,97 @@ Widget _buildBoardingPass(BuildContext context, bool isDark, Map<String, dynamic
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildCityInfo(data['fromCode'] ?? 'KTM', data['fromCity'] ?? 'Kathmandu', CrossAxisAlignment.start, isDark),
+                    _buildCityInfo(
+                      data['fromCode'] ?? 'KTM',
+                      data['fromCity'] ?? 'Kathmandu',
+                      CrossAxisAlignment.start,
+                      isDark,
+                    ),
                     Column(
                       children: [
-                        Icon(Icons.flight_takeoff_rounded, color: color, size: 28),
+                        Icon(
+                          Icons.flight_takeoff_rounded,
+                          color: color,
+                          size: 28,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           data['duration'] ?? '1h 45m',
-                          style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.black54),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
                         ),
                       ],
                     ),
-                    _buildCityInfo(data['toCode'] ?? 'DEL', data['toCity'] ?? 'Delhi', CrossAxisAlignment.end, isDark),
+                    _buildCityInfo(
+                      data['toCode'] ?? 'DEL',
+                      data['toCity'] ?? 'Delhi',
+                      CrossAxisAlignment.end,
+                      isDark,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 32),
                 _buildModernDashedDivider(isDark),
                 const SizedBox(height: 32),
-                
+
                 // Flight Information Grid
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 2,
-                  childAspectRatio: 2.5,
-                  mainAxisSpacing: 20,
+                  childAspectRatio: 2.0,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
                   children: [
-                    _buildInfoColumn('PASSENGER', data['passengerName'] ?? 'Guest', isDark),
-                    _buildInfoColumn('PNR', data['pnr'] ?? 'N/A', isDark, isBold: true, color: color),
-                    _buildInfoColumn('DATE', data['departureDate'] ?? 'N/A', isDark),
-                    _buildInfoColumn('TIME', data['departureTime'] ?? 'N/A', isDark),
+                    _buildInfoColumn(
+                      'PASSENGER',
+                      data['passengerName'] ?? 'Guest',
+                      isDark,
+                    ),
+                    _buildInfoColumn(
+                      'PNR',
+                      data['pnr'] ?? 'N/A',
+                      isDark,
+                      isBold: true,
+                      color: color,
+                    ),
+                    _buildInfoColumn(
+                      'DATE',
+                      data['departureDate'] ?? 'N/A',
+                      isDark,
+                    ),
+                    _buildInfoColumn(
+                      'TIME',
+                      data['departureTime'] ?? 'N/A',
+                      isDark,
+                    ),
                     _buildInfoColumn('GATE', data['gate'] ?? 'TBD', isDark),
-                    _buildInfoColumn('SEAT', data['seatNumber'] ?? 'N/A', isDark, isBold: true, color: color),
+                    _buildInfoColumn(
+                      'SEAT',
+                      data['seatNumber'] ?? 'N/A',
+                      isDark,
+                      isBold: true,
+                      color: color,
+                    ),
                   ],
                 ),
 
                 const SizedBox(height: 40),
-                
+
                 // Barcode Section
                 Container(
                   padding: const EdgeInsets.all(24),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                    border: Border.all(
+                      color: isDark ? Colors.white12 : Colors.black12,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -331,7 +393,12 @@ Widget _buildHomeButton(BuildContext context) {
   ).animate(delay: 400.ms).fadeIn().scale();
 }
 
-Widget _buildCityInfo(String code, String city, CrossAxisAlignment align, bool isDark) {
+Widget _buildCityInfo(
+  String code,
+  String city,
+  CrossAxisAlignment align,
+  bool isDark,
+) {
   return Column(
     crossAxisAlignment: align,
     children: [
@@ -355,33 +422,57 @@ Widget _buildCityInfo(String code, String city, CrossAxisAlignment align, bool i
   );
 }
 
-Widget _buildInfoColumn(String label, String value, bool isDark, {bool isBold = false, Color? color}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: isDark ? Colors.white24 : Colors.black26,
-          letterSpacing: 1,
-        ),
+Widget _buildInfoColumn(
+  String label,
+  String value,
+  bool isDark, {
+  bool isBold = false,
+  Color? color,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.grey[200]!,
       ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
-          color: color ?? (isDark ? Colors.white : Colors.black87),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white30 : Colors.black38,
+            letterSpacing: 1,
+          ),
         ),
-      ),
-    ],
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
+            color: color ?? (isDark ? Colors.white : Colors.black87),
+          ),
+        ),
+      ],
+    ),
   );
 }
 
-Widget _buildTopIconButton({required IconData icon, required VoidCallback onTap}) {
+Widget _buildTopIconButton({
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
   return GestureDetector(
     onTap: onTap,
     child: Container(
@@ -404,9 +495,9 @@ Widget _buildModernDashedDivider(bool isDark) {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           height: 2,
           decoration: BoxDecoration(
-            color: index.isEven 
-              ? (isDark ? Colors.white12 : Colors.black12) 
-              : Colors.transparent,
+            color: index.isEven
+                ? (isDark ? Colors.white12 : Colors.black12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(2),
           ),
         ),

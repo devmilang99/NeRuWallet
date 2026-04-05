@@ -61,14 +61,20 @@ class HomeTab extends StatelessWidget {
             balance: totalBalance,
             totalExpenses: totalExpenses,
             onToggleVisibility: onToggleBalance,
-            onIncomeTap: () => _showTransactionListBottomSheet(context, 'Income', transactions.where((t) => t.amount > 0).toList()),
-            onExpenseTap: () => _showTransactionListBottomSheet(context, 'Expense', transactions.where((t) => t.amount < 0).toList()),
+            onIncomeTap: () => _showTransactionListBottomSheet(
+              context,
+              'Income',
+              transactions.where((t) => t.amount > 0).toList(),
+            ),
+            onExpenseTap: () => _showTransactionListBottomSheet(
+              context,
+              'Expense',
+              transactions.where((t) => t.amount < 0).toList(),
+            ),
           ),
         ),
         SliverToBoxAdapter(child: SizedBox(height: 12)),
-        SliverToBoxAdapter(
-          child: QuickActionsGrid(isDark: isDark),
-        ),
+        SliverToBoxAdapter(child: QuickActionsGrid(isDark: isDark)),
         SliverToBoxAdapter(child: PromoCard(isDark: isDark)),
         SliverToBoxAdapter(
           child: _buildSectionHeader(context, 'Recent Transactions', isDark),
@@ -78,7 +84,10 @@ class HomeTab extends StatelessWidget {
           sliver: transactions.isEmpty
               ? SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 40,
+                    ),
                     child: Column(
                       children: [
                         Container(
@@ -90,7 +99,8 @@ class HomeTab extends StatelessWidget {
                           child: Icon(
                             Icons.history_rounded,
                             size: 40,
-                            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                            color: (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.1),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -99,7 +109,9 @@ class HomeTab extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                            color: isDark
+                                ? Colors.white70
+                                : AppTheme.textSecondaryColor,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -107,7 +119,9 @@ class HomeTab extends StatelessWidget {
                           'Transactions you make will appear here.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+                            color: isDark
+                                ? AppTheme.textHintDark
+                                : AppTheme.textHintColor,
                           ),
                         ),
                       ],
@@ -181,10 +195,7 @@ class HomeTab extends StatelessWidget {
                 ),
                 Text(
                   'Complete eKYC to unlock full limits.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 11),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -215,7 +226,6 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-
   Widget _buildSectionHeader(BuildContext context, String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 8),
@@ -228,42 +238,56 @@ class HomeTab extends StatelessWidget {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'See All',
-              style: TextStyle(color: AppTheme.primaryColor, fontSize: 13),
-            ),
-          ),
         ],
       ),
     );
   }
 
-
-  void _showTransactionListBottomSheet(BuildContext context, String title, List<TransactionModel> filteredTransactions) {
+  void _showTransactionListBottomSheet(
+    BuildContext context,
+    String title,
+    List<TransactionModel> filteredTransactions,
+  ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.6,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           color: isDark ? AppTheme.surfaceDark : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 20),
-            Text(
-              '$title Transactions',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white12 : Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Expanded(
-              child: filteredTransactions.isEmpty 
+              child: filteredTransactions.isEmpty
                   ? const Center(child: Text('No transactions found'))
                   : ListView.builder(
                       itemCount: filteredTransactions.length,

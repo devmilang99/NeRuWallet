@@ -58,6 +58,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -234,6 +236,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -424,6 +428,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -588,6 +594,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => TransactionReceiptSheet(
         title: 'Wallet Top Up',

@@ -216,7 +216,14 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
         if (onTap != null) {
           onTap();
         } else if (enabled || isConfirm) {
-          focusNode.requestFocus();
+          if (focusNode.hasFocus) {
+            focusNode.unfocus();
+            Future.delayed(const Duration(milliseconds: 10), () {
+              focusNode.requestFocus();
+            });
+          } else {
+            focusNode.requestFocus();
+          }
         }
       },
       behavior: HitTestBehavior.opaque,
@@ -233,28 +240,26 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
               ...List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled || isConfirm)),
             ],
           ),
-          IgnorePointer(
-            child: Opacity(
-              opacity: 0,
-              child: SizedBox(
-                height: 1,
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  autofocus: false,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  onChanged: (val) {
-                    if (_showMismatchError) {
-                      setState(() => _showMismatchError = false);
-                    } else {
-                      setState(() {});
-                    }
-                    if (val.length == 4) {
-                      onComplete();
-                    }
-                  },
-                ),
+          Opacity(
+            opacity: 0,
+            child: SizedBox(
+              height: 1,
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                autofocus: false,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                onChanged: (val) {
+                  if (_showMismatchError) {
+                    setState(() => _showMismatchError = false);
+                  } else {
+                    setState(() {});
+                  }
+                  if (val.length == 4) {
+                    onComplete();
+                  }
+                },
               ),
             ),
           ),

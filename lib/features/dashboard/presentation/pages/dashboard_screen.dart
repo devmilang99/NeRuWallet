@@ -126,6 +126,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             context: context,
             backgroundColor: Colors.transparent,
             isScrollControlled: true,
+            isDismissible: false,
+            enableDrag: false,
             useRootNavigator: true,
             builder: (context) => BiometricPromptSheet(
               biometrics: availableBiometrics,

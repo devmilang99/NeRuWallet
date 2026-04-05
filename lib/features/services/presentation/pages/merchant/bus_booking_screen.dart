@@ -9,6 +9,7 @@ import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:intl/intl.dart';
 import 'bus_ticket_screen.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 class BusBookingScreen extends ConsumerStatefulWidget {
   const BusBookingScreen({super.key});
@@ -92,9 +93,25 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
 
   void _initiateVerification() {
     if (_formKey.currentState!.validate()) {
+      final double amount = double.parse(_priceController.text.replaceAll(',', ''));
+      final double fee = TransactionService.getServiceCharge(TransactionType.bus, amount);
+      final double tax = TransactionService.getTax(TransactionType.bus, amount);
+      final double totalPayable = amount + fee + tax;
+      final double currentBalance = ref.read(balanceProvider).totalBalance;
+
+      if (totalPayable > currentBalance) {
+        GlassDialog.showError(
+          context,
+          'Insufficient balance to complete this transaction.\n\nRequired: Rs. ${totalPayable.toStringAsFixed(2)}\nAvailable: Rs. ${currentBalance.toStringAsFixed(2)}',
+        );
+        return;
+      }
+
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
         backgroundColor: Colors.transparent,
         builder: (context) => BookingVerificationSheet(
           title: 'Bus',
@@ -110,7 +127,9 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
             'Seat Type': _seatController.text,
             'Fare': 'Rs. ${_priceController.text}',
           },
-          amount: double.parse(_priceController.text.replaceAll(',', '')),
+          amount: amount,
+          fee: fee,
+          tax: tax,
           onConfirm: () {
             Navigator.push(
               context,
@@ -598,6 +617,9 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
   void _showSelectionDialog(String title, List<String> options, Function(String) onSelect) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(

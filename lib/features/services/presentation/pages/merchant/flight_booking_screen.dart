@@ -20,7 +20,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   late TextEditingController _returnDateController;
   late TextEditingController _seatController;
   late TextEditingController _priceController;
-  
+
   int _adults = 1;
   int _children = 0;
 
@@ -51,7 +51,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   }
 
   void _updatePrice() {
-    int basePrice = _seatController.text == 'Premium Economy' ? 11500 : (_seatController.text == 'Business' ? 18000 : 8500);
+    int basePrice = _seatController.text == 'Premium Economy'
+        ? 11500
+        : (_seatController.text == 'Business' ? 18000 : 8500);
     if (_isRoundTrip) basePrice = (basePrice * 1.8).round();
     int total = basePrice * (_adults + _children);
     _priceController.text = total.toString();
@@ -68,7 +70,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     super.dispose();
   }
 
-  void _selectDate(TextEditingController controller, {DateTime? firstDate}) async {
+  void _selectDate(
+    TextEditingController controller, {
+    DateTime? firstDate,
+  }) async {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: firstDate ?? DateTime.now(),
@@ -137,13 +142,25 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                 margin: const EdgeInsets.only(bottom: 24),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[200],
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey[200],
                   borderRadius: AppTheme.radiusLarge,
                 ),
                 child: Row(
                   children: [
-                    _buildTripTypeButton('One Way', !_isRoundTrip, isDark, providerColor),
-                    _buildTripTypeButton('Round Trip', _isRoundTrip, isDark, providerColor),
+                    _buildTripTypeButton(
+                      'One Way',
+                      !_isRoundTrip,
+                      isDark,
+                      providerColor,
+                    ),
+                    _buildTripTypeButton(
+                      'Round Trip',
+                      _isRoundTrip,
+                      isDark,
+                      providerColor,
+                    ),
                   ],
                 ),
               ),
@@ -155,7 +172,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.surfaceDark : Colors.white,
                       borderRadius: AppTheme.radiusLarge,
-                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
+                      border: Border.all(
+                        color: isDark ? Colors.white12 : Colors.grey[200]!,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -163,18 +182,26 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           label: 'From',
                           value: _departureController.text,
                           icon: Icons.flight_takeoff_rounded,
-                          onTap: () => _showSelectionDialog('Departure City', _departments, (val) {
-                            setState(() => _departureController.text = val);
-                          }),
+                          onTap: () => _showSelectionDialog(
+                            'Departure City',
+                            _departments,
+                            (val) {
+                              setState(() => _departureController.text = val);
+                            },
+                          ),
                         ),
                         const Divider(height: 1, indent: 60),
                         _routeInput(
                           label: 'To',
                           value: _arrivalController.text,
                           icon: Icons.flight_land_rounded,
-                          onTap: () => _showSelectionDialog('Arrival City', _arrivals, (val) {
-                            setState(() => _arrivalController.text = val);
-                          }),
+                          onTap: () => _showSelectionDialog(
+                            'Arrival City',
+                            _arrivals,
+                            (val) {
+                              setState(() => _arrivalController.text = val);
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -196,7 +223,11 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.swap_vert_rounded, color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.swap_vert_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ).animate().rotate(duration: 300.ms),
                   ),
@@ -204,16 +235,31 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 24),
 
-              const Text('Passengers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Text(
+                'Passengers',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    child: _buildCounter('Adults', '12+ years', _adults, (val) => setState(() => _adults = val), isDark),
+                    child: _buildCounter(
+                      'Adults',
+                      '12+ years',
+                      _adults,
+                      (val) => setState(() => _adults = val),
+                      isDark,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildCounter('Children', '2-12 years', _children, (val) => setState(() => _children = val), isDark),
+                    child: _buildCounter(
+                      'Children',
+                      '2-12 years',
+                      _children,
+                      (val) => setState(() => _children = val),
+                      isDark,
+                    ),
                   ),
                 ],
               ),
@@ -232,7 +278,8 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           prefixIcon: Icon(Icons.calendar_month_rounded),
                           hintText: 'Date',
                         ),
-                        validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+                        validator: (value) =>
+                            (value?.isEmpty ?? true) ? 'Required' : null,
                       ),
                     ),
                   ),
@@ -249,7 +296,8 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             prefixIcon: Icon(Icons.event_repeat_rounded),
                             hintText: 'Date',
                           ),
-                          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+                          validator: (value) =>
+                              (value?.isEmpty ?? true) ? 'Required' : null,
                         ),
                       ),
                     ),
@@ -258,7 +306,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 24),
 
-              const Text('Travel Class', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Text(
+                'Travel Class',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
@@ -273,18 +324,33 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? providerColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
+                        color: isSelected
+                            ? providerColor
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.grey[100]),
                         borderRadius: AppTheme.radiusMedium,
-                        border: Border.all(color: isSelected ? providerColor : Colors.transparent),
+                        border: Border.all(
+                          color: isSelected
+                              ? providerColor
+                              : Colors.transparent,
+                        ),
                       ),
                       child: Text(
                         sClass,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.black87),
                         ),
                       ),
                     ),
@@ -293,15 +359,14 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 32),
 
-              _buildSummaryCard(providerColor, isDark),
-              const SizedBox(height: 32),
-
               ElevatedButton(
                 onPressed: _initiateSearch,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: providerColor,
                   minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppTheme.radiusLarge,
+                  ),
                   elevation: 8,
                   shadowColor: providerColor.withValues(alpha: 0.4),
                 ),
@@ -310,7 +375,14 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                   children: [
                     Icon(Icons.search_rounded, size: 20, color: Colors.white),
                     SizedBox(width: 12),
-                    Text('Search Flights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(
+                      'Search Flights',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ).animate().shimmer(delay: 2.seconds, duration: 1.5.seconds),
@@ -323,7 +395,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     );
   }
 
-  Widget _buildTripTypeButton(String label, bool isSelected, bool isDark, Color color) {
+  Widget _buildTripTypeButton(
+    String label,
+    bool isSelected,
+    bool isDark,
+    Color color,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -335,9 +412,18 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white) : Colors.transparent,
+            color: isSelected
+                ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white)
+                : Colors.transparent,
             borderRadius: AppTheme.radiusLarge,
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                    ),
+                  ]
+                : null,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -345,7 +431,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               fontSize: 13,
-              color: isSelected ? color : (isDark ? Colors.grey[400] : Colors.grey[600]),
+              color: isSelected
+                  ? color
+                  : (isDark ? Colors.grey[400] : Colors.grey[600]),
             ),
           ),
         ),
@@ -353,7 +441,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     );
   }
 
-  Widget _routeInput({required String label, required String value, required IconData icon, required VoidCallback onTap}) {
+  Widget _routeInput({
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -372,87 +465,43 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
               ],
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.grey,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSummaryCard(Color color, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
-        borderRadius: AppTheme.radiusLarge,
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[200]!),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15)],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Total Fare', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  Text('Rs ${_priceController.text}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text('Class', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  Text(_seatController.text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _dottedLine(isDark),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Price includes taxes and basic baggage fees.',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dottedLine(bool isDark) {
-    return Row(
-      children: List.generate(
-        40,
-        (index) => Expanded(
-          child: Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            color: index.isEven ? (isDark ? Colors.white12 : Colors.grey[300]) : Colors.transparent,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCounter(String title, String subtitle, int value, Function(int) onChanged, bool isDark) {
+  Widget _buildCounter(
+    String title,
+    String subtitle,
+    int value,
+    Function(int) onChanged,
+    bool isDark,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -463,7 +512,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
           Text(subtitle, style: TextStyle(color: Colors.grey, fontSize: 10)),
           const SizedBox(height: 12),
           Row(
@@ -479,7 +531,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                   _updatePrice();
                 }
               }, isDark),
-              Text('$value', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                '$value',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               _counterButton(Icons.add, () {
                 onChanged(value + 1);
                 _updatePrice();
@@ -497,17 +555,30 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.grey[100],
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: isDark ? Colors.white : Colors.black),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isDark ? Colors.white : Colors.black,
+        ),
       ),
     );
   }
 
-  void _showSelectionDialog(String title, List<String> options, Function(String) onSelect) {
+  void _showSelectionDialog(
+    String title,
+    List<String> options,
+    Function(String) onSelect,
+  ) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -518,13 +589,34 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   Text(
+                    title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
             ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.4,
+              ),
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: options.length,

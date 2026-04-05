@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/providers/theme_provider.dart';
+import '../providers/notification_provider.dart';
 
 class DashboardHeader extends ConsumerWidget {
   final bool isDark;
@@ -20,6 +22,8 @@ class DashboardHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+
     return Padding(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 8),
       child: Row(
@@ -66,20 +70,33 @@ class DashboardHeader extends ConsumerWidget {
                   _buildIconButton(
                     context,
                     Icons.notifications_outlined,
-                    () => Navigator.pushNamed(context, '/notifications'),
+                    () => context.push('/notifications'),
                   ),
-                  Positioned(
-                    right: 4,
-                    top: 4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.errorColor,
-                        shape: BoxShape.circle,
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? AppTheme.backgroundDark : Colors.white, width: 2),
+                        ),
+                        child: Center(
+                          child: Text(
+                            unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                      constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
-                    ),
-                  ),
+                    ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+                     .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 2.seconds),
                 ],
               ),
               const SizedBox(width: 8),
