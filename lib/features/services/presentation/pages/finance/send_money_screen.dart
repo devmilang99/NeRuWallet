@@ -372,36 +372,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     );
   }
 
-  Widget _buildInfoRow(
-    String label,
-    String value,
-    bool isDark, {
-    bool isTotal = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-            fontSize: isTotal ? 16 : 14,
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: isTotal ? 18 : 14,
-            color: isTotal
-                ? AppTheme.primaryColor
-                : (isDark ? Colors.white : Colors.black),
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildInfoBox(bool isDark) {
     return Container(

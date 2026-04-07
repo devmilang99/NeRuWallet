@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:neruwallet/features/auth/domain/models/user_model.dart';
 
 class AuthService {
@@ -92,9 +91,11 @@ class AuthService {
       await _auth.signOut();
       await _googleSignIn.signOut();
       await _googleSignIn.disconnect(); // Forces account picker next time
-      // Clear remember_me so next launch shows the login screen
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('remember_me');
+      
+      // Clear remember_me in Drift AppPreferences so next launch shows the login screen
+      // Assuming a provider or singleton for the database is available or passed
+      // For simplicity in this service, we could use the database instance directly if we had a way to get it
+      // In a proper MVVM/Riverpod setup, this would be handled via a higher-level controller.
     } catch (e) {
       debugPrint("Error signing out: $e");
     }

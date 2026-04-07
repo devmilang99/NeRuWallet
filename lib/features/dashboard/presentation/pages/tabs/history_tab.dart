@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import '../../widgets/transaction_tile.dart';
-import '../../../data/models/transaction_model.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 
 class HistoryTab extends StatefulWidget {
   final bool isDark;
-  final List<TransactionModel> transactions;
+  final List<Transaction> transactions;
 
   const HistoryTab({
     super.key,
@@ -22,22 +22,38 @@ class _HistoryTabState extends State<HistoryTab> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Income', 'Expense', 'Movies', 'Travel', 'Payments'];
 
-  List<TransactionModel> get _filteredTransactions {
+  List<Transaction> get _filteredTransactions {
     if (_selectedFilter == 'All') return widget.transactions;
-    if (_selectedFilter == 'Income') {
+    final lowerFilter = _selectedFilter.toLowerCase();
+    
+    if (lowerFilter == 'income') {
       return widget.transactions.where((t) => t.amount > 0).toList();
     }
-    if (_selectedFilter == 'Expense') {
+    if (lowerFilter == 'expense') {
       return widget.transactions.where((t) => t.amount < 0).toList();
     }
-    if (_selectedFilter == 'Movies') {
-      return widget.transactions.where((t) => t.title.toLowerCase().contains('ticket') && t.category.toLowerCase().contains('movie')).toList();
+    if (lowerFilter == 'movies') {
+      // Check category first, then title
+      return widget.transactions.where((t) => 
+        t.category.toLowerCase().contains('movie') || 
+        t.title.toLowerCase().contains('movie') ||
+        t.title.toLowerCase().contains('ticket')
+      ).toList();
     }
-    if (_selectedFilter == 'Travel') {
-      return widget.transactions.where((t) => t.category.toLowerCase() == 'travel' || t.title.toLowerCase().contains('flight') || t.title.toLowerCase().contains('bus')).toList();
+    if (lowerFilter == 'travel') {
+      return widget.transactions.where((t) => 
+        t.category.toLowerCase().contains('travel') || 
+        t.category.toLowerCase().contains('flight') || 
+        t.category.toLowerCase().contains('bus') || 
+        t.title.toLowerCase().contains('flight') || 
+        t.title.toLowerCase().contains('bus')
+      ).toList();
     }
-    if (_selectedFilter == 'Payments') {
-      return widget.transactions.where((t) => t.category.toLowerCase() == 'payment' || t.title.toLowerCase().contains('qr')).toList();
+    if (lowerFilter == 'payments') {
+      return widget.transactions.where((t) => 
+        t.category.toLowerCase().contains('payment') || 
+        t.title.toLowerCase().contains('qr')
+      ).toList();
     }
     return widget.transactions;
   }
@@ -71,7 +87,7 @@ class _HistoryTabState extends State<HistoryTab> {
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: IconButton(
-                onPressed: () {},
+                onPressed: () => _showFilterBottomSheet(context),
                 icon: const Icon(Icons.filter_list_rounded),
                 color: widget.isDark ? Colors.white : Colors.black,
               ),
@@ -176,4 +192,62 @@ class _HistoryTabState extends State<HistoryTab> {
       ],
     );
   }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: widget.isDark ? AppTheme.surfaceDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Filter Transactions',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _filters.map((filter) {
+                final isActive = _selectedFilter == filter;
+                return ChoiceChip(
+                  label: Text(filter),
+                  selected: isActive,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedFilter = filter);
+                      Navigator.pop(context);
+                    }
+                  },
+                  selectedColor: AppTheme.primaryColor,
+                  labelStyle: TextStyle(
+                    color: isActive ? Colors.white : (widget.isDark ? Colors.white70 : Colors.black87),
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

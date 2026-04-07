@@ -15,6 +15,7 @@ import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -149,7 +150,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final balanceState = ref.watch(balanceProvider);
-    final transactions = balanceState.transactions;
+    final List<Transaction> transactions = balanceState.transactions;
 
     return PopScope(
       // Prevent the default pop — we handle it ourselves with a dialog.

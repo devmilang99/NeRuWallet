@@ -83,7 +83,9 @@ class TransactionReceiptSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Icon(
-              isSuccess ? Icons.check_circle_rounded : Icons.receipt_long_rounded,
+              isSuccess
+                  ? Icons.check_circle_rounded
+                  : Icons.receipt_long_rounded,
               size: 64,
               color: isSuccess ? AppTheme.successColor : AppTheme.primaryColor,
             ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
@@ -157,12 +159,15 @@ class TransactionReceiptSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (isSuccess ? AppTheme.successColor : AppTheme.primaryColor)
-                    .withValues(alpha: 0.05),
+                color:
+                    (isSuccess ? AppTheme.successColor : AppTheme.primaryColor)
+                        .withValues(alpha: 0.05),
                 borderRadius: AppTheme.radiusLarge,
                 border: Border.all(
                   color:
-                      (isSuccess ? AppTheme.successColor : AppTheme.primaryColor)
+                      (isSuccess
+                              ? AppTheme.successColor
+                              : AppTheme.primaryColor)
                           .withValues(alpha: 0.1),
                 ),
               ),
@@ -214,7 +219,10 @@ class TransactionReceiptSheet extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       "Confirm & Authenticate",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -267,11 +275,11 @@ class TransactionReceiptSheet extends StatelessWidget {
                 child: const Text("Back to Home"),
               ),
             const SizedBox(height: 16),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildReceiptRow(String label, String value, bool isDark) {
     return Row(

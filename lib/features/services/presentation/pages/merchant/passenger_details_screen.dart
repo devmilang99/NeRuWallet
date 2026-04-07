@@ -14,13 +14,19 @@ class PassengerDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> searchData;
   final Map<String, dynamic> flightData;
 
-  const PassengerDetailsScreen({super.key, required this.searchData, required this.flightData});
+  const PassengerDetailsScreen({
+    super.key,
+    required this.searchData,
+    required this.flightData,
+  });
 
   @override
-  ConsumerState<PassengerDetailsScreen> createState() => _PassengerDetailsScreenState();
+  ConsumerState<PassengerDetailsScreen> createState() =>
+      _PassengerDetailsScreenState();
 }
 
-class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen> {
+class _PassengerDetailsScreenState
+    extends ConsumerState<PassengerDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   late List<PassengerController> _adultControllers;
   late List<PassengerController> _childControllers;
@@ -53,15 +59,31 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
     if (_formKey.currentState!.validate()) {
       final List<Map<String, String>> allPassengers = [];
       for (var c in _adultControllers) {
-        allPassengers.add({'title': c.title, 'name': c.nameController.text, 'type': 'Adult'});
+        allPassengers.add({
+          'title': c.title,
+          'name': c.nameController.text,
+          'type': 'Adult',
+        });
       }
       for (var c in _childControllers) {
-        allPassengers.add({'title': c.title, 'name': c.nameController.text, 'type': 'Child'});
+        allPassengers.add({
+          'title': c.title,
+          'name': c.nameController.text,
+          'type': 'Child',
+        });
       }
 
-      final double totalAmount = (widget.flightData['price'] as int) * (allPassengers.length).toDouble();
-      final double fee = TransactionService.getServiceCharge(TransactionType.flight, totalAmount);
-      final double tax = TransactionService.getTax(TransactionType.flight, totalAmount);
+      final double totalAmount =
+          (widget.flightData['price'] as int) *
+          (allPassengers.length).toDouble();
+      final double fee = TransactionService.getServiceCharge(
+        TransactionType.flight,
+        totalAmount,
+      );
+      final double tax = TransactionService.getTax(
+        TransactionType.flight,
+        totalAmount,
+      );
       final double totalPayable = totalAmount + fee + tax;
       final double currentBalance = ref.read(balanceProvider).totalBalance;
 
@@ -84,16 +106,23 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
           provider: widget.flightData['airline'],
           color: const Color(0xFF10B981),
           details: {
-            'Flight': '${widget.flightData['airline']} (${widget.flightData['flightNumber']})',
+            'Flight':
+                '${widget.flightData['airline']} (${widget.flightData['flightNumber']})',
             'Passengers': allPassengers.length.toString(),
-            'Adult/Child': '${widget.searchData['adults']}A, ${widget.searchData['children']}C',
-            'Route': '${widget.searchData['from']} → ${widget.searchData['to']}',
-            'Type': widget.searchData['isRoundTrip'] == true ? 'Round Trip' : 'One Way',
+            'Adult/Child':
+                '${widget.searchData['adults']}A, ${widget.searchData['children']}C',
+            'Route':
+                '${widget.searchData['from']} → ${widget.searchData['to']}',
+            'Type': widget.searchData['isRoundTrip'] == true
+                ? 'Round Trip'
+                : 'One Way',
             'Travel Date': widget.searchData['departureDate'],
             'Class': widget.searchData['class'],
             'Total Fare': 'Rs. $totalAmount',
           },
-          passengers: allPassengers.map((p) => '${p['title']} ${p['name']}').toList(),
+          passengers: allPassengers
+              .map((p) => '${p['title']} ${p['name']}')
+              .toList(),
           amount: totalAmount,
           fee: fee,
           tax: tax,
@@ -117,19 +146,24 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
     Navigator.pop(context); // Close PIN screen
 
     // Deduct balance here (as the flight booking transaction is now completed successfully)
-    ref.read(balanceProvider.notifier).deductTravelTicket(
-      mode: 'Flight',
-      amount: amount,
-      ref: 'FLI${DateTime.now().millisecondsSinceEpoch % 1000000}',
-      fee: TransactionService.getServiceCharge(TransactionType.flight, amount),
-      tax: TransactionService.getTax(TransactionType.flight, amount),
-      metadata: {
-        'from': widget.searchData['from'],
-        'to': widget.searchData['to'],
-        'date': widget.searchData['departureDate'],
-        'passengers': passengers.map((p) => p['name']).toList(),
-      },
-    );
+    ref
+        .read(balanceProvider.notifier)
+        .deductTravelTicket(
+          mode: 'Flight',
+          amount: amount,
+          ref: 'FLI${DateTime.now().millisecondsSinceEpoch % 1000000}',
+          fee: TransactionService.getServiceCharge(
+            TransactionType.flight,
+            amount,
+          ),
+          tax: TransactionService.getTax(TransactionType.flight, amount),
+          metadata: {
+            'from': widget.searchData['from'],
+            'to': widget.searchData['to'],
+            'date': widget.searchData['departureDate'],
+            'passengers': passengers.map((p) => p['name']).toList(),
+          },
+        );
 
     showDialog(
       context: context,
@@ -141,12 +175,15 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 20),
-            const CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF10B981)),
+            const CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFF10B981),
+            ),
             const SizedBox(height: 32),
-            const Text('Issuing your flight ticket...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
-            const Text('Your transaction is successful. Please wait.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
-            const SizedBox(height: 20),
+            const Text(
+              'Issuing your flight ticket...',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ],
         ),
       ),
@@ -161,14 +198,19 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
         'airline': widget.flightData['airline'],
         'flightNumber': widget.flightData['flightNumber'],
         'departureCity': widget.searchData['from'].split('(')[0].trim(),
-        'departureCode': widget.searchData['from'].contains('(') ? widget.searchData['from'].split('(')[1].replaceAll(')', '') : 'N/A',
+        'departureCode': widget.searchData['from'].contains('(')
+            ? widget.searchData['from'].split('(')[1].replaceAll(')', '')
+            : 'N/A',
         'arrivalCity': widget.searchData['to'].split('(')[0].trim(),
-        'arrivalCode': widget.searchData['to'].contains('(') ? widget.searchData['to'].split('(')[1].replaceAll(')', '') : 'N/A',
+        'arrivalCode': widget.searchData['to'].contains('(')
+            ? widget.searchData['to'].split('(')[1].replaceAll(')', '')
+            : 'N/A',
         'departureDate': widget.searchData['departureDate'],
         'departureTime': widget.flightData['departure'],
         'arrivalTime': widget.flightData['arrival'],
         'duration': widget.flightData['duration'],
-        'passengerName': '${passengers[0]['title']} ${passengers[0]['name']}${passengers.length > 1 ? ' + ${passengers.length - 1} more' : ''}',
+        'passengerName':
+            '${passengers[0]['title']} ${passengers[0]['name']}${passengers.length > 1 ? ' + ${passengers.length - 1} more' : ''}',
         'passengerAge': widget.searchData['adults'] > 0 ? 'Adult' : 'Child',
         'seatNumber': 'A-${(10 + DateTime.now().millisecond % 50)}',
         'seatClass': widget.searchData['class'],
@@ -181,7 +223,8 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FlightTicketScreenWithData(ticketData: ticketData),
+          builder: (context) =>
+              FlightTicketScreenWithData(ticketData: ticketData),
         ),
       );
     });
@@ -199,11 +242,17 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: AppTheme.radiusSmall),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: AppTheme.radiusSmall,
+              ),
               child: Icon(Icons.group_rounded, color: color, size: 20),
             ),
             const SizedBox(width: 12),
-            Text('Passenger Information', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(
+              'Passenger Information',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -219,9 +268,18 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color,
                   minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppTheme.radiusLarge,
+                  ),
                 ),
-                child: const Text('Proceed to Confirmation', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: const Text(
+                  'Proceed to Confirmation',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ).animate().shimmer(),
               const SizedBox(height: 48),
             ],
@@ -231,15 +289,25 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
     );
   }
 
-  List<Widget> _buildPassengerList(String title, List<PassengerController> controllers, bool isDark) {
+  List<Widget> _buildPassengerList(
+    String title,
+    List<PassengerController> controllers,
+    bool isDark,
+  ) {
     if (controllers.isEmpty) return [];
     return [
       const SizedBox(height: 16),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          Text('${controllers.length} Passenger(s)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          Text(
+            '${controllers.length} Passenger(s)',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ],
       ),
       const SizedBox(height: 16),
@@ -250,12 +318,21 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
           decoration: BoxDecoration(
             color: isDark ? AppTheme.surfaceDark : Colors.white,
             borderRadius: AppTheme.radiusLarge,
-            border: Border.all(color: isDark ? Colors.white12 : Colors.grey[200]!),
+            border: Border.all(
+              color: isDark ? Colors.white12 : Colors.grey[200]!,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$title ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey, fontSize: 12)),
+              Text(
+                '$title ${index + 1}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -263,15 +340,28 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
                     width: 70,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                      border: Border.all(
+                        color: isDark ? Colors.white12 : Colors.grey[300]!,
+                      ),
                       borderRadius: AppTheme.radiusMedium,
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: controllers[index].title,
                         isExpanded: true,
-                        items: ['Mr.', 'Mrs.', 'Ms.'].map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 13)))).toList(),
-                        onChanged: (val) => setState(() => controllers[index].title = val!),
+                        items: ['Mr.', 'Mrs.', 'Ms.']
+                            .map(
+                              (t) => DropdownMenuItem(
+                                value: t,
+                                child: Text(
+                                  t,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => controllers[index].title = val!),
                       ),
                     ),
                   ),
@@ -282,9 +372,13 @@ class _PassengerDetailsScreenState extends ConsumerState<PassengerDetailsScreen>
                       decoration: const InputDecoration(
                         hintText: 'Full Name',
                         hintStyle: TextStyle(fontSize: 14),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                      validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                      validator: (v) =>
+                          (v?.isEmpty ?? true) ? 'Required' : null,
                     ),
                   ),
                 ],

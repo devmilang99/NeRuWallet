@@ -5,7 +5,7 @@ import '../../widgets/balance_card.dart';
 import '../../widgets/quick_actions_grid.dart';
 import '../../widgets/promo_card.dart';
 import '../../widgets/transaction_tile.dart';
-import '../../../data/models/transaction_model.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class HomeTab extends StatelessWidget {
@@ -15,7 +15,7 @@ class HomeTab extends StatelessWidget {
   final bool isKycVerified;
   final VoidCallback onToggleBalance;
   final VoidCallback onProfileTap;
-  final List<TransactionModel> transactions;
+  final List<Transaction> transactions;
   final double totalBalance;
   final double totalExpenses;
 
@@ -73,7 +73,7 @@ class HomeTab extends StatelessWidget {
             ),
           ),
         ),
-        SliverToBoxAdapter(child: SizedBox(height: 12)),
+        SliverToBoxAdapter(child: const SizedBox(height: 12)),
         SliverToBoxAdapter(child: QuickActionsGrid(isDark: isDark)),
         SliverToBoxAdapter(child: PromoCard(isDark: isDark)),
         SliverToBoxAdapter(
@@ -246,7 +246,7 @@ class HomeTab extends StatelessWidget {
   void _showTransactionListBottomSheet(
     BuildContext context,
     String title,
-    List<TransactionModel> filteredTransactions,
+    List<Transaction> filteredTransactions,
   ) {
     showModalBottomSheet(
       context: context,
@@ -304,3 +304,4 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
+

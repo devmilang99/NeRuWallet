@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import '../../data/models/transaction_model.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 import 'transaction_detail_sheet.dart';
+import 'package:intl/intl.dart';
 
 class TransactionTile extends StatelessWidget {
-  final TransactionModel transaction;
+  final Transaction transaction;
   final bool isDark;
   final int index;
 
@@ -19,6 +20,9 @@ class TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCredit = transaction.amount > 0;
     final double displayAmount = transaction.amount.abs() + transaction.fee + transaction.tax;
+    final Color iconColor = Color(transaction.colorValue);
+    final IconData iconData = IconData(transaction.iconCode, fontFamily: 'MaterialIcons');
+    final String formattedDate = DateFormat('hh:mm a').format(transaction.createdAt);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
@@ -58,10 +62,10 @@ class TransactionTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: transaction.color.withValues(alpha: 0.1),
+                      color: iconColor.withValues(alpha: 0.1),
                       borderRadius: AppTheme.radiusMedium,
                     ),
-                    child: Icon(transaction.icon, color: transaction.color, size: 20),
+                    child: Icon(iconData, color: iconColor, size: 20),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -103,7 +107,7 @@ class TransactionTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        transaction.time,
+                        formattedDate,
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
@@ -120,3 +124,4 @@ class TransactionTile extends StatelessWidget {
     );
   }
 }
+

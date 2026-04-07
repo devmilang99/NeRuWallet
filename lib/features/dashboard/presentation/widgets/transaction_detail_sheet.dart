@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/features/dashboard/data/models/transaction_model.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:intl/intl.dart';
 
 class TransactionDetailSheet extends StatelessWidget {
-  final TransactionModel transaction;
+  final Transaction transaction;
   final bool isDark;
 
   const TransactionDetailSheet({
@@ -17,7 +17,10 @@ class TransactionDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isExpense = transaction.amount < 0;
-    final double total = transaction.totalPayable;
+    final double total = transaction.amount.abs() + transaction.fee + transaction.tax;
+    final Color iconColor = Color(transaction.colorValue);
+    final IconData iconData = IconData(transaction.iconCode, fontFamily: 'MaterialIcons');
+    final String formattedDate = DateFormat('dd MMM, hh:mm a').format(transaction.createdAt);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -52,10 +55,10 @@ class TransactionDetailSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: transaction.color.withValues(alpha: 0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(transaction.icon, size: 40, color: transaction.color),
+            child: Icon(iconData, size: 40, color: iconColor),
           ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
           
           const SizedBox(height: 16),
@@ -93,7 +96,7 @@ class TransactionDetailSheet extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider(height: 1),
                 ),
-                _buildDetailRow("Date & Time", transaction.time == 'Just now' ? DateFormat('dd MMM, hh:mm a').format(DateTime.now()) : transaction.time, isDark),
+                _buildDetailRow("Date & Time", formattedDate, isDark),
                 const SizedBox(height: 12),
                 _buildDetailRow("Transaction Type", transaction.category, isDark),
                 const Padding(
@@ -102,10 +105,14 @@ class TransactionDetailSheet extends StatelessWidget {
                 ),
                 _buildDetailRow("Base Amount", "Rs. ${transaction.amount.abs().toStringAsFixed(2)}", isDark),
                 if (isExpense) ...[
-                  const SizedBox(height: 12),
-                  _buildDetailRow("Service Fee", "Rs. ${transaction.fee.toStringAsFixed(2)}", isDark),
-                  const SizedBox(height: 12),
-                  _buildDetailRow("Service Tax (VAT)", "Rs. ${transaction.tax.toStringAsFixed(2)}", isDark),
+                  if (transaction.fee > 0) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailRow("Service Fee", "Rs. ${transaction.fee.toStringAsFixed(2)}", isDark),
+                  ],
+                  if (transaction.tax > 0) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailRow("Service Tax (VAT)", "Rs. ${transaction.tax.toStringAsFixed(2)}", isDark),
+                  ],
                 ],
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -219,3 +226,4 @@ class TransactionDetailSheet extends StatelessWidget {
     );
   }
 }
+

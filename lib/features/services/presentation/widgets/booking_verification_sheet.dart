@@ -143,9 +143,14 @@ class BookingVerificationSheet extends StatelessWidget {
                   children: [
                     _buildRow("Ticket Fare", "Rs. ${amount.toStringAsFixed(2)}", isDark),
                     const SizedBox(height: 8),
-                    _buildRow("Service Charge", "Rs. ${fee.toStringAsFixed(2)}", isDark),
-                    const SizedBox(height: 8),
-                    _buildRow("Service Tax (VAT)", "Rs. ${tax.toStringAsFixed(2)}", isDark),
+                    if (fee > 0) ...[
+                      _buildRow("Service Charge", "Rs. ${fee.toStringAsFixed(2)}", isDark),
+                      const SizedBox(height: 8),
+                    ],
+                    if (tax > 0) ...[
+                      _buildRow("Service Tax (VAT)", "Rs. ${tax.toStringAsFixed(2)}", isDark),
+                      const SizedBox(height: 8),
+                    ],
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1),

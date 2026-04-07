@@ -283,9 +283,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.utility, amount).toStringAsFixed(2)}'),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Service Tax (VAT)', 'Rs. ${TransactionService.getTax(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                      if (TransactionService.getServiceCharge(TransactionType.utility, amount) > 0) ...[
+                        _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                        const SizedBox(height: 8),
+                      ],
+                      if (TransactionService.getTax(TransactionType.utility, amount) > 0) ...[
+                        _buildInfoRow('Service Tax (VAT)', 'Rs. ${TransactionService.getTax(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                      ],
                       const Divider(height: 24),
                       _buildInfoRow('Total Payable', 'Rs. ${TransactionService.getTotalPayable(TransactionType.utility, amount).toStringAsFixed(2)}', isTotal: true),
                     ],

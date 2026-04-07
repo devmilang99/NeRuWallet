@@ -107,6 +107,7 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
     'totalPrice': 'Rs 1,350',
     'bookingDate': '10 April 2024',
     'status': 'Confirmed',
+    'posterUrl': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop',
   };
 
   @override
@@ -196,6 +197,14 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
               Container(
                 height: 200,
                 decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: const NetworkImage('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.5),
+                      BlendMode.darken,
+                    ),
+                  ),
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -253,22 +262,53 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                               ),
                             ],
                           ),
-                          const Spacer(),
-                          Text(
-                            data['movieName'] ?? 'Movie Name',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              _buildModernBadge(data['genre'] ?? 'Genre', Colors.white24),
-                              const SizedBox(width: 8),
-                              _buildModernBadge(data['format'] ?? 'Format', Colors.white24),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data['movieName'] ?? 'Movie Name',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        _buildModernBadge(data['genre'] ?? 'Genre', Colors.white24),
+                                        const SizedBox(width: 8),
+                                        _buildModernBadge(data['format'] ?? 'Format', Colors.white24),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Container(
+                                width: 80,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white24, width: 2),
+                                  image: DecorationImage(
+                                    image: NetworkImage(data['posterUrl'] ?? 'https://images.unsplash.com/photo-1536440136628-849c177e76a1'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ],
