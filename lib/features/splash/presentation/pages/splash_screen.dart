@@ -6,17 +6,18 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   String _statusMessage = "Initializing systems...";
   bool _hasError = false;
 
@@ -55,8 +56,8 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
       setState(() => _statusMessage = "Loading user preferences...");
-      final prefs = await SharedPreferences.getInstance();
-      final bool isFirstTime = prefs.getBool('is_first_time') ?? true;
+      final prefService = ref.read(preferenceServiceProvider);
+      final bool isFirstTime = await prefService.getBool('is_first_time') ?? true;
 
       // Wait for splash animation if it's faster than the checks
       await splashFuture;
@@ -67,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
         await _navigateBasedOnPermissions();
       } else {
         // Check if user is already authenticated and can skip login
-        final destination = await _resolveAuthDestination(prefs);
+        final destination = await _resolveAuthDestination(prefService);
         if (mounted) context.go(destination);
       }
     } catch (e) {
@@ -87,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen> {
   /// - If the user signed in with **email/password** AND has "Remember Me"
   ///   enabled, go to dashboard directly.
   /// - Otherwise, route to the login screen.
-  Future<String> _resolveAuthDestination(SharedPreferences prefs) async {
+  Future<String> _resolveAuthDestination(PreferenceService prefService) async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
 
     if (firebaseUser != null) {
@@ -102,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
       // Email/password user: only skip login if "Remember Me" was enabled
-      final bool rememberMe = prefs.getBool('remember_me') ?? false;
+      final bool rememberMe = await prefService.getBool('remember_me') ?? false;
       if (rememberMe) {
         return '/dashboard';
       }

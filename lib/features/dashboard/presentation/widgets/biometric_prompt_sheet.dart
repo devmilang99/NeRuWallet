@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
-class BiometricPromptSheet extends StatefulWidget {
+class BiometricPromptSheet extends ConsumerStatefulWidget {
   final List<BiometricType> biometrics;
   final LocalAuthentication auth;
   final VoidCallback onEnrolled;
@@ -17,10 +18,10 @@ class BiometricPromptSheet extends StatefulWidget {
   });
 
   @override
-  State<BiometricPromptSheet> createState() => _BiometricPromptSheetState();
+  ConsumerState<BiometricPromptSheet> createState() => _BiometricPromptSheetState();
 }
 
-class _BiometricPromptSheetState extends State<BiometricPromptSheet> {
+class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
   bool _isEnrolled = false;
   bool _loginAuth = true;
   bool _transactionAuth = true;
@@ -167,12 +168,12 @@ class _BiometricPromptSheetState extends State<BiometricPromptSheet> {
         const SizedBox(height: 48),
         ElevatedButton(
           onPressed: () async {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('biometrics_enabled', _loginAuth || _transactionAuth);
-            await prefs.setBool('biometrics_login_enabled', _loginAuth);
-            await prefs.setBool('biometrics_transaction_enabled', _transactionAuth);
+            final prefService = ref.read(preferenceServiceProvider);
+            await prefService.setBool('biometrics_enabled', _loginAuth || _transactionAuth);
+            await prefService.setBool('biometrics_login_enabled', _loginAuth);
+            await prefService.setBool('biometrics_transaction_enabled', _transactionAuth);
             // Mark onboarding as completed
-            await prefs.setBool('biometric_onboarding_completed', true);
+            await prefService.setBool('biometric_onboarding_completed', true);
 
             if (mounted) {
               Navigator.pop(context);

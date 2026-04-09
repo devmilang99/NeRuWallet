@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
-class PromoCard extends StatefulWidget {
+class PromoCard extends ConsumerStatefulWidget {
   final bool isDark;
 
   const PromoCard({
@@ -13,10 +14,10 @@ class PromoCard extends StatefulWidget {
   });
 
   @override
-  State<PromoCard> createState() => _PromoCardState();
+  ConsumerState<PromoCard> createState() => _PromoCardState();
 }
 
-class _PromoCardState extends State<PromoCard> {
+class _PromoCardState extends ConsumerState<PromoCard> {
   bool _isClaimed = false;
 
   @override
@@ -26,18 +27,19 @@ class _PromoCardState extends State<PromoCard> {
   }
 
   Future<void> _checkClaimStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
+    final isClaimed = await prefService.getBool('voucher_active') ?? false;
     setState(() {
-      _isClaimed = prefs.getBool('voucher_active') ?? false;
+      _isClaimed = isClaimed;
     });
   }
 
   Future<void> _handleClaim() async {
     if (_isClaimed) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('voucher_active', true);
-    await prefs.setInt('voucher_limit', 3);
+    final prefService = ref.read(preferenceServiceProvider);
+    await prefService.setBool('voucher_active', true);
+    await prefService.setInt('voucher_limit', 3);
     
     // Success Dialog
     if (mounted) {

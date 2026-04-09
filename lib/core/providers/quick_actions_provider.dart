@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import '../../features/dashboard/data/models/quick_action_model.dart';
 
 class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
-  QuickActionsNotifier() : super(_defaultActions) {
+  final PreferenceService _prefService;
+
+  QuickActionsNotifier(this._prefService) : super(_defaultActions) {
     _loadSelectedActions();
   }
 
@@ -114,8 +116,7 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
   ];
 
   Future<void> _loadSelectedActions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? actionLabels = prefs.getStringList(
+    final List<String>? actionLabels = await _prefService.getStringList(
       'selected_quick_actions',
     );
     if (actionLabels != null && actionLabels.isNotEmpty) {
@@ -164,8 +165,7 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
   }
 
   Future<void> _saveSelectedActions() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
+    await _prefService.setStringList(
       'selected_quick_actions',
       state.map((a) => a.label).toList(),
     );
@@ -178,5 +178,5 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
 
 final quickActionsProvider =
     StateNotifierProvider<QuickActionsNotifier, List<QuickActionModel>>((ref) {
-      return QuickActionsNotifier();
+      return QuickActionsNotifier(ref.watch(preferenceServiceProvider));
     });

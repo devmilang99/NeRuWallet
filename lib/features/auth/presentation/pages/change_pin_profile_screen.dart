@@ -3,16 +3,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 
-class ChangePinProfileScreen extends StatefulWidget {
+class ChangePinProfileScreen extends ConsumerStatefulWidget {
   const ChangePinProfileScreen({super.key});
 
   @override
-  State<ChangePinProfileScreen> createState() => _ChangePinProfileScreenState();
+  ConsumerState<ChangePinProfileScreen> createState() => _ChangePinProfileScreenState();
 }
 
-class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
+class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen> {
   final _oldPinController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
@@ -44,10 +45,10 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
   }
 
   Future<void> _handleComplete() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     
     if (_step == 0) {
-      final savedPin = prefs.getString('transaction_pin');
+      final savedPin = await prefService.getString('transaction_pin', encrypted: true);
       if (_oldPinController.text != savedPin) {
         if (mounted) {
           GlassDialog.showError(context, "Old PIN is incorrect.");
@@ -90,7 +91,7 @@ class _ChangePinProfileScreenState extends State<ChangePinProfileScreen> {
       GlassDialog.showLoading(context, message: 'Updating PIN...');
       
       try {
-        await prefs.setString('transaction_pin', _pinController.text);
+        await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
         
         if (mounted) {
           Navigator.pop(context); // Close loading

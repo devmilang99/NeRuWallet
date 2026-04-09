@@ -4,10 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
-class RegistrationPinScreen extends StatefulWidget {
+class RegistrationPinScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> signupData;
 
   const RegistrationPinScreen({
@@ -16,10 +17,10 @@ class RegistrationPinScreen extends StatefulWidget {
   });
 
   @override
-  State<RegistrationPinScreen> createState() => _RegistrationPinScreenState();
+  ConsumerState<RegistrationPinScreen> createState() => _RegistrationPinScreenState();
 }
 
-class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
+class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
   
@@ -38,7 +39,7 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
   }
 
   Future<void> _handleComplete() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     
     if (_step == 1) {
       if (_pinController.text.length != 4) {
@@ -69,8 +70,8 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
       if (!mounted) return;
       GlassDialog.showLoading(context, message: 'Creating Account...');
       try {
-        // Save PIN first
-        await prefs.setString('transaction_pin', _pinController.text);
+        // Save PIN first with AES encryption
+        await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
         
         final data = widget.signupData;
         final bool isSocial = data['isSocial'] ?? false;
@@ -85,11 +86,11 @@ class _RegistrationPinScreenState extends State<RegistrationPinScreen> {
         
         // Also save security data
         if (data.containsKey('security_question')) {
-          await prefs.setString('security_question', data['security_question']);
-          await prefs.setString('security_answer', data['security_answer']);
+          await prefService.setString('security_question', data['security_question']);
+          await prefService.setString('security_answer', data['security_answer'], encrypted: true);
         }
         if (data.containsKey('password')) {
-          await prefs.setString('app_password', data['password']);
+          await prefService.setString('app_password', data['password'], encrypted: true);
         }
 
         if (mounted) {

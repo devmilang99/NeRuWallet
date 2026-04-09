@@ -3,13 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 enum PinMode { set, change, verify, reset }
 
-class TransactionPinScreen extends StatefulWidget {
+class TransactionPinScreen extends ConsumerStatefulWidget {
   final PinMode mode;
   final VoidCallback? onSuccess;
   final Map<String, dynamic>? signupData;
@@ -22,10 +23,10 @@ class TransactionPinScreen extends StatefulWidget {
   });
 
   @override
-  State<TransactionPinScreen> createState() => _TransactionPinScreenState();
+  ConsumerState<TransactionPinScreen> createState() => _TransactionPinScreenState();
 }
 
-class _TransactionPinScreenState extends State<TransactionPinScreen> {
+class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
   final AuthService _authService = AuthService();
@@ -104,12 +105,12 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   }
 
   Future<void> _handleNewUserPinSetup() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     if (!mounted) return;
 
     GlassDialog.showLoading(context, message: 'Completing your setup...');
     try {
-      await prefs.setString('transaction_pin', _pinController.text);
+      await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
 
       if (widget.signupData != null) {
         final data = widget.signupData!;
@@ -124,12 +125,12 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
         }
 
         if (data.containsKey('security_question')) {
-          await prefs.setString('security_question', data['security_question']);
-          await prefs.setString('security_answer', data['security_answer']);
+          await prefService.setString('security_question', data['security_question']);
+          await prefService.setString('security_answer', data['security_answer'], encrypted: true);
         }
 
         if (data.containsKey('password')) {
-          await prefs.setString('app_password', data['password']);
+          await prefService.setString('app_password', data['password'], encrypted: true);
         }
       }
 
@@ -156,9 +157,9 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   Future<void> _checkBiometricForVerification() async {
     if (widget.mode != PinMode.verify) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final bool isEnabled = prefs.getBool('biometrics_transaction_enabled') ?? false;
-    final bool isFirstTime = prefs.getBool('is_first_time') ?? false;
+    final prefService = ref.read(preferenceServiceProvider);
+    final bool isEnabled = await prefService.getBool('biometrics_transaction_enabled') ?? false;
+    final bool isFirstTime = await prefService.getBool('is_first_time') ?? false;
 
 
     if (!isEnabled && isFirstTime) {
@@ -199,12 +200,12 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   }
 
   Future<void> _handleChangePin() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     if (!mounted) return;
 
     GlassDialog.showLoading(context, message: 'Updating PIN...');
     try {
-      await prefs.setString('transaction_pin', _pinController.text);
+      await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
 
       if (mounted) {
         Navigator.pop(context);
@@ -223,8 +224,8 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   }
 
   Future<void> _handleTransactionVerification() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedPin = prefs.getString('transaction_pin');
+    final prefService = ref.read(preferenceServiceProvider);
+    final savedPin = await prefService.getString('transaction_pin', encrypted: true);
 
     if (_pinController.text == savedPin) {
       if (!mounted) return;
@@ -382,7 +383,7 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
                   ),
                 if (widget.mode == PinMode.verify)
                   FutureBuilder<bool>(
-                    future: SharedPreferences.getInstance().then((p) => p.getBool('biometrics_transaction_enabled') ?? false),
+                    future: ref.read(preferenceServiceProvider).getBool('biometrics_transaction_enabled').then((v) => v ?? false),
                     builder: (context, snapshot) {
                       if (snapshot.data == true) {
                         return Padding(

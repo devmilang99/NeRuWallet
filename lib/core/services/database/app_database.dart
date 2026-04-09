@@ -3,8 +3,15 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
+
+@riverpod
+AppDatabase appDatabase(Ref ref) {
+  return AppDatabase();
+}
 
 /// Transactions table for offline storage and atomicity
 class Transactions extends Table {

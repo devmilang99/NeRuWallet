@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:local_auth/local_auth.dart';
 
-class BiometricSettingsScreen extends StatefulWidget {
+class BiometricSettingsScreen extends ConsumerStatefulWidget {
   const BiometricSettingsScreen({super.key});
 
   @override
-  State<BiometricSettingsScreen> createState() => _BiometricSettingsScreenState();
+  ConsumerState<BiometricSettingsScreen> createState() => _BiometricSettingsScreenState();
 }
 
-class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
+class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScreen> {
   final LocalAuthentication _auth = LocalAuthentication();
   bool _loginEnabled = false;
   bool _transactionEnabled = false;
@@ -32,15 +33,17 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
+    final loginEnabled = await prefService.getBool('biometrics_login_enabled') ?? false;
+    final transactionEnabled = await prefService.getBool('biometrics_transaction_enabled') ?? false;
     setState(() {
-      _loginEnabled = prefs.getBool('biometrics_login_enabled') ?? false;
-      _transactionEnabled = prefs.getBool('biometrics_transaction_enabled') ?? false;
+      _loginEnabled = loginEnabled;
+      _transactionEnabled = transactionEnabled;
     });
   }
 
   Future<void> _toggleLoginBiometrics(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     if (value) {
       // Authenticate once before enabling
       final bool authenticated = await _auth.authenticate(
@@ -50,9 +53,9 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
       if (!authenticated) return;
     }
 
-    await prefs.setBool('biometrics_login_enabled', value);
+    await prefService.setBool('biometrics_login_enabled', value);
     // Backward compatibility
-    await prefs.setBool('biometrics_enabled', value);
+    await prefService.setBool('biometrics_enabled', value);
     
     setState(() {
       _loginEnabled = value;
@@ -60,7 +63,7 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
   }
 
   Future<void> _toggleTransactionBiometrics(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     if (value) {
       final bool authenticated = await _auth.authenticate(
         localizedReason: 'Confirm to enable biometric transactions',
@@ -69,7 +72,7 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
       if (!authenticated) return;
     }
 
-    await prefs.setBool('biometrics_transaction_enabled', value);
+    await prefService.setBool('biometrics_transaction_enabled', value);
     setState(() {
       _transactionEnabled = value;
     });

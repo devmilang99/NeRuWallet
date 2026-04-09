@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import '../../data/models/nav_item_model.dart';
 import '../widgets/biometric_prompt_sheet.dart';
@@ -50,10 +50,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _initializeSession() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     // Unique session ID for voucher management
     final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    await prefs.setString('voucher_session_id', sessionId);
+    await prefService.setString('voucher_session_id', sessionId);
   }
 
   void _loadUserName() {
@@ -67,8 +67,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Future<void> _markOnboardingComplete() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_first_time', false);
+      final prefService = ref.read(preferenceServiceProvider);
+      await prefService.setBool('is_first_time', false);
     } catch (_) {}
   }
 
@@ -86,10 +86,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _loadKycStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
+    final isVerified = await prefService.getBool('is_kyc_verified') ?? false;
     if (mounted) {
       setState(() {
-        _isKycVerified = prefs.getBool('is_kyc_verified') ?? false;
+        _isKycVerified = isVerified;
       });
     }
   }
@@ -98,10 +99,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     if (_hasPromptedThisSession) return;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final bool isEnrolled = prefs.getBool('biometrics_enabled') ?? false;
+      final prefService = ref.read(preferenceServiceProvider);
+      final bool isEnrolled = await prefService.getBool('biometrics_enabled') ?? false;
       final bool onboardingCompleted =
-          prefs.getBool('biometric_onboarding_completed') ?? false;
+          await prefService.getBool('biometric_onboarding_completed') ?? false;
 
       // Just load the preferences, we don't need to store _biometricsEnabled in state anymore
 
@@ -118,7 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
         if (availableBiometrics.isNotEmpty && mounted) {
           // Strictly mark onboarding as completed the first time we show it (or attempt to)
-          await prefs.setBool('biometric_onboarding_completed', true);
+          await prefService.setBool('biometric_onboarding_completed', true);
           _hasPromptedThisSession = true;
 
           if (!mounted) return;

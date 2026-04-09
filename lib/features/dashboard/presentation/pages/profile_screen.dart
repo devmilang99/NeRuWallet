@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
@@ -8,14 +9,14 @@ import 'package:go_router/go_router.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final AuthService _authService = AuthService();
   bool _isKycVerified = false;
 
@@ -26,10 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadKycStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
+    final isVerified = await prefService.getBool('is_kyc_verified') ?? false;
     if (mounted) {
       setState(() {
-        _isKycVerified = prefs.getBool('is_kyc_verified') ?? false;
+        _isKycVerified = isVerified;
       });
     }
   }

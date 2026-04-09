@@ -3,19 +3,20 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -46,8 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
             context.go('/auth/security-setup', extra: false);
           } else {
             // Save 'remember me' preference for splash auto-login
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('remember_me', _rememberMe);
+            final prefService = ref.read(preferenceServiceProvider);
+            await prefService.setBool('remember_me', _rememberMe);
             if (mounted) context.go('/dashboard');
           }
         }
@@ -133,18 +134,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadSavedPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
+    final rememberMe = await prefService.getBool('remember_me') ?? false;
     if (mounted) {
       setState(() {
-        _rememberMe = prefs.getBool('remember_me') ?? false;
+        _rememberMe = rememberMe;
       });
     }
   }
 
   Future<void> _checkAndStartBiometricLogin() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefService = ref.read(preferenceServiceProvider);
     final bool isBiometricEnabled =
-        prefs.getBool('biometrics_login_enabled') ?? prefs.getBool('biometrics_enabled') ?? false;
+        await prefService.getBool('biometrics_login_enabled') ?? await prefService.getBool('biometrics_enabled') ?? false;
 
     if (isBiometricEnabled) {
       final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
