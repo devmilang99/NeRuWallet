@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:neruwallet/firebase_options.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_router.dart';
 import 'core/providers/theme_provider.dart';
-import 'core/providers/database_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,11 +16,12 @@ void main() async {
   // Use a ProviderContainer to access and initialize services before the UI is ready
   final container = ProviderContainer();
   
+  // Pre-initialize the database to ensure it's ready and kept alive
   try {
-    // Initialize notification handling (FCM)
-    await container.read(notificationServiceProvider).initialize();
+    // This triggers the database opening logic
+    container.read(appDatabaseProvider);
   } catch (e) {
-    debugPrint('Notification initialization error: $e');
+    debugPrint('Database Pre-initialization Error: $e');
   }
 
   runApp(

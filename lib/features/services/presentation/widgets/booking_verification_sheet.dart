@@ -12,6 +12,7 @@ class BookingVerificationSheet extends StatelessWidget {
   final double tax;
   final Color color;
   final VoidCallback onConfirm;
+  final VoidCallback? onCancel;
 
   const BookingVerificationSheet({
     super.key,
@@ -24,6 +25,7 @@ class BookingVerificationSheet extends StatelessWidget {
     this.tax = 0.0,
     required this.color,
     required this.onConfirm,
+    this.onCancel,
   });
 
   @override
@@ -211,6 +213,22 @@ class BookingVerificationSheet extends StatelessWidget {
                   style: TextStyle(color: isDark ? Colors.white54 : Colors.grey[600]),
                 ),
               ),
+              if (onCancel != null) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onCancel!();
+                  },
+                  child: const Text(
+                    "Cancel Booking",
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
             ],
           ),

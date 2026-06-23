@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../widgets/dashboard_header.dart';
-import '../../widgets/balance_card.dart';
-import '../../widgets/quick_actions_grid.dart';
-import '../../widgets/promo_card.dart';
-import '../../widgets/transaction_tile.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+
+import '../../widgets/balance_card.dart';
+import '../../widgets/dashboard_header.dart';
+import '../../widgets/promo_card.dart';
+import '../../widgets/quick_actions_grid.dart';
+import '../../widgets/transaction_tile.dart';
 
 class HomeTab extends StatelessWidget {
   final bool isDark;
@@ -17,6 +17,7 @@ class HomeTab extends StatelessWidget {
   final VoidCallback onProfileTap;
   final List<Transaction> transactions;
   final double totalBalance;
+  final double totalIncome;
   final double totalExpenses;
 
   const HomeTab({
@@ -29,6 +30,7 @@ class HomeTab extends StatelessWidget {
     required this.onProfileTap,
     required this.transactions,
     required this.totalBalance,
+    required this.totalIncome,
     required this.totalExpenses,
   });
 
@@ -58,8 +60,11 @@ class HomeTab extends StatelessWidget {
           child: BalanceCard(
             isDark: isDark,
             isVisible: balanceVisible,
+            userName: userName,
             balance: totalBalance,
+            totalIncome: totalIncome,
             totalExpenses: totalExpenses,
+            showStats: transactions.isNotEmpty,
             onToggleVisibility: onToggleBalance,
             onIncomeTap: () => _showTransactionListBottomSheet(
               context,
@@ -204,7 +209,13 @@ class HomeTab extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () => context.push('/ekycHome'),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('KYC Verification is currently unavailable.'),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFFD97706),
@@ -277,7 +288,10 @@ class HomeTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
@@ -304,4 +318,3 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
-

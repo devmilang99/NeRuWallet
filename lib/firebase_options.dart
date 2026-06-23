@@ -50,20 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB8-uSwjA0wkgeSmue2m22wtRUSKrtwePo',
-    appId: '1:836637415070:android:6d6362c45715e352460d8f',
-    messagingSenderId: '836637415070',
-    projectId: 'neruwallet',
-    storageBucket: 'neruwallet.firebasestorage.app',
+    apiKey: 'AIzaSyDSNHL7nd0aHFD0ydpeWuNB34gJ7205CdU',
+    appId: '1:722947171092:android:a66ee668f6d31ec7b5d801',
+    messagingSenderId: '722947171092',
+    projectId: 'neruwallet-21c13',
+    storageBucket: 'neruwallet-21c13.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDfGFKusMYYdYQK956BxU1qHlA-cdmXfuU',
-    appId: '1:836637415070:ios:f7dea4e5970349f5460d8f',
-    messagingSenderId: '836637415070',
-    projectId: 'neruwallet',
-    storageBucket: 'neruwallet.firebasestorage.app',
-    iosClientId: '836637415070-ouqk28g2trk6kgcaob1gtaml1frflgo1.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCR-92HFhFMISBJExUJQG1Aug1cj74sUlM',
+    appId: '1:722947171092:ios:aaeae87e7b1a2a9eb5d801',
+    messagingSenderId: '722947171092',
+    projectId: 'neruwallet-21c13',
+    storageBucket: 'neruwallet-21c13.firebasestorage.app',
+    iosClientId: '722947171092-i3rav08lrj9mar7uskumpus91elmqq31.apps.googleusercontent.com',
     iosBundleId: 'com.example.neruwallet',
   );
 }

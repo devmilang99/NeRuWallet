@@ -1,10 +1,13 @@
-import 'package:encrypt/encrypt.dart';
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart';
 
 class EncryptionService {
-  static final _key = Key.fromUtf8('my32lengthsupersecretnooneknows1'); // 32 chars for AES-256
-  static final _iv = IV.fromLength(16);
+  static final _key = Key.fromUtf8(
+    'my32lengthsupersecretnooneknows1',
+  ); // 32 chars for AES-256
+  static final _iv = IV.fromUtf8('8822991100334455'); // 16 chars consistent IV
   static final _encrypter = Encrypter(AES(_key));
 
   static String encrypt(String text) {

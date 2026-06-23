@@ -1,14 +1,18 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'dart:ui';
 
 class BalanceCard extends StatelessWidget {
   final bool isDark;
   final bool isVisible;
+  final String userName;
   final double balance;
+  final double totalIncome;
   final double totalExpenses;
+  final bool showStats;
   final VoidCallback onToggleVisibility;
   final VoidCallback? onIncomeTap;
   final VoidCallback? onExpenseTap;
@@ -17,8 +21,11 @@ class BalanceCard extends StatelessWidget {
     super.key,
     required this.isDark,
     required this.isVisible,
+    required this.userName,
     required this.balance,
+    required this.totalIncome,
     required this.totalExpenses,
+    required this.showStats,
     required this.onToggleVisibility,
     this.onIncomeTap,
     this.onExpenseTap,
@@ -26,157 +33,326 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Stack(
-        children: [
-          // Background Gradient & Glow
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              borderRadius: AppTheme.radiusLarge,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF6366F1),
-                  const Color(0xFF8B5CF6),
-                  const Color(0xFFD946EF),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-          ),
-          
-          // Decorative Abstract Shapes for Premium Look
-          Positioned(
-            top: -20,
-            right: -20,
-            child: _buildCircle(120, Colors.white.withValues(alpha: 0.1)),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).moveY(begin: 0, end: 10, duration: 3.seconds),
-          
-          Positioned(
-            bottom: -30,
-            left: -10,
-            child: _buildCircle(150, Colors.white.withValues(alpha: 0.05)),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).moveX(begin: 0, end: 15, duration: 4.seconds),
-
-          // Main Glass Content
-          ClipRRect(
-            borderRadius: AppTheme.radiusLarge,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                height: 200,
-                padding: const EdgeInsets.all(24),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Stack(
+            children: [
+              // Virtual Card Background
+              Container(
+                height: 220,
                 decoration: BoxDecoration(
                   borderRadius: AppTheme.radiusLarge,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                  color: Colors.white.withValues(alpha: 0.05),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'TOTAL BALANCE',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              child: isVisible
-                                  ? Text(
-                                      'Rs. ${NumberFormat('#,###.00').format(balance)}',
-                                      key: const ValueKey('visible'),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Rs. ••••••••',
-                                      key: ValueKey('hidden'),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 2,
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        ),
-                        _buildVisibilityToggle(),
-                      ],
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildModernStat(
-                              'INCOME',
-                              'Rs. 12,450.00',
-                              Icons.arrow_downward_rounded,
-                              const Color(0xFF4ADE80),
-                              onIncomeTap,
-                            ),
-                          ),
-                          Container(width: 1, height: 30, color: Colors.white24),
-                          Expanded(
-                            child: _buildModernStat(
-                              'EXPENSE',
-                              'Rs. ${NumberFormat('#,###.00').format(totalExpenses)}',
-                              Icons.arrow_upward_rounded,
-                              const Color(0xFFF87171),
-                              onExpenseTap,
-                            ),
-                          ),
-                        ],
-                      ),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1E1E2E), // Deep space blue/black
+                      Color(0xFF2D2D44),
+                      Color(0xFF1E1E2E),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
               ),
-            ),
+
+              // Decorative Glows
+              Positioned(
+                top: -50,
+                right: -50,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                  ),
+                ),
+              ),
+
+              // Glassmorphic Overlay for depth
+              ClipRRect(
+                borderRadius: AppTheme.radiusLarge,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(
+                    height: 220,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: AppTheme.radiusLarge,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        width: 1.5,
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.1),
+                          Colors.white.withValues(alpha: 0.02),
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Card Header: Brand & Chip
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Text(
+                                  'NeRu',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                Text(
+                                  ' PLATINUM',
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            _buildCardChip(),
+                          ],
+                        ),
+                        const Spacer(),
+                        // Balance Section
+                        const Text(
+                          'TOTAL BALANCE',
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                layoutBuilder:
+                                    (currentChild, previousChildren) => Stack(
+                                      alignment: Alignment.centerLeft,
+                                      children: [
+                                        ...previousChildren,
+                                        if (currentChild != null) currentChild,
+                                      ],
+                                    ),
+                                child: isVisible
+                                    ? Text(
+                                        'Rs. ${NumberFormat('#,###.00').format(balance)}',
+                                        key: const ValueKey('visible'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Rs. ••••••••',
+                                        key: ValueKey('hidden'),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            _buildVisibilityToggle(),
+                          ],
+                        ),
+                        const Spacer(),
+                        // Card Footer: Card Number & Name
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '•••• •••• •••• 4200',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                    letterSpacing: 3,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  userName.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'VALID THRU',
+                                  style: TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '12/28',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // NFC Icon subtle decoration
+              Positioned(
+                right: 24,
+                top: 80,
+                child: Transform.rotate(
+                  angle: 1.57,
+                  child: Icon(
+                    Icons.wifi_rounded,
+                    color: Colors.white.withValues(alpha: 0.1),
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
+        ),
+
+        // Income/Expense Stats Card (Separate from Virtual Card)
+        if (showStats)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildModernStat(
+                      'INCOME',
+                      'Rs. ${NumberFormat('#,###.00').format(totalIncome)}',
+                      Icons.arrow_downward_rounded,
+                      const Color(0xFF10B981),
+                      onIncomeTap,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: (isDark ? Colors.white : Colors.black).withValues(
+                      alpha: 0.05,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildModernStat(
+                      'EXPENSE',
+                      'Rs. ${NumberFormat('#,###.00').format(totalExpenses)}',
+                      Icons.arrow_upward_rounded,
+                      const Color(0xFFEF4444),
+                      onExpenseTap,
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
           ),
-        ],
-      ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
+      ],
     );
   }
 
-  Widget _buildCircle(double size, Color color) {
+  Widget _buildCardChip() {
     return Container(
-      width: size,
-      height: size,
+      width: 45,
+      height: 35,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFFD700).withValues(alpha: 0.8),
+            const Color(0xFFB8860B),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          ...List.generate(
+            3,
+            (i) => Positioned(
+              top: (i + 1) * 8.0,
+              left: 0,
+              right: 0,
+              child: Container(height: 1, color: Colors.black12),
+            ),
+          ),
+          ...List.generate(
+            2,
+            (i) => Positioned(
+              left: (i + 1) * 15.0,
+              top: 0,
+              bottom: 0,
+              child: Container(width: 1, color: Colors.black12),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -187,9 +363,9 @@ class BalanceCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white24),
+          border: Border.all(color: Colors.white10),
         ),
         child: Icon(
           isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -214,12 +390,12 @@ class BalanceCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 14),
+            child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(width: 12),
           Column(
@@ -229,8 +405,8 @@ class BalanceCard extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 9,
+                  color: Colors.grey,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -238,10 +414,10 @@ class BalanceCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
+                style: TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : AppTheme.textBodyColor,
                 ),
               ),
             ],

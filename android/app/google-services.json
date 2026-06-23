@@ -1,45 +1,37 @@
 {
   "project_info": {
-    "project_number": "836637415070",
-    "project_id": "neruwallet",
-    "storage_bucket": "neruwallet.firebasestorage.app"
+    "project_number": "722947171092",
+    "project_id": "neruwallet-21c13",
+    "storage_bucket": "neruwallet-21c13.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:836637415070:android:6d6362c45715e352460d8f",
+        "mobilesdk_app_id": "1:722947171092:android:a66ee668f6d31ec7b5d801",
         "android_client_info": {
           "package_name": "com.example.neruwallet"
         }
       },
       "oauth_client": [
         {
-          "client_id": "836637415070-r1vbjp486iqvl76l3ima56pbr7ogfqkd.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.neruwallet",
-            "certificate_hash": "ae06d9146f9cb4cf5fd2b30cd15a5feaa9f56356"
-          }
-        },
-        {
-          "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
+          "client_id": "722947171092-87abloiaud6rjqsqict1rpgodeha3p4q.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyB8-uSwjA0wkgeSmue2m22wtRUSKrtwePo"
+          "current_key": "AIzaSyDSNHL7nd0aHFD0ydpeWuNB34gJ7205CdU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "836637415070-2luheg7r7cunmbtdf3d4cldmi1vh7m70.apps.googleusercontent.com",
+              "client_id": "722947171092-87abloiaud6rjqsqict1rpgodeha3p4q.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "836637415070-ouqk28g2trk6kgcaob1gtaml1frflgo1.apps.googleusercontent.com",
+              "client_id": "722947171092-i3rav08lrj9mar7uskumpus91elmqq31.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "com.example.neruwallet"

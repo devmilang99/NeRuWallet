@@ -15,6 +15,8 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
 
 
@@ -93,18 +95,29 @@ class _SignupScreenState extends State<SignupScreen> {
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          controller: _passwordController,
+                          label: "Password",
+                          hint: "••••••••",
+                          icon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          obscureText: _obscurePassword,
+                          togglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
                         const SizedBox(height: 32),
                         ElevatedButton(
                           onPressed: () {
-                            if (_nameController.text.isEmpty || !_emailController.text.contains('@')) {
-                              GlassDialog.showError(context, "Please enter a valid name and email.");
+                            if (_nameController.text.isEmpty || !_emailController.text.contains('@') || _passwordController.text.length < 6) {
+                              GlassDialog.showError(context, "Please enter a valid name, email, and password (min 6 chars).");
                               return;
                             }
-                            // Move to security setup which will handle password and PIN
+                            // Move to security setup which will handle PINs
                             context.push('/auth/security-setup', extra: {
                               'isSocial': false,
                               'email': _emailController.text,
                               'name': _nameController.text,
+                              'password': _passwordController.text,
                               'isNewUser': true,
                             });
                           },

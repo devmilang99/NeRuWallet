@@ -77,10 +77,6 @@ dependencies:
   sign_in_with_apple: ^7.0.1
   local_auth_android: ^1.0.56
   local_auth_darwin: ^1.6.1
-
-  ekyc_shared:
-    path: ../ekyc_shared
-
   # Mobile and QR Scanner
   device_info_plus: ^12.3.0
   connectivity_plus: ^7.0.0
@@ -91,6 +87,7 @@ dependencies:
   reorderable_grid_view: ^2.0.4
 
 
+  crypto: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

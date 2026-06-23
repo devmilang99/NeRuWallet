@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -90,21 +91,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// - Otherwise, route to the login screen.
   Future<String> _resolveAuthDestination(PreferenceService prefService) async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
+    final bool registrationComplete =
+        await prefService.getBool('registration_complete') ?? false;
 
     if (firebaseUser != null) {
       // Check the sign-in providers linked to this account
-      final providers = firebaseUser.providerData.map((p) => p.providerId).toList();
-      final isSocialUser = providers.contains('google.com') ||
-          providers.contains('apple.com');
+      final providers =
+          firebaseUser.providerData.map((p) => p.providerId).toList();
+      final isSocialUser =
+          providers.contains('google.com') || providers.contains('apple.com');
+
+      // If registration was never finished (PINs not set), and it's a social user,
+      // the user should be removed according to requirements.
+      if (!registrationComplete && isSocialUser) {
+        final authService = AuthService();
+        await authService.deleteAccount();
+        return '/auth/login';
+      }
 
       if (isSocialUser) {
-        // Social users: always go straight to dashboard on app reopen
+        // Social users: always go straight to dashboard on app reopen IF registration is complete
         return '/dashboard';
       }
 
       // Email/password user: only skip login if "Remember Me" was enabled
       final bool rememberMe = await prefService.getBool('remember_me') ?? false;
-      if (rememberMe) {
+      if (rememberMe && registrationComplete) {
         return '/dashboard';
       }
     }
@@ -122,9 +134,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     if (mounted) {
       if (allPermissionsGranted) {
-        context.go('/onboarding');
+        context.goNamed('login');
       } else {
-        context.go('/permissions');
+        context.goNamed('permissions');
       }
     }
   }

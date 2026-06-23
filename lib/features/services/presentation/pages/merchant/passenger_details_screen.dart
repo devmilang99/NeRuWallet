@@ -73,16 +73,19 @@ class _PassengerDetailsScreenState
         });
       }
 
+      final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
       final double totalAmount =
           (widget.flightData['price'] as int) *
           (allPassengers.length).toDouble();
       final double fee = TransactionService.getServiceCharge(
         TransactionType.flight,
         totalAmount,
+        isVoucherActive: isVoucherActive,
       );
       final double tax = TransactionService.getTax(
         TransactionType.flight,
         totalAmount,
+        isVoucherActive: isVoucherActive,
       );
       final double totalPayable = totalAmount + fee + tax;
       final double currentBalance = ref.read(balanceProvider).totalBalance;
@@ -118,6 +121,7 @@ class _PassengerDetailsScreenState
                 : 'One Way',
             'Travel Date': widget.searchData['departureDate'],
             'Class': widget.searchData['class'],
+            if (isVoucherActive) 'Voucher': 'Applied (Free Fees)',
             'Total Fare': 'Rs. $totalAmount',
           },
           passengers: allPassengers
@@ -126,6 +130,10 @@ class _PassengerDetailsScreenState
           amount: totalAmount,
           fee: fee,
           tax: tax,
+          onCancel: () {
+            // Cancel booking and go back to flight selection
+            Navigator.pop(context);
+          },
           onConfirm: () {
             Navigator.push(
               context,
@@ -144,6 +152,7 @@ class _PassengerDetailsScreenState
 
   void _completeBooking(List<Map<String, String>> passengers, double amount) {
     Navigator.pop(context); // Close PIN screen
+    final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the flight booking transaction is now completed successfully)
     ref
@@ -155,14 +164,16 @@ class _PassengerDetailsScreenState
           fee: TransactionService.getServiceCharge(
             TransactionType.flight,
             amount,
+            isVoucherActive: isVoucherActive,
           ),
-          tax: TransactionService.getTax(TransactionType.flight, amount),
+          tax: TransactionService.getTax(TransactionType.flight, amount, isVoucherActive: isVoucherActive),
           metadata: {
             'from': widget.searchData['from'],
             'to': widget.searchData['to'],
             'date': widget.searchData['departureDate'],
             'passengers': passengers.map((p) => p['name']).toList(),
           },
+          isVoucherApplied: isVoucherActive,
         );
 
     showDialog(

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -43,12 +43,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         Navigator.pop(context); // Close loading
         if (user != null) {
+          final prefService = ref.read(preferenceServiceProvider);
           if (user.isNewUser) {
-            context.go('/auth/security-setup', extra: false);
+            context.go(
+              '/auth/security-setup',
+              extra: {
+                'isSocial': false,
+                'email': _emailController.text,
+                'isNewUser': true,
+              },
+            );
           } else {
             // Save 'remember me' preference for splash auto-login
-            final prefService = ref.read(preferenceServiceProvider);
             await prefService.setBool('remember_me', _rememberMe);
+            await prefService.setBool('registration_complete', true);
             if (mounted) context.go('/dashboard');
           }
         }
@@ -68,28 +76,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     GlassDialog.showLoading(context, message: 'Connecting to Google...');
     try {
       final user = await _authService.signInWithGoogle();
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        if (user != null) {
-          if (user.isNewUser) {
-            context.go('/auth/security-setup', extra: {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      if (user != null) {
+        if (user.isNewUser) {
+          context.go(
+            '/auth/security-setup',
+            extra: {
               'isSocial': true,
               'email': user.email,
               'name': user.name,
               'isNewUser': true,
-            });
-          } else {
-            context.go('/dashboard');
-          }
+            },
+          );
+        } else {
+          final prefService = ref.read(preferenceServiceProvider);
+          await prefService.setBool('registration_complete', true);
+          if (!mounted) return;
+          context.go('/dashboard');
         }
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(
-          context,
-          "Google Sign-In failed. Please try again.",
-        );
+        String errorMessage = 'Google Sign-In failed. Please try again.';
+        if (e.toString().contains('cancelled')) {
+          errorMessage = 'Google Sign-In was cancelled.';
+        } else if (e.toString().contains('token')) {
+          errorMessage =
+              'Failed to retrieve Google credentials. Please try again.';
+        }
+        GlassDialog.showError(context, errorMessage);
       }
     }
   }
@@ -98,28 +115,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     GlassDialog.showLoading(context, message: 'Connecting to Apple...');
     try {
       final user = await _authService.signInWithApple();
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        if (user != null) {
-          if (user.isNewUser) {
-            context.go('/auth/security-setup', extra: {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      if (user != null) {
+        if (user.isNewUser) {
+          context.go(
+            '/auth/security-setup',
+            extra: {
               'isSocial': true,
               'email': user.email,
               'name': user.name,
               'isNewUser': true,
-            });
-          } else {
-            context.go('/dashboard');
-          }
+            },
+          );
+        } else {
+          final prefService = ref.read(preferenceServiceProvider);
+          await prefService.setBool('registration_complete', true);
+          if (!mounted) return;
+          context.go('/dashboard');
         }
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(
-          context,
-          "Apple Sign-In failed. Please try again.",
-        );
+        String errorMessage = 'Apple Sign-In failed. Please try again.';
+        if (e.toString().contains('cancelled')) {
+          errorMessage = 'Apple Sign-In was cancelled.';
+        } else if (e.toString().contains('identity token')) {
+          errorMessage =
+              'Failed to retrieve Apple credentials. Please try again.';
+        } else if (e.toString().contains('entitlements')) {
+          errorMessage =
+              'Apple Sign-In is not properly configured. Please contact support.';
+        }
+        GlassDialog.showError(context, errorMessage);
       }
     }
   }
@@ -146,7 +175,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _checkAndStartBiometricLogin() async {
     final prefService = ref.read(preferenceServiceProvider);
     final bool isBiometricEnabled =
-        await prefService.getBool('biometrics_login_enabled') ?? await prefService.getBool('biometrics_enabled') ?? false;
+        await prefService.getBool('biometrics_login_enabled') ??
+        await prefService.getBool('biometrics_enabled') ??
+        false;
 
     if (isBiometricEnabled) {
       final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
@@ -185,16 +216,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-              IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                  padding: const EdgeInsets.all(12),
-                ),
-              ).animate().fadeIn().slideX(begin: -0.5, end: 0),
-              const SizedBox(height: 32),
               Text(
                 "Welcome Back!",
                 style: Theme.of(
@@ -283,22 +304,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                onChanged: (val) =>
+                                    setState(() => _rememberMe = val ?? false),
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => setState(() => _rememberMe = !_rememberMe),
+                              onTap: () =>
+                                  setState(() => _rememberMe = !_rememberMe),
                               child: Text(
                                 "Remember me",
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppTheme.textSecondaryColor,
                                 ),
                               ),
                             ),
                             const Spacer(),
                             TextButton(
-                              onPressed: () => context.push('/auth/forgot-password'),
+                              onPressed: () =>
+                                  context.push('/auth/forgot-password'),
                               child: Text(
                                 "Forgot password?",
                                 style: TextStyle(
@@ -361,7 +387,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   Expanded(
                     child: _buildSocialButton(
-                      icon: "https://www.svgrepo.com/show/475656/google-color.svg",
+                      icon:
+                          "https://www.svgrepo.com/show/475656/google-color.svg",
                       label: "Google",
                       onPressed: _handleGoogleLogin,
                     ),
@@ -369,7 +396,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSocialButton(
-                      icon: "https://www.svgrepo.com/show/303108/apple-black-logo.svg",
+                      icon:
+                          "https://www.svgrepo.com/show/303108/apple-black-logo.svg",
                       label: "Apple",
                       onPressed: _handleAppleLogin,
                     ),

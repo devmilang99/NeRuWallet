@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
@@ -21,6 +22,13 @@ class TransactionDetailSheet extends StatelessWidget {
     final Color iconColor = Color(transaction.colorValue);
     final IconData iconData = IconData(transaction.iconCode, fontFamily: 'MaterialIcons');
     final String formattedDate = DateFormat('dd MMM, hh:mm a').format(transaction.createdAt);
+
+    Map<String, dynamic> metadata = {};
+    if (transaction.metadata != null) {
+      try {
+        metadata = jsonDecode(transaction.metadata!);
+      } catch (_) {}
+    }
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -80,62 +88,82 @@ class TransactionDetailSheet extends StatelessWidget {
           const SizedBox(height: 32),
           
           // Financial Breakdown
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.surfaceDark : Colors.grey[50],
-              borderRadius: AppTheme.radiusLarge,
-              border: Border.all(
-                color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-              ),
-            ),
-            child: Column(
-              children: [
-                _buildDetailRow("Status", "Completed", isDark, valueColor: AppTheme.successColor),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.surfaceDark : Colors.grey[50],
+                  borderRadius: AppTheme.radiusLarge,
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                  ),
                 ),
-                _buildDetailRow("Date & Time", formattedDate, isDark),
-                const SizedBox(height: 12),
-                _buildDetailRow("Transaction Type", transaction.category, isDark),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
-                ),
-                _buildDetailRow("Base Amount", "Rs. ${transaction.amount.abs().toStringAsFixed(2)}", isDark),
-                if (isExpense) ...[
-                  if (transaction.fee > 0) ...[
-                    const SizedBox(height: 12),
-                    _buildDetailRow("Service Fee", "Rs. ${transaction.fee.toStringAsFixed(2)}", isDark),
-                  ],
-                  if (transaction.tax > 0) ...[
-                    const SizedBox(height: 12),
-                    _buildDetailRow("Service Tax (VAT)", "Rs. ${transaction.tax.toStringAsFixed(2)}", isDark),
-                  ],
-                ],
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    const Text(
-                      "Total Amount",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    _buildDetailRow("Status", "Completed", isDark, valueColor: AppTheme.successColor),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(height: 1),
                     ),
-                    Text(
-                      "Rs. ${total.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: isExpense ? AppTheme.errorColor : AppTheme.successColor,
+                    _buildDetailRow("Date & Time", formattedDate, isDark),
+                    const SizedBox(height: 12),
+                    _buildDetailRow("Transaction Type", transaction.category, isDark),
+                    
+                    if (metadata.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
                       ),
+                      ...metadata.entries.map((e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildDetailRow(
+                          e.key[0].toUpperCase() + e.key.substring(1), 
+                          e.value is List ? (e.value as List).join(', ') : e.value.toString(), 
+                          isDark
+                        ),
+                      )),
+                    ],
+
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(height: 1),
+                    ),
+                    _buildDetailRow("Base Amount", "Rs. ${transaction.amount.abs().toStringAsFixed(2)}", isDark),
+                    if (isExpense) ...[
+                      if (transaction.fee > 0) ...[
+                        const SizedBox(height: 12),
+                        _buildDetailRow("Service Fee", "Rs. ${transaction.fee.toStringAsFixed(2)}", isDark),
+                      ],
+                      if (transaction.tax > 0) ...[
+                        const SizedBox(height: 12),
+                        _buildDetailRow("Service Tax (VAT)", "Rs. ${transaction.tax.toStringAsFixed(2)}", isDark),
+                      ],
+                    ],
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(height: 1),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Total Amount",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          "Rs. ${total.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: isExpense ? AppTheme.errorColor : AppTheme.successColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
           
@@ -185,12 +213,16 @@ class TransactionDetailSheet extends StatelessWidget {
             fontSize: 14,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? (isDark ? Colors.white : AppTheme.textBodyColor),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: valueColor ?? (isDark ? Colors.white : AppTheme.textBodyColor),
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
         ),
       ],
@@ -226,4 +258,3 @@ class TransactionDetailSheet extends StatelessWidget {
     );
   }
 }
-

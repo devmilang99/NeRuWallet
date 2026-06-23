@@ -1,18 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPageIndex = 0;
   Timer? _autoSlideTimer;
@@ -38,6 +40,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
+  void _onDone() async {
+    final prefService = ref.read(preferenceServiceProvider);
+    await prefService.setBool('is_first_time', false);
+    if (mounted) context.go('/theme-selection');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -53,14 +61,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _startAutoSlide() {
     _autoSlideTimer?.cancel();
-    _autoSlideTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_currentPageIndex < _items.length - 1) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 600),
           curve: Curves.fastOutSlowIn,
         );
       } else {
-        // Option 1: Loop back to start
         _pageController.animateToPage(
           0,
           duration: const Duration(milliseconds: 600),
@@ -84,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: () => context.go('/theme-selection'),
+                  onPressed: _onDone,
                   child: Text(
                     "Skip",
                     style: TextStyle(
@@ -102,7 +109,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     setState(() {
                       _currentPageIndex = index;
                     });
-                    // Reset timer on manual swipe
                     _startAutoSlide();
                   },
                   itemCount: _items.length,
@@ -133,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_currentPageIndex == _items.length - 1) {
-                          context.go('/theme-selection');
+                          _onDone();
                         } else {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 600),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+
 import '../../features/dashboard/data/models/quick_action_model.dart';
 
 class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
@@ -78,28 +79,16 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
 
   static const List<QuickActionModel> _defaultActions = [
     QuickActionModel(
-      label: 'Electricity',
-      icon: Icons.bolt_rounded,
-      color: Color(0xFFF59E0B),
-      category: 'Bills',
+      label: 'Top Up',
+      icon: Icons.account_balance_wallet_rounded,
+      color: Color(0xFF8B5CF6),
+      category: 'Finance',
     ),
     QuickActionModel(
-      label: 'Water',
-      icon: Icons.water_drop_rounded,
-      color: Color(0xFF0EA5E9),
-      category: 'Bills',
-    ),
-    QuickActionModel(
-      label: 'Internet',
-      icon: Icons.wifi_rounded,
-      color: Color(0xFF0EA5E9),
-      category: 'Bills',
-    ),
-    QuickActionModel(
-      label: 'Fine Payment',
-      icon: Icons.gavel_rounded,
-      color: Color(0xFFFF6B6B),
-      category: 'Government',
+      label: 'Send Money',
+      icon: Icons.send_rounded,
+      color: Color(0xFF10B981),
+      category: 'Finance',
     ),
     QuickActionModel(
       label: 'Tickets',
@@ -108,10 +97,10 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
       category: 'Merchant',
     ),
     QuickActionModel(
-      label: 'Send Money',
-      icon: Icons.send_rounded,
-      color: Color(0xFF10B981),
-      category: 'Finance',
+      label: 'Fine Payment',
+      icon: Icons.gavel_rounded,
+      color: Color(0xFFFF6B6B),
+      category: 'Government',
     ),
   ];
 

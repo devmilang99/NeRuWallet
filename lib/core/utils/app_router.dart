@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ekyc_shared/router.dart' as kyc;
 import '../../features/splash/presentation/pages/splash_screen.dart';
 import '../../features/auth/presentation/pages/permission_screen.dart';
 import '../../features/onboarding/presentation/pages/onboarding_screen.dart';
@@ -15,6 +14,7 @@ import '../../features/dashboard/presentation/pages/notification_screen.dart';
 import '../../features/dashboard/presentation/pages/help_support_screen.dart';
 import '../../features/dashboard/presentation/pages/privacy_policy_screen.dart';
 import '../../features/dashboard/presentation/pages/biometric_settings_screen.dart';
+import '../../features/auth/presentation/pages/change_password_screen.dart';
 import '../../features/onboarding/presentation/pages/theme_selection_screen.dart';
 import '../../features/auth/presentation/pages/security_setup_screen.dart';
 import '../../features/auth/presentation/pages/transaction_pin_screen.dart';
@@ -39,6 +39,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/permissions',
+      name: 'permissions',
       builder: (context, state) => const PermissionScreen(),
     ),
     GoRoute(
@@ -230,9 +231,12 @@ final GoRouter appRouter = GoRouter(
           path: 'biometric-settings',
           builder: (context, state) => const BiometricSettingsScreen(),
         ),
+        GoRoute(
+          path: 'change-password',
+          builder: (context, state) => const ChangePasswordScreen(),
+        ),
       ],
     ),
-    ...kyc.kycRoutes,
   ],
 );
 

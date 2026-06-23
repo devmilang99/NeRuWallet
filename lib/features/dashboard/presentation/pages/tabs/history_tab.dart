@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import '../../widgets/transaction_tile.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+
+import '../../widgets/transaction_tile.dart';
 
 class HistoryTab extends StatefulWidget {
   final bool isDark;
@@ -20,12 +20,19 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Income', 'Expense', 'Movies', 'Travel', 'Payments'];
+  final List<String> _filters = [
+    'All',
+    'Income',
+    'Expense',
+    'Movies',
+    'Travel',
+    'Payments',
+  ];
 
   List<Transaction> get _filteredTransactions {
     if (_selectedFilter == 'All') return widget.transactions;
     final lowerFilter = _selectedFilter.toLowerCase();
-    
+
     if (lowerFilter == 'income') {
       return widget.transactions.where((t) => t.amount > 0).toList();
     }
@@ -33,27 +40,39 @@ class _HistoryTabState extends State<HistoryTab> {
       return widget.transactions.where((t) => t.amount < 0).toList();
     }
     if (lowerFilter == 'movies') {
-      // Check category first, then title
-      return widget.transactions.where((t) => 
-        t.category.toLowerCase().contains('movie') || 
-        t.title.toLowerCase().contains('movie') ||
-        t.title.toLowerCase().contains('ticket')
-      ).toList();
+      // Show only movies. Exclude other tickets even if they have "ticket" in title.
+      return widget.transactions
+          .where(
+            (t) =>
+                t.category.toLowerCase().contains('movie') ||
+                t.title.toLowerCase().contains('movie'),
+          )
+          .toList();
     }
     if (lowerFilter == 'travel') {
-      return widget.transactions.where((t) => 
-        t.category.toLowerCase().contains('travel') || 
-        t.category.toLowerCase().contains('flight') || 
-        t.category.toLowerCase().contains('bus') || 
-        t.title.toLowerCase().contains('flight') || 
-        t.title.toLowerCase().contains('bus')
-      ).toList();
+      // Show travel related transactions, including non-movie tickets
+      return widget.transactions
+          .where(
+            (t) =>
+                t.category.toLowerCase().contains('travel') ||
+                t.category.toLowerCase().contains('flight') ||
+                t.category.toLowerCase().contains('bus') ||
+                t.title.toLowerCase().contains('flight') ||
+                t.title.toLowerCase().contains('bus') ||
+                (t.title.toLowerCase().contains('ticket') &&
+                    !t.category.toLowerCase().contains('movie') &&
+                    !t.title.toLowerCase().contains('movie')),
+          )
+          .toList();
     }
     if (lowerFilter == 'payments') {
-      return widget.transactions.where((t) => 
-        t.category.toLowerCase().contains('payment') || 
-        t.title.toLowerCase().contains('qr')
-      ).toList();
+      return widget.transactions
+          .where(
+            (t) =>
+                t.category.toLowerCase().contains('payment') ||
+                t.title.toLowerCase().contains('qr'),
+          )
+          .toList();
     }
     return widget.transactions;
   }
@@ -68,14 +87,19 @@ class _HistoryTabState extends State<HistoryTab> {
           floating: false,
           pinned: true,
           stretch: true,
-          backgroundColor: widget.isDark ? AppTheme.backgroundDark : const Color(0xFFF1F5F9),
+          backgroundColor: widget.isDark
+              ? AppTheme.backgroundDark
+              : const Color(0xFFF1F5F9),
           elevation: 0,
           flexibleSpace: FlexibleSpaceBar(
-            stretchModes: const [StretchMode.blurBackground, StretchMode.zoomBackground],
+            stretchModes: const [
+              StretchMode.blurBackground,
+              StretchMode.zoomBackground,
+            ],
             centerTitle: false,
             titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
             title: Text(
-              'Transactions',
+              _selectedFilter == 'All' ? 'History' : _selectedFilter,
               style: TextStyle(
                 color: widget.isDark ? Colors.white : Colors.black,
                 fontWeight: FontWeight.w900,
@@ -94,59 +118,59 @@ class _HistoryTabState extends State<HistoryTab> {
             ),
           ],
         ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: SizedBox(
-              height: 42,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _filters.length,
-                separatorBuilder: (context, idx) => const SizedBox(width: 10),
-                itemBuilder: (ctx, i) {
-                  final isActive = _selectedFilter == _filters[i];
-                  final filter = _filters[i];
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFilter = filter),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? AppTheme.primaryColor
-                            : (widget.isDark ? AppTheme.surfaceDark : Colors.white),
-                        borderRadius: AppTheme.radiusFull,
-                        boxShadow: isActive
-                            ? [
-                                BoxShadow(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          color: isActive
-                              ? Colors.white
-                              : (widget.isDark
-                                  ? AppTheme.textBodyDark
-                                  : AppTheme.textBodyColor),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ).animate().fadeIn(),
-        ),
+        // SliverToBoxAdapter(
+        //   child: Padding(
+        //     padding: const EdgeInsets.symmetric(vertical: 16),
+        //     child: SizedBox(
+        //       height: 42,
+        //       child: ListView.separated(
+        //         scrollDirection: Axis.horizontal,
+        //         padding: const EdgeInsets.symmetric(horizontal: 24),
+        //         itemCount: _filters.length,
+        //         separatorBuilder: (context, idx) => const SizedBox(width: 10),
+        //         itemBuilder: (ctx, i) {
+        //           final isActive = _selectedFilter == _filters[i];
+        //           final filter = _filters[i];
+        //           return GestureDetector(
+        //             onTap: () => setState(() => _selectedFilter = filter),
+        //             child: AnimatedContainer(
+        //               duration: const Duration(milliseconds: 200),
+        //               alignment: Alignment.center,
+        //               padding: const EdgeInsets.symmetric(horizontal: 24),
+        //               decoration: BoxDecoration(
+        //                 color: isActive
+        //                     ? AppTheme.primaryColor
+        //                     : (widget.isDark ? AppTheme.surfaceDark : Colors.white),
+        //                 borderRadius: AppTheme.radiusFull,
+        //                 boxShadow: isActive
+        //                     ? [
+        //                         BoxShadow(
+        //                           color: AppTheme.primaryColor.withValues(alpha: 0.3),
+        //                           blurRadius: 8,
+        //                           offset: const Offset(0, 4),
+        //                         ),
+        //                       ]
+        //                     : null,
+        //               ),
+        //               child: Text(
+        //                 filter,
+        //                 style: TextStyle(
+        //                   color: isActive
+        //                       ? Colors.white
+        //                       : (widget.isDark
+        //                           ? AppTheme.textBodyDark
+        //                           : AppTheme.textBodyColor),
+        //                   fontWeight: FontWeight.bold,
+        //                   fontSize: 13,
+        //                 ),
+        //               ),
+        //             ),
+        //           );
+        //         },
+        //       ),
+        //     ),
+        //   ).animate().fadeIn(),
+        // ),
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 100),
           sliver: _filteredTransactions.isEmpty
@@ -159,10 +183,11 @@ class _HistoryTabState extends State<HistoryTab> {
                         Icon(
                           Icons.receipt_long_rounded,
                           size: 64,
-                          color: (widget.isDark
-                                  ? AppTheme.textHintDark
-                                  : AppTheme.textHintColor)
-                              .withValues(alpha: 0.2),
+                          color:
+                              (widget.isDark
+                                      ? AppTheme.textHintDark
+                                      : AppTheme.textHintColor)
+                                  .withValues(alpha: 0.2),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -237,7 +262,9 @@ class _HistoryTabState extends State<HistoryTab> {
                   },
                   selectedColor: AppTheme.primaryColor,
                   labelStyle: TextStyle(
-                    color: isActive ? Colors.white : (widget.isDark ? Colors.white70 : Colors.black87),
+                    color: isActive
+                        ? Colors.white
+                        : (widget.isDark ? Colors.white70 : Colors.black87),
                     fontWeight: FontWeight.bold,
                   ),
                 );
@@ -250,4 +277,3 @@ class _HistoryTabState extends State<HistoryTab> {
     );
   }
 }
-

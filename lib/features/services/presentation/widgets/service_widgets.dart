@@ -21,7 +21,9 @@ class BaseServicePage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundColor,
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : AppTheme.backgroundColor,
       appBar: AppBar(
         title: Text(
           title,
@@ -102,7 +104,9 @@ class ServiceHeader extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
                     fontSize: 14,
                   ),
                 ),
@@ -118,11 +122,13 @@ class ServiceHeader extends StatelessWidget {
 class ServiceInputSection extends StatelessWidget {
   final String label;
   final Widget child;
+  final Widget? trailing;
 
   const ServiceInputSection({
     super.key,
     required this.label,
     required this.child,
+    this.trailing,
   });
 
   @override
@@ -132,12 +138,18 @@ class ServiceInputSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              ?trailing,
+            ],
           ),
         ),
         child,

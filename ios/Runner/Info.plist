@@ -74,5 +74,14 @@
 	<string>NeRuWallet needs access to your photos to upload profile pictures.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>NeRuWallet needs access to your contacts to let you send money easily.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.722947171092-i3rav08lrj9mar7uskumpus91elmqq31</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

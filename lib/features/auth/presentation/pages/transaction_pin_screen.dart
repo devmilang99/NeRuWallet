@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 enum PinMode { set, change, verify, reset }
@@ -23,7 +23,8 @@ class TransactionPinScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<TransactionPinScreen> createState() => _TransactionPinScreenState();
+  ConsumerState<TransactionPinScreen> createState() =>
+      _TransactionPinScreenState();
 }
 
 class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
@@ -110,7 +111,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     GlassDialog.showLoading(context, message: 'Completing your setup...');
     try {
-      await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
+      await prefService.setString(
+        'transaction_pin',
+        _pinController.text,
+        encrypted: true,
+      );
 
       if (widget.signupData != null) {
         final data = widget.signupData!;
@@ -125,14 +130,35 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         }
 
         if (data.containsKey('security_question')) {
-          await prefService.setString('security_question', data['security_question']);
-          await prefService.setString('security_answer', data['security_answer'], encrypted: true);
+          await prefService.setString(
+            'security_question',
+            data['security_question'],
+          );
+          await prefService.setString(
+            'security_answer',
+            data['security_answer'],
+            encrypted: true,
+          );
+        }
+
+        if (data.containsKey('login_pin')) {
+          await prefService.setString(
+            'login_pin',
+            data['login_pin'],
+            encrypted: true,
+          );
         }
 
         if (data.containsKey('password')) {
-          await prefService.setString('app_password', data['password'], encrypted: true);
+          await prefService.setString(
+            'app_password',
+            data['password'],
+            encrypted: true,
+          );
         }
       }
+
+      await prefService.setBool('registration_complete', true);
 
       if (mounted) {
         Navigator.pop(context); // Close loading
@@ -158,19 +184,21 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     if (widget.mode != PinMode.verify) return;
 
     final prefService = ref.read(preferenceServiceProvider);
-    final bool isEnabled = await prefService.getBool('biometrics_transaction_enabled') ?? false;
-    final bool isFirstTime = await prefService.getBool('is_first_time') ?? false;
-
+    final bool isEnabled =
+        await prefService.getBool('biometrics_transaction_enabled') ?? false;
+    final bool isFirstTime =
+        await prefService.getBool('is_first_time') ?? false;
 
     if (!isEnabled && isFirstTime) {
       final bool canCheck = await _auth.canCheckBiometrics;
       final bool isSupported = await _auth.isDeviceSupported();
-      
+
       if (mounted && (canCheck || isSupported)) {
         GlassDialog.showConfirm(
           context,
           title: 'Enable Biometrics',
-          message: 'Biometric authentication is available on your device. Would you like to enable it for faster transactions?',
+          message:
+              'Biometric authentication is available on your device. Would you like to enable it for faster transactions?',
           confirmText: 'Go to Settings',
           onConfirm: () => context.push('/profile/biometric-settings'),
         );
@@ -205,7 +233,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     GlassDialog.showLoading(context, message: 'Updating PIN...');
     try {
-      await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
+      await prefService.setString(
+        'transaction_pin',
+        _pinController.text,
+        encrypted: true,
+      );
 
       if (mounted) {
         Navigator.pop(context);
@@ -225,7 +257,20 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
   Future<void> _handleTransactionVerification() async {
     final prefService = ref.read(preferenceServiceProvider);
-    final savedPin = await prefService.getString('transaction_pin', encrypted: true);
+    final savedPin = await prefService.getString(
+      'transaction_pin',
+      encrypted: true,
+    );
+
+    if (savedPin == null || savedPin.isEmpty) {
+      if (mounted) {
+        GlassDialog.showError(
+          context,
+          "Transaction PIN not set. Please set it up in Settings.",
+        );
+      }
+      return;
+    }
 
     if (_pinController.text == savedPin) {
       if (!mounted) return;
@@ -254,19 +299,26 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       return;
     }
 
-    final isNewSocial = widget.mode == PinMode.set && (widget.signupData?['isSocial'] ?? false);
+    final isNewSocial =
+        widget.mode == PinMode.set &&
+        (widget.signupData?['isSocial'] ?? false) &&
+        (widget.signupData?['isNewUser'] ?? false);
 
     if (isNewSocial) {
       if (!mounted) return;
       GlassDialog.showConfirm(
         context,
         title: "Cancel Registration?",
-        message: "Your account connection is incomplete. If you leave now, your registration will be cancelled.",
+        message:
+            "Your account connection is incomplete. If you leave now, your registration will be cancelled.",
         confirmText: "Yes, Cancel",
         cancelText: "Stay here",
         isDestructive: true,
         onConfirm: () async {
-          GlassDialog.showLoading(context, message: "Cancelling registration...");
+          GlassDialog.showLoading(
+            context,
+            message: "Cancelling registration...",
+          );
           try {
             await _authService.deleteAccount();
           } catch (e) {
@@ -286,10 +338,12 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    String title = widget.mode == PinMode.verify ? "Enter PIN" : "Setup PIN";
+    String title = widget.mode == PinMode.verify
+        ? "Enter PIN"
+        : "Transaction PIN";
     String subtitle = widget.mode == PinMode.verify
         ? "Authorize this transaction"
-        : "Create a 4-digit PIN for security";
+        : "Create a 4-digit PIN for secure transactions";
 
     return PopScope(
       canPop: false,
@@ -325,14 +379,18 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                   subtitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
-                      ),
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
+                  ),
                 ).animate().fadeIn(delay: 400.ms),
                 const SizedBox(height: 48),
                 _buildOtpSection(
                   controller: _pinController,
                   focusNode: _pinFocusNode,
-                  label: widget.mode == PinMode.verify ? "Enter PIN" : "New PIN",
+                  label: widget.mode == PinMode.verify
+                      ? "Enter PIN"
+                      : "New PIN",
                   isDark: isDark,
                   onComplete: () {
                     if (widget.mode == PinMode.verify) {
@@ -347,9 +405,9 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                   enabled: _step == 1,
                   onTap: _step == 2
                       ? () => setState(() {
-                            _step = 1;
-                            _pinFocusNode.requestFocus();
-                          })
+                          _step = 1;
+                          _pinFocusNode.requestFocus();
+                        })
                       : null,
                 ),
                 if (_step == 2) ...[
@@ -378,12 +436,18 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                 const SizedBox(height: 48),
                 if (widget.mode == PinMode.verify)
                   TextButton(
-                    onPressed: () => context.push('/auth/pin-setup', extra: {'mode': PinMode.reset}),
+                    onPressed: () => context.push(
+                      '/auth/pin-setup',
+                      extra: {'mode': PinMode.reset},
+                    ),
                     child: const Text("Forgot PIN?"),
                   ),
                 if (widget.mode == PinMode.verify)
                   FutureBuilder<bool>(
-                    future: ref.read(preferenceServiceProvider).getBool('biometrics_transaction_enabled').then((v) => v ?? false),
+                    future: ref
+                        .read(preferenceServiceProvider)
+                        .getBool('biometrics_transaction_enabled')
+                        .then((v) => v ?? false),
                     builder: (context, snapshot) {
                       if (snapshot.data == true) {
                         return Padding(
@@ -433,11 +497,18 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       behavior: HitTestBehavior.opaque,
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled || isConfirm)),
+            children: List.generate(
+              4,
+              (index) =>
+                  _buildOtpBox(index, controller, isDark, enabled || isConfirm),
+            ),
           ),
           IgnorePointer(
             child: Opacity(
@@ -469,12 +540,17 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     );
   }
 
-  Widget _buildOtpBox(int index, TextEditingController controller, bool isDark, bool enabled) {
+  Widget _buildOtpBox(
+    int index,
+    TextEditingController controller,
+    bool isDark,
+    bool enabled,
+  ) {
     String char = "";
     if (controller.text.length > index) char = controller.text[index];
     bool isFocused = enabled && controller.text.length == index;
     bool isWrong = _showMismatchError && controller == _confirmPinController;
-    
+
     return Container(
       width: 60,
       height: 60,
@@ -483,7 +559,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isWrong ? AppTheme.errorColor : (isFocused ? AppTheme.primaryColor : (isDark ? Colors.white10 : Colors.black12)),
+          color: isWrong
+              ? AppTheme.errorColor
+              : (isFocused
+                    ? AppTheme.primaryColor
+                    : (isDark ? Colors.white10 : Colors.black12)),
           width: 2,
         ),
       ),
@@ -493,7 +573,9 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: isWrong ? AppTheme.errorColor : (isDark ? Colors.white : Colors.black),
+            color: isWrong
+                ? AppTheme.errorColor
+                : (isDark ? Colors.white : Colors.black),
           ),
         ),
       ),

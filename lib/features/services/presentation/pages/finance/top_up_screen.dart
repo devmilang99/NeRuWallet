@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
 
 class TopUpScreen extends ConsumerStatefulWidget {
   const TopUpScreen({super.key});
@@ -25,23 +25,35 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     {'name': 'eSewa Wallet', 'icon': Icons.account_balance_wallet_rounded},
   ];
 
-  final int _selectedMethodIndex = 0;
-  Map<String, String>? _selectedSavedSource;
+  Map<String, dynamic>? _selectedSavedSource;
 
-  final List<Map<String, String>> _savedPaymentMethods = [
+  final List<Map<String, dynamic>> _savedPaymentMethods = [
     {
       'type': 'Bank Connect',
       'display': 'HBL **** 8821',
       'accountNumber': '1234567890',
+      'bankName': 'Himalayan Bank',
+      'branch': 'Kathmandu',
+      'holder': 'Milan',
+      'isFeatured': true,
     },
     {
       'type': 'Debit/Credit Card',
       'display': 'VISA **** 4490',
       'cardNumber': '1234567890124490',
+      'holder': 'Milan',
+      'expiry': '12/25',
+      'isFeatured': true,
     },
   ];
 
-  void _showBankConnectDialog({Map<String, String>? savedMethod}) {
+  final Map<String, int> _limits = {
+    'Bank Connect': 3,
+    'Debit/Credit Card': 3,
+    'eSewa Wallet': 3,
+  };
+
+  void _showBankConnectDialog({Map<String, dynamic>? savedMethod}) {
     final bankController = TextEditingController(
       text: savedMethod?['bankName'] ?? '',
     );
@@ -178,6 +190,17 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                             if (bank.isNotEmpty &&
                                 account.isNotEmpty &&
                                 holder.isNotEmpty) {
+                              final currentCount = _savedPaymentMethods
+                                  .where((m) => m['type'] == 'Bank Connect')
+                                  .length;
+                              if (currentCount >= _limits['Bank Connect']!) {
+                                GlassDialog.showError(
+                                  context,
+                                  'You can only save up to 3 bank accounts.',
+                                );
+                                return;
+                              }
+
                               setState(() {
                                 _savedPaymentMethods.add({
                                   'type': 'Bank Connect',
@@ -187,6 +210,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                                   'bankName': bank,
                                   'branch': branch,
                                   'holder': holder,
+                                  'isFeatured': _savedPaymentMethods.length < 4,
                                 });
                               });
                               Navigator.pop(context);
@@ -221,7 +245,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     );
   }
 
-  void _showCardDialog({Map<String, String>? savedMethod}) {
+  void _showCardDialog({Map<String, dynamic>? savedMethod}) {
     final cardController = TextEditingController(
       text: savedMethod?['cardNumber'] ?? '',
     );
@@ -361,54 +385,78 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    if (savedMethod == null)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final card = cardController.text.trim();
-                            final holder = holderController.text.trim();
-                            final expiry = expiryController.text.trim();
-                            final cvv = cvvController.text.trim();
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final card = cardController.text.trim();
+                          final holder = holderController.text.trim();
+                          final expiry = expiryController.text.trim();
+                          final cvv = cvvController.text.trim();
 
-                            if (card.length == 16 &&
-                                holder.isNotEmpty &&
-                                expiry.isNotEmpty &&
-                                cvv.length == 3) {
-                              final cardType = int.parse(card[0]) == 4
-                                  ? 'VISA'
-                                  : 'MASTERCARD';
-                              setState(() {
-                                _savedPaymentMethods.add({
-                                  'type': 'Debit/Credit Card',
-                                  'display':
-                                      '$cardType **** ${card.substring(card.length - 4)}',
-                                  'cardNumber': card,
-                                  'holder': holder,
-                                  'expiry': expiry,
-                                });
-                              });
-                              Navigator.pop(context);
-                              GlassDialog.showSuccess(
-                                context,
-                                'Card saved successfully!',
-                              );
-                            } else {
-                              GlassDialog.showError(
-                                context,
-                                'Please fill all fields correctly',
-                              );
+                          if (card.length == 16 &&
+                              holder.isNotEmpty &&
+                              expiry.isNotEmpty &&
+                              cvv.length == 3) {
+                            if (savedMethod == null) {
+                              final currentCount = _savedPaymentMethods
+                                  .where(
+                                    (m) => m['type'] == 'Debit/Credit Card',
+                                  )
+                                  .length;
+                              if (currentCount >=
+                                  _limits['Debit/Credit Card']!) {
+                                GlassDialog.showError(
+                                  context,
+                                  'You can only save up to 3 cards.',
+                                );
+                                return;
+                              }
                             }
-                          },
-                          child: const Text('Save'),
-                        ),
+
+                            final cardType = int.parse(card[0]) == 4
+                                ? 'VISA'
+                                : 'MASTERCARD';
+                            setState(() {
+                              final data = {
+                                'type': 'Debit/Credit Card',
+                                'display':
+                                    '$cardType **** ${card.substring(card.length - 4)}',
+                                'cardNumber': card,
+                                'holder': holder,
+                                'expiry': expiry,
+                                'isFeatured':
+                                    savedMethod?['isFeatured'] ??
+                                    _savedPaymentMethods.length < 4,
+                              };
+
+                              if (savedMethod != null) {
+                                final index = _savedPaymentMethods.indexOf(
+                                  savedMethod,
+                                );
+                                if (index != -1) {
+                                  _savedPaymentMethods[index] = data;
+                                }
+                              } else {
+                                _savedPaymentMethods.add(data);
+                              }
+                            });
+                            Navigator.pop(context);
+                            GlassDialog.showSuccess(
+                              context,
+                              savedMethod != null
+                                  ? 'Card updated successfully!'
+                                  : 'Card saved successfully!',
+                            );
+                          } else {
+                            GlassDialog.showError(
+                              context,
+                              'Please fill all fields correctly',
+                            );
+                          }
+                        },
+                        child: Text(savedMethod == null ? 'Save' : 'Update'),
                       ),
-                    if (savedMethod != null)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Close'),
-                        ),
-                      ),
+                    ),
                   ],
                 ),
               ),
@@ -419,7 +467,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     );
   }
 
-  void _showEsewaDialog({Map<String, String>? savedMethod}) {
+  void _showEsewaDialog({Map<String, dynamic>? savedMethod}) {
     final emailController = TextEditingController(
       text: savedMethod?['email'] ?? '',
     );
@@ -521,43 +569,65 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    if (savedMethod == null)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final email = emailController.text.trim();
-                            final pin = passwordController.text.trim();
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final email = emailController.text.trim();
+                          final pin = passwordController.text.trim();
 
-                            if (email.isNotEmpty && pin.isNotEmpty) {
-                              setState(() {
-                                _savedPaymentMethods.add({
-                                  'type': 'eSewa Wallet',
-                                  'display': email,
-                                  'email': email,
-                                });
-                              });
-                              Navigator.pop(context);
-                              GlassDialog.showSuccess(
-                                context,
-                                'eSewa wallet linked successfully!',
-                              );
-                            } else {
-                              GlassDialog.showError(
-                                context,
-                                'Please fill all fields',
-                              );
+                          if (email.isNotEmpty &&
+                              (savedMethod != null || pin.isNotEmpty)) {
+                            if (savedMethod == null) {
+                              final currentCount = _savedPaymentMethods
+                                  .where((m) => m['type'] == 'eSewa Wallet')
+                                  .length;
+                              if (currentCount >= _limits['eSewa Wallet']!) {
+                                GlassDialog.showError(
+                                  context,
+                                  'You can only link up to 3 eSewa wallets.',
+                                );
+                                return;
+                              }
                             }
-                          },
-                          child: const Text('Link'),
-                        ),
+
+                            setState(() {
+                              final data = {
+                                'type': 'eSewa Wallet',
+                                'display': email,
+                                'email': email,
+                                'isFeatured':
+                                    savedMethod?['isFeatured'] ??
+                                    _savedPaymentMethods.length < 4,
+                              };
+
+                              if (savedMethod != null) {
+                                final index = _savedPaymentMethods.indexOf(
+                                  savedMethod,
+                                );
+                                if (index != -1) {
+                                  _savedPaymentMethods[index] = data;
+                                }
+                              } else {
+                                _savedPaymentMethods.add(data);
+                              }
+                            });
+                            Navigator.pop(context);
+                            GlassDialog.showSuccess(
+                              context,
+                              savedMethod != null
+                                  ? 'eSewa wallet updated successfully!'
+                                  : 'eSewa wallet linked successfully!',
+                            );
+                          } else {
+                            GlassDialog.showError(
+                              context,
+                              'Please fill all fields',
+                            );
+                          }
+                        },
+                        child: Text(savedMethod == null ? 'Link' : 'Update'),
                       ),
-                    if (savedMethod != null)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Close'),
-                        ),
-                      ),
+                    ),
                   ],
                 ),
               ),
@@ -588,7 +658,12 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
       return;
     }
 
-    final target = _methods[_selectedMethodIndex]['name'];
+    if (_selectedSavedSource == null) {
+      GlassDialog.showError(context, 'Please select a payment source.');
+      return;
+    }
+
+    final target = _selectedSavedSource!['display'];
 
     // 1. Show Receipt Preview
     showModalBottomSheet(
@@ -664,14 +739,33 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
         const SizedBox(height: 32),
         ServiceInputSection(
           label: 'Saved Sources',
+          trailing: TextButton(
+            onPressed: _showManageSourcesDialog,
+            child: const Text('Manage', style: TextStyle(fontSize: 12)),
+          ),
           child: _savedPaymentMethods.isNotEmpty
-              ? SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _savedPaymentMethods.map((method) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: _buildSavedSource(
+              ? Column(
+                  children: [
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            mainAxisExtent: 56,
+                          ),
+                      itemCount: _savedPaymentMethods
+                          .where((m) => m['isFeatured'] == true)
+                          .length
+                          .clamp(0, 4),
+                      itemBuilder: (context, index) {
+                        final featuredOnes = _savedPaymentMethods
+                            .where((m) => m['isFeatured'] == true)
+                            .toList();
+                        final method = featuredOnes[index];
+                        return _buildSavedSource(
                           method['display'] ?? '',
                           method['type'] == 'Bank Connect'
                               ? Icons.account_balance_rounded
@@ -680,10 +774,24 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                               : Icons.account_balance_wallet_rounded,
                           isDark,
                           method,
+                        );
+                      },
+                    ),
+                    if (_savedPaymentMethods.length > 4)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: TextButton(
+                          onPressed: _showManageSourcesDialog,
+                          child: const Text(
+                            'See All Sources',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                  ],
                 )
               : Container(
                   padding: const EdgeInsets.all(16),
@@ -818,9 +926,17 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.topUp, amount).toStringAsFixed(2)}', isDark),
+                      _buildInfoRow(
+                        'Service Charge',
+                        'Rs. ${TransactionService.getServiceCharge(TransactionType.topUp, amount).toStringAsFixed(2)}',
+                        isDark,
+                      ),
                       const SizedBox(height: 8),
-                      _buildInfoRow('Service Tax', 'Rs. ${TransactionService.getTax(TransactionType.topUp, amount).toStringAsFixed(2)}', isDark),
+                      _buildInfoRow(
+                        'Service Tax',
+                        'Rs. ${TransactionService.getTax(TransactionType.topUp, amount).toStringAsFixed(2)}',
+                        isDark,
+                      ),
                       const Divider(height: 24),
                       _buildInfoRow(
                         'Total Payable',
@@ -1030,11 +1146,175 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     return const SizedBox.shrink();
   }
 
+  void _showManageSourcesDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Manage Sources',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: _savedPaymentMethods.length,
+                    itemBuilder: (context, index) {
+                      final method = _savedPaymentMethods[index];
+                      final bool isFeatured = method['isFeatured'] ?? false;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.surfaceDark : Colors.white,
+                          borderRadius: AppTheme.radiusMedium,
+                          border: Border.all(
+                            color: isDark ? Colors.white10 : Colors.black12,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              method['type'] == 'Bank Connect'
+                                  ? Icons.account_balance_rounded
+                                  : method['type'] == 'Debit/Credit Card'
+                                  ? Icons.payment_rounded
+                                  : Icons.account_balance_wallet_rounded,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    method['display'] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    method['type'] ?? '',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              children: [
+                                const Text(
+                                  'Featured',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Switch(
+                                  value: isFeatured,
+                                  onChanged: (val) {
+                                    final featuredCount = _savedPaymentMethods
+                                        .where((m) => m['isFeatured'] == true)
+                                        .length;
+                                    if (val && featuredCount >= 4) {
+                                      GlassDialog.showError(
+                                        context,
+                                        'You can only feature up to 4 sources.',
+                                      );
+                                      return;
+                                    }
+                                    setModalState(
+                                      () => method['isFeatured'] = val,
+                                    );
+                                    setState(() {});
+                                  },
+                                  activeThumbColor: AppTheme.primaryColor,
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                setModalState(
+                                  () => _savedPaymentMethods.removeAt(index),
+                                );
+                                setState(() {
+                                  if (_selectedSavedSource == method) {
+                                    _selectedSavedSource = null;
+                                  }
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildSavedSource(
     String label,
     IconData icon,
     bool isDark,
-    Map<String, String> method,
+    Map<String, dynamic> method,
   ) {
     final isSelected = _selectedSavedSource == method;
 
@@ -1044,7 +1324,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primaryColor.withValues(alpha: 0.15)
@@ -1060,18 +1340,20 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: AppTheme.primaryColor),
+            Icon(icon, size: 18, color: AppTheme.primaryColor),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isSelected
-                    ? AppTheme.primaryColor
-                    : (isDark ? Colors.white : Colors.black),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: isSelected
+                      ? AppTheme.primaryColor
+                      : (isDark ? Colors.white : Colors.black),
+                ),
               ),
             ),
           ],

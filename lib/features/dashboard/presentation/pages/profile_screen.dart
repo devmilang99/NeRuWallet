@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:ekyc_shared/ekyc_shared.dart' as ocr;
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
@@ -19,11 +20,28 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final AuthService _authService = AuthService();
   bool _isKycVerified = false;
+  bool _biometricHardwareSupported = false;
+  bool _biometricEnrolled = false;
+  bool _isBiometricLocked = false;
+  String _userName = 'User';
+  String _userEmail = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _loadKycStatus();
+    _loadProfileCapabilities();
+  }
+
+  void _loadUserInfo() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        _userName = user.displayName ?? 'User';
+        _userEmail = user.email ?? '';
+      });
+    }
   }
 
   Future<void> _loadKycStatus() async {
@@ -32,6 +50,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) {
       setState(() {
         _isKycVerified = isVerified;
+      });
+    }
+  }
+
+  Future<void> _loadProfileCapabilities() async {
+    final hardwareSupported = await BiometricService.hasHardwareSupport();
+    final enrolled = await BiometricService.isEnrolled();
+    final locked = await BiometricService.isLockedOut();
+    
+    if (mounted) {
+      setState(() {
+        _biometricHardwareSupported = hardwareSupported;
+        _biometricEnrolled = enrolled;
+        _isBiometricLocked = locked;
       });
     }
   }
@@ -50,13 +82,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -99,10 +132,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       floating: true,
       pinned: true,
       elevation: 0,
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_new_rounded, 
-          color: isDark ? Colors.white : AppTheme.textBodyColor, size: 20),
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: isDark ? Colors.white : AppTheme.textBodyColor,
+          size: 20,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -141,12 +179,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   color: Colors.white24,
                   shape: BoxShape.circle,
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 36,
                   backgroundColor: Colors.white,
                   child: Text(
-                    'RG',
-                    style: TextStyle(
+                    _userName.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase(),
+                    style: const TextStyle(
                       color: AppTheme.primaryColor,
                       fontWeight: FontWeight.w900,
                       fontSize: 24,
@@ -164,7 +202,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       color: AppTheme.accentColor,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.verified_rounded, color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.verified_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
             ],
@@ -174,16 +216,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Raju Ghimire',
-                  style: TextStyle(
+                Text(
+                  _userName,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
                   ),
                 ),
                 Text(
-                  'raju@neruwallet.com',
+                  _userEmail,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
@@ -191,16 +233,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ocr.HomeScreen(),
-                      ),
-                    );
-                  },
+                  onTap: _isKycVerified
+                      ? null
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'KYC Verification is currently unavailable.',
+                              ),
+                            ),
+                          );
+                        },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: AppTheme.radiusFull,
@@ -210,13 +258,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _isKycVerified ? Icons.verified_user_rounded : Icons.shield_rounded, 
-                          color: Colors.white, 
-                          size: 14
+                          _isKycVerified
+                              ? Icons.verified_user_rounded
+                              : Icons.shield_rounded,
+                          color: Colors.white,
+                          size: 14,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _isKycVerified ? 'Verified Account' : 'Verify Your Account',
+                          _isKycVerified
+                              ? 'Verified Account'
+                              : 'Verify Your Account',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -248,44 +300,73 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildSecurityCard(bool isDark) {
-    return Card(
-      child: Column(
-        children: [
-          _buildSettingTile(
-            icon: Icons.fingerprint_rounded,
-            title: 'Biometric Security',
-            subtitle: 'Manage Face ID/Fingerprint',
-            isDark: isDark,
-            onTap: () => context.push('/profile/biometric-settings'),
-          ),
-          _buildDivider(isDark),
-          _buildSettingTile(
-            icon: Icons.lock_outline_rounded,
-            title: 'Change Password',
-            subtitle: 'Update login credentials',
-            isDark: isDark,
-            onTap: () => context.push('/auth/security-setup', extra: {'isSocial': true}),
-          ),
-          _buildDivider(isDark),
-          _buildSettingTile(
-            icon: Icons.pin_rounded,
-            title: 'Transaction PIN',
-            subtitle: 'Set or reset your security PIN',
-            isDark: isDark,
-            // Navigate directly to ChangePinProfileScreen which handles the
-            // full 3-step flow: verify old PIN → new PIN → confirm new PIN.
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ChangePinProfileScreen(),
+    return FutureBuilder<bool?>(
+      future: ref.read(preferenceServiceProvider).getBool('biometrics_login_enabled'),
+      builder: (context, snapshot) {
+        final bool isBiometricEnabled = snapshot.data ?? false;
+        
+        return Card(
+          child: Column(
+            children: [
+              _buildSettingTile(
+                icon: Icons.fingerprint_rounded,
+                title: 'Biometric Security',
+                subtitle: !_biometricHardwareSupported
+                    ? 'Hardware unsupported'
+                    : (_isBiometricLocked
+                        ? 'Biometrics locked (Use PIN)'
+                        : (!_biometricEnrolled
+                            ? 'Not activated in device settings'
+                            : (isBiometricEnabled
+                                ? 'Manage Face ID/Fingerprint'
+                                : 'Tap to enable biometric security'))),
+                isDark: isDark,
+                onTap: (!_biometricHardwareSupported ||
+                        _isBiometricLocked ||
+                        !_biometricEnrolled)
+                    ? null
+                    : () => context.push('/profile/biometric-settings'),
+                trailing: (!_biometricHardwareSupported ||
+                        _isBiometricLocked ||
+                        !_biometricEnrolled)
+                    ? const Icon(
+                        Icons.lock_clock_rounded,
+                        color: Colors.grey,
+                        size: 18,
+                      )
+                    : (!isBiometricEnabled
+                        ? const Icon(
+                            Icons.lock_outline_rounded,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          )
+                        : null),
               ),
-            ),
+              _buildDivider(isDark),
+              _buildSettingTile(
+                icon: Icons.lock_outline_rounded,
+                title: 'Change Password',
+                subtitle: 'Update login credentials',
+                isDark: isDark,
+                onTap: () => context.push('/profile/change-password'),
+              ),
+              _buildDivider(isDark),
+              _buildSettingTile(
+                icon: Icons.pin_rounded,
+                title: 'Transaction PIN',
+                subtitle: 'Set or reset your security PIN',
+                isDark: isDark,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ChangePinProfileScreen()),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.05, end: 0);
   }
-
 
   Widget _buildAccountCard(bool isDark) {
     return Card(
@@ -359,15 +440,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       subtitle: Text(
         subtitle,
         style: TextStyle(
-          color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+          color: isDark
+              ? AppTheme.textSecondaryDark
+              : AppTheme.textSecondaryColor,
           fontSize: 12,
         ),
       ),
-      trailing: trailing ?? Icon(
-        Icons.arrow_forward_ios_rounded,
-        size: 14,
-        color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
-      ),
+      trailing:
+          trailing ??
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+          ),
     );
   }
 

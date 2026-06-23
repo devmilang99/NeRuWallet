@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+
 import '../../../../core/providers/theme_provider.dart';
 
 class ThemeSelectionScreen extends ConsumerStatefulWidget {
@@ -77,7 +79,11 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
               ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await ref
+                      .read(preferenceServiceProvider)
+                      .setBool('is_first_time', false);
+                  if (!context.mounted) return;
                   context.go('/auth/login');
                 },
                 child: const Text("Continue"),

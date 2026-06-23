@@ -83,17 +83,29 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       androidVersion = deviceInfo.version.sdkInt;
     }
 
-    for (var step in allSteps) {
-      Permission targetPerm = step.permission;
-      
-      // Handle Storage Permission correctly for Android 33+ (Android 13, 14, 15, 16)
-      if (step.title == "Media Storage" && Platform.isAndroid && androidVersion >= 33) {
-        targetPerm = Permission.photos;
-      }
-      
-      final status = await targetPerm.status;
-      if (!status.isGranted) {
-        ungrantedSteps.add(step.copyWith(permission: targetPerm));
+    for (final step in allSteps) {
+      final targetPerm = step.permission;
+      // Handle Storage Permission correctly for Android 33+
+      if (step.title == "Media Storage" && Platform.isAndroid) {
+        if (androidVersion >= 33) {
+          // On Android 13+, we check for specific media permissions
+          final photosStatus = await Permission.photos.status;
+          final videosStatus = await Permission.videos.status;
+          if (photosStatus.isGranted && videosStatus.isGranted) {
+            continue; // Already granted
+          }
+          ungrantedSteps.add(step.copyWith(permission: Permission.photos));
+        } else {
+          // On Android 12 and below, use standard storage permission
+          final status = await Permission.storage.status;
+          if (status.isGranted) continue;
+          ungrantedSteps.add(step.copyWith(permission: Permission.storage));
+        }
+      } else {
+        final status = await targetPerm.status;
+        if (!status.isGranted) {
+          ungrantedSteps.add(step.copyWith(permission: targetPerm));
+        }
       }
     }
 
@@ -121,23 +133,41 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       // Special handling for storage on modern Android
       Permission targetPermission = step.permission;
       
-      final status = await targetPermission.request();
-      
-      if (status.isGranted || status.isLimited) {
-        _updateState(1);
-        _nextPage();
-      } else if (status.isPermanentlyDenied) {
-        _updateState(3);
-        _showErrorSnackBar("Permission permanently denied. Please enable it in settings.", isPermanent: true);
-      } else {
-        _updateState(2);
-        _showErrorSnackBar("${step.title} is necessary for specific features.");
+      if (step.title == "Media Storage" && Platform.isAndroid) {
+        final deviceInfo = await DeviceInfoPlugin().androidInfo;
+        if (deviceInfo.version.sdkInt >= 33) {
+          // Request photos and videos for Android 13+
+          final results = await [Permission.photos, Permission.videos].request();
+          if (results[Permission.photos]!.isGranted && results[Permission.videos]!.isGranted) {
+             _updateState(1);
+             _nextPage();
+          } else {
+             _handleDenied(results[Permission.photos]!, step);
+          }
+          return;
+        }
       }
+
+      final status = await targetPermission.request();
+      _handleDenied(status, step);
     } catch (e) {
       debugPrint("Permission Error: $e");
       _showErrorSnackBar("An unexpected error occurred. Please try again.");
     } finally {
       if (mounted) setState(() => _isRequesting = false);
+    }
+  }
+
+  void _handleDenied(PermissionStatus status, PermissionStep step) {
+    if (status.isGranted || status.isLimited) {
+      _updateState(1);
+      _nextPage();
+    } else if (status.isPermanentlyDenied) {
+      _updateState(3);
+      _showErrorSnackBar("Permission permanently denied. Please enable it in settings.", isPermanent: true);
+    } else {
+      _updateState(2);
+      _showErrorSnackBar("${step.title} is necessary for specific features.");
     }
   }
 

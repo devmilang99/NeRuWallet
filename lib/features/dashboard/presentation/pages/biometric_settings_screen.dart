@@ -1,41 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
 
 class BiometricSettingsScreen extends ConsumerStatefulWidget {
   const BiometricSettingsScreen({super.key});
 
   @override
-  ConsumerState<BiometricSettingsScreen> createState() => _BiometricSettingsScreenState();
+  ConsumerState<BiometricSettingsScreen> createState() =>
+      _BiometricSettingsScreenState();
 }
 
-class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScreen> {
-  final LocalAuthentication _auth = LocalAuthentication();
+class _BiometricSettingsScreenState
+    extends ConsumerState<BiometricSettingsScreen>
+    with WidgetsBindingObserver {
   bool _loginEnabled = false;
   bool _transactionEnabled = false;
-  bool _isDeviceSupported = false;
+  bool _hardwareSupported = false;
+  bool _isEnrolled = false;
+  bool _isLockedOut = false;
 
   @override
   void initState() {
     super.initState();
-    _checkSupport();
+    WidgetsBinding.instance.addObserver(this);
+    _checkSupportAndLockout();
     _loadSettings();
   }
 
-  Future<void> _checkSupport() async {
-    final bool isSupported = await _auth.isDeviceSupported();
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkSupportAndLockout();
+    }
+  }
+
+  Future<void> _checkSupportAndLockout() async {
+    final bool hasHardware = await BiometricService.hasHardwareSupport();
+    final bool enrolled = await BiometricService.isEnrolled();
+    final bool locked = await BiometricService.isLockedOut();
     setState(() {
-      _isDeviceSupported = isSupported;
+      _hardwareSupported = hasHardware;
+      _isEnrolled = enrolled;
+      _isLockedOut = locked;
     });
   }
 
   Future<void> _loadSettings() async {
     final prefService = ref.read(preferenceServiceProvider);
-    final loginEnabled = await prefService.getBool('biometrics_login_enabled') ?? false;
-    final transactionEnabled = await prefService.getBool('biometrics_transaction_enabled') ?? false;
+    final loginEnabled =
+        await prefService.getBool('biometrics_login_enabled') ?? false;
+    final transactionEnabled =
+        await prefService.getBool('biometrics_transaction_enabled') ?? false;
     setState(() {
       _loginEnabled = loginEnabled;
       _transactionEnabled = transactionEnabled;
@@ -43,39 +68,41 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
   }
 
   Future<void> _toggleLoginBiometrics(bool value) async {
+    if (!_hardwareSupported || !_isEnrolled) return;
+
     final prefService = ref.read(preferenceServiceProvider);
     if (value) {
       // Authenticate once before enabling
-      final bool authenticated = await _auth.authenticate(
-        localizedReason: 'Confirm to enable biometric login',
-        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
-      );
+      final bool authenticated = await BiometricService.authenticate();
       if (!authenticated) return;
     }
 
     await prefService.setBool('biometrics_login_enabled', value);
     // Backward compatibility
     await prefService.setBool('biometrics_enabled', value);
-    
-    setState(() {
-      _loginEnabled = value;
-    });
+
+    if (mounted) {
+      setState(() {
+        _loginEnabled = value;
+      });
+    }
   }
 
   Future<void> _toggleTransactionBiometrics(bool value) async {
+    if (!_hardwareSupported || !_isEnrolled) return;
+
     final prefService = ref.read(preferenceServiceProvider);
     if (value) {
-      final bool authenticated = await _auth.authenticate(
-        localizedReason: 'Confirm to enable biometric transactions',
-        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
-      );
+      final bool authenticated = await BiometricService.authenticate();
       if (!authenticated) return;
     }
 
     await prefService.setBool('biometrics_transaction_enabled', value);
-    setState(() {
-      _transactionEnabled = value;
-    });
+    if (mounted) {
+      setState(() {
+        _transactionEnabled = value;
+      });
+    }
   }
 
   @override
@@ -83,7 +110,9 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text("Biometric Security"),
         backgroundColor: Colors.transparent,
@@ -126,14 +155,20 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
       ),
       child: Row(
         children: [
-          const Icon(Icons.fingerprint_rounded, size: 48, color: AppTheme.primaryColor),
+          const Icon(
+            Icons.fingerprint_rounded,
+            size: 48,
+            color: AppTheme.primaryColor,
+          ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isDeviceSupported ? "Device Supported" : "Wait Support Info",
+                  _hardwareSupported
+                      ? (_isEnrolled ? "Biometrics Active" : "Action Required")
+                      : "Not Supported",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -145,7 +180,9 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
                   "Use your biometric credentials for quick and secure access.",
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
                   ),
                 ),
               ],
@@ -157,22 +194,41 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
   }
 
   Widget _buildSettingCard(bool isDark) {
+    final bool canToggle = _hardwareSupported && _isEnrolled && !_isLockedOut;
+
     return Card(
       child: Column(
         children: [
           _buildToggleTile(
             title: "Biometric Login",
-            subtitle: "Access your account without password",
+            subtitle: _isLockedOut
+                ? "Biometrics are currently locked. Use device PIN."
+                : (!_hardwareSupported
+                      ? "Hardware unsupported on this device"
+                      : (!_isEnrolled
+                            ? "Activate biometrics in device settings"
+                            : "Access your account without password")),
             value: _loginEnabled,
-            onChanged: _toggleLoginBiometrics,
+            onChanged: canToggle ? _toggleLoginBiometrics : null,
             isDark: isDark,
           ),
-          Divider(height: 1, color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.1)),
+          Divider(
+            height: 1,
+            color: isDark
+                ? Colors.white12
+                : Colors.black.withValues(alpha: 0.1),
+          ),
           _buildToggleTile(
             title: "Transaction Validation",
-            subtitle: "Confirm payments using your biometrics",
+            subtitle: _isLockedOut
+                ? "Biometrics are currently locked."
+                : (!_hardwareSupported
+                      ? "Hardware unsupported on this device"
+                      : (!_isEnrolled
+                            ? "Activate biometrics in device settings"
+                            : "Confirm payments using your biometrics")),
             value: _transactionEnabled,
-            onChanged: _toggleTransactionBiometrics,
+            onChanged: canToggle ? _toggleTransactionBiometrics : null,
             isDark: isDark,
           ),
         ],
@@ -184,7 +240,7 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
     required String title,
     required String subtitle,
     required bool value,
-    required Function(bool) onChanged,
+    required ValueChanged<bool>? onChanged,
     required bool isDark,
   }) {
     return ListTile(
@@ -200,7 +256,9 @@ class _BiometricSettingsScreenState extends ConsumerState<BiometricSettingsScree
         subtitle,
         style: TextStyle(
           fontSize: 12,
-          color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+          color: isDark
+              ? AppTheme.textSecondaryDark
+              : AppTheme.textSecondaryColor,
         ),
       ),
       trailing: Switch.adaptive(

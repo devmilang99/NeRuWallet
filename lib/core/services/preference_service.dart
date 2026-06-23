@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'preference_service.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 PreferenceService preferenceService(Ref ref) {
   return PreferenceService(ref.watch(appDatabaseProvider));
 }

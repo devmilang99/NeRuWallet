@@ -1,21 +1,23 @@
 import 'dart:ui';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import '../../data/models/nav_item_model.dart';
-import '../widgets/biometric_prompt_sheet.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'tabs/home_tab.dart';
-import 'tabs/history_tab.dart';
-import 'package:neruwallet/core/widgets/glass_dialog.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
+
+import '../../data/models/nav_item_model.dart';
+import '../widgets/biometric_prompt_sheet.dart';
+import 'tabs/history_tab.dart';
+import 'tabs/home_tab.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -26,7 +28,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
-
   int _selectedTab = 0;
   bool _balanceVisible = true;
   bool _hasPromptedThisSession = false;
@@ -44,9 +45,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _markOnboardingComplete();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _checkAndPromptBiometrics();
+        _handleBiometricSecurity();
       }
     });
+  }
+
+  Future<void> _handleBiometricSecurity() async {
+    final prefService = ref.read(preferenceServiceProvider);
+    final bool isEnabled =
+        await prefService.getBool('biometrics_enabled') ?? false;
+
+    if (isEnabled) {
+      final bool authenticated = await BiometricService.authenticate();
+      if (!authenticated && mounted) {
+        // If authentication fails, we should ideally go back to login
+        // but for now, we'll just show a snackbar or take action
+        context.go('/auth/login');
+      }
+    } else {
+      _checkAndPromptBiometrics();
+    }
+  }
+
+  Future<void> _checkAndPromptBiometrics() async {
+    if (_hasPromptedThisSession) return;
+
+    try {
+      final prefService = ref.read(preferenceServiceProvider);
+      final bool onboardingCompleted =
+          await prefService.getBool('biometric_onboarding_completed') ?? false;
+
+      // If we've already shown the onboarding prompt, don't prompt again
+      if (onboardingCompleted) return;
+
+      final bool hasHardware = await BiometricService.hasHardwareSupport();
+
+      if (hasHardware && mounted) {
+        final List<BiometricType> availableBiometrics =
+            await BiometricService.getAvailableBiometrics();
+
+        // Mark onboarding as completed so we don't spam the user
+        await prefService.setBool('biometric_onboarding_completed', true);
+        _hasPromptedThisSession = true;
+
+        if (availableBiometrics.isNotEmpty && mounted) {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            isDismissible: false,
+            enableDrag: false,
+            useRootNavigator: true,
+            builder: (context) => BiometricPromptSheet(
+              biometrics: availableBiometrics,
+              auth: _auth,
+              onEnrolled: () {
+                // Biometrics enrolled successfully
+              },
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Biometric Check Error: $e");
+    }
   }
 
   Future<void> _initializeSession() async {
@@ -95,63 +157,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
-  Future<void> _checkAndPromptBiometrics() async {
-    if (_hasPromptedThisSession) return;
-
-    try {
-      final prefService = ref.read(preferenceServiceProvider);
-      final bool isEnrolled = await prefService.getBool('biometrics_enabled') ?? false;
-      final bool onboardingCompleted =
-          await prefService.getBool('biometric_onboarding_completed') ?? false;
-
-      // Just load the preferences, we don't need to store _biometricsEnabled in state anymore
-
-      // If already enrolled or if we've already shown the onboarding prompt, don't prompt again
-      if (isEnrolled || onboardingCompleted) return;
-
-      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-      final bool canAuthenticate =
-          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
-
-      if (canAuthenticate && mounted) {
-        final List<BiometricType> availableBiometrics = await _auth
-            .getAvailableBiometrics();
-
-        if (availableBiometrics.isNotEmpty && mounted) {
-          // Strictly mark onboarding as completed the first time we show it (or attempt to)
-          await prefService.setBool('biometric_onboarding_completed', true);
-          _hasPromptedThisSession = true;
-
-          if (!mounted) return;
-
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            isDismissible: false,
-            enableDrag: false,
-            useRootNavigator: true,
-            builder: (context) => BiometricPromptSheet(
-              biometrics: availableBiometrics,
-              auth: _auth,
-              onEnrolled: () {
-                // Biometrics enrolled successfully
-              },
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint("Biometric Check Error: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final balanceState = ref.watch(balanceProvider);
     final List<Transaction> transactions = balanceState.transactions;
+
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return PopScope(
       // Prevent the default pop — we handle it ourselves with a dialog.
@@ -189,6 +202,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   },
                   transactions: transactions,
                   totalBalance: balanceState.totalBalance,
+                  totalIncome: balanceState.totalIncome,
                   totalExpenses: balanceState.totalExpenses,
                 ),
                 _selectedTab == 1
@@ -199,13 +213,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             // Floating Bottom Nav
             Align(
               alignment: Alignment.bottomCenter,
-              child: _buildBottomNav(isDark),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: bottomInset > 0 ? bottomInset + 12 : 24,
+                ),
+                child: _buildBottomNav(isDark),
+              ),
             ),
             // Floating Scan Button
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 25), // Adjusted position
+                padding: EdgeInsets.only(
+                  bottom: bottomInset > 0 ? bottomInset + 11 : 23,
+                ),
                 child: _buildScanButton(isDark),
               ),
             ),
@@ -230,7 +251,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildBottomNav(bool isDark) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+      margin: const EdgeInsets.symmetric(horizontal: 32),
       height: 68,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),

@@ -4,9 +4,9 @@ import 'package:neruwallet/core/services/notification_service.dart';
 
 /// Database provider for Drift.
 final databaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-  ref.onDispose(db.close);
-  return db;
+  // Reuse the generated Riverpod `appDatabaseProvider` to ensure only
+  // a single `AppDatabase` instance exists across the app.
+  return ref.watch(appDatabaseProvider);
 });
 
 /// Notification Service provider

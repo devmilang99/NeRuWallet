@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/services/preference_service.dart';
 
 class ChangePinProfileScreen extends ConsumerStatefulWidget {
   const ChangePinProfileScreen({super.key});
 
   @override
-  ConsumerState<ChangePinProfileScreen> createState() => _ChangePinProfileScreenState();
+  ConsumerState<ChangePinProfileScreen> createState() =>
+      _ChangePinProfileScreenState();
 }
 
-class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen> {
+class _ChangePinProfileScreenState
+    extends ConsumerState<ChangePinProfileScreen> {
   final _oldPinController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
-  
+
   int _step = 0; // 0: Old PIN, 1: New PIN, 2: Confirm PIN
   bool _showMismatchError = false;
 
@@ -46,9 +48,22 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
 
   Future<void> _handleComplete() async {
     final prefService = ref.read(preferenceServiceProvider);
-    
+
     if (_step == 0) {
-      final savedPin = await prefService.getString('transaction_pin', encrypted: true);
+      final savedPin = await prefService.getString(
+        'transaction_pin',
+        encrypted: true,
+      );
+
+      if (savedPin == null || savedPin.isEmpty) {
+        // If for some reason PIN is missing, let them set a new one
+        setState(() => _step = 1);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _pinFocusNode.requestFocus();
+        });
+        return;
+      }
+
       if (_oldPinController.text != savedPin) {
         if (mounted) {
           GlassDialog.showError(context, "Old PIN is incorrect.");
@@ -89,14 +104,18 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
 
       if (!mounted) return;
       GlassDialog.showLoading(context, message: 'Updating PIN...');
-      
+
       try {
-        await prefService.setString('transaction_pin', _pinController.text, encrypted: true);
-        
+        await prefService.setString(
+          'transaction_pin',
+          _pinController.text,
+          encrypted: true,
+        );
+
         if (mounted) {
           Navigator.pop(context); // Close loading
           GlassDialog.showSuccess(
-            context, 
+            context,
             "Transaction PIN updated successfully!",
             onConfirm: () => context.go('/dashboard'),
           );
@@ -128,20 +147,25 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
           child: Column(
             children: [
               const SizedBox(height: 20),
-              const Icon(Icons.lock_reset_rounded, size: 80, color: AppTheme.primaryColor)
-                  .animate().scale(delay: 200.ms),
+              const Icon(
+                Icons.lock_reset_rounded,
+                size: 80,
+                color: AppTheme.primaryColor,
+              ).animate().scale(delay: 200.ms),
               const SizedBox(height: 32),
               Text(
-                _step == 0 
-                  ? "Verify your current identity to update your PIN" 
-                  : "Choose a new 4-digit PIN for your transactions",
+                _step == 0
+                    ? "Verify your current identity to update your PIN"
+                    : "Choose a new 4-digit PIN for your transactions",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                  color: isDark
+                      ? AppTheme.textSecondaryDark
+                      : AppTheme.textSecondaryColor,
                 ),
               ).animate().fadeIn(delay: 400.ms),
               const SizedBox(height: 48),
-              
+
               if (_step == 0)
                 _buildOtpSection(
                   controller: _oldPinController,
@@ -165,12 +189,12 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
                   enabled: _step == 1,
                   // If user clicks the first PIN field while on confirm step,
                   // bring them back to the first step.
-                  onTap: _step == 2 
-                    ? () => setState(() {
-                        _step = 1;
-                        _pinFocusNode.requestFocus();
-                      }) 
-                    : null,
+                  onTap: _step == 2
+                      ? () => setState(() {
+                          _step = 1;
+                          _pinFocusNode.requestFocus();
+                        })
+                      : null,
                 ),
                 if (_step == 2) ...[
                   const SizedBox(height: 40),
@@ -187,12 +211,16 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
                       padding: const EdgeInsets.only(top: 12.0),
                       child: const Text(
                         "PINs do not match. Please try again.",
-                        style: TextStyle(color: AppTheme.errorColor, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: AppTheme.errorColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ).animate().shake(),
                     ),
                 ],
               ],
-              
+
               const SizedBox(height: 48),
               // Manual button removed - auto-submits on 4th digit
             ],
@@ -238,7 +266,15 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ...List.generate(4, (index) => _buildOtpBox(index, controller, isDark, enabled || isConfirm)),
+              ...List.generate(
+                4,
+                (index) => _buildOtpBox(
+                  index,
+                  controller,
+                  isDark,
+                  enabled || isConfirm,
+                ),
+              ),
             ],
           ),
           Opacity(
@@ -269,7 +305,12 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
     );
   }
 
-  Widget _buildOtpBox(int index, TextEditingController controller, bool isDark, bool enabled) {
+  Widget _buildOtpBox(
+    int index,
+    TextEditingController controller,
+    bool isDark,
+    bool enabled,
+  ) {
     String char = "";
     if (controller.text.length > index) {
       char = controller.text[index];
@@ -278,7 +319,8 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
     bool isFocused = enabled && controller.text.length == index;
     bool isWrong = false;
     if (_showMismatchError && controller == _confirmPinController) {
-      if (index < controller.text.length && index < _pinController.text.length) {
+      if (index < controller.text.length &&
+          index < _pinController.text.length) {
         isWrong = controller.text[index] != _pinController.text[index];
       } else if (index < controller.text.length) {
         isWrong = true;
@@ -286,7 +328,8 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
     }
 
     return Container(
-      width: 60, height: 60,
+      width: 60,
+      height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
@@ -294,16 +337,21 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
         border: Border.all(
           color: isWrong
               ? AppTheme.errorColor
-              : (isFocused ? AppTheme.primaryColor : (isDark ? Colors.white10 : Colors.black12)),
+              : (isFocused
+                    ? AppTheme.primaryColor
+                    : (isDark ? Colors.white10 : Colors.black12)),
           width: 2,
         ),
-        boxShadow: isFocused ? [
-          BoxShadow(
-            color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor).withValues(alpha: 0.3),
-            blurRadius: 8,
-            spreadRadius: 1,
-          )
-        ] : [],
+        boxShadow: isFocused
+            ? [
+                BoxShadow(
+                  color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor)
+                      .withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
+            : [],
       ),
       child: Center(
         child: Text(
@@ -311,7 +359,9 @@ class _ChangePinProfileScreenState extends ConsumerState<ChangePinProfileScreen>
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: isWrong ? AppTheme.errorColor : (isDark ? Colors.white : Colors.black),
+            color: isWrong
+                ? AppTheme.errorColor
+                : (isDark ? Colors.white : Colors.black),
           ),
         ),
       ),

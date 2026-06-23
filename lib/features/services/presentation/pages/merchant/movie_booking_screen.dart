@@ -95,8 +95,9 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
           ? const Color(0xFF6366F1)
           : const Color(0xFF0EA5E9);
 
-      final double fee = TransactionService.getServiceCharge(TransactionType.movie, _totalPrice);
-      final double tax = TransactionService.getTax(TransactionType.movie, _totalPrice);
+      final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
+      final double fee = TransactionService.getServiceCharge(TransactionType.movie, _totalPrice, isVoucherActive: isVoucherActive);
+      final double tax = TransactionService.getTax(TransactionType.movie, _totalPrice, isVoucherActive: isVoucherActive);
       final double totalPayable = _totalPrice + fee + tax;
       final double currentBalance = ref.read(balanceProvider).totalBalance;
 
@@ -124,6 +125,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
             'Show': '${DateFormat('dd MMM').format(_dates[_selectedDateIndex])}, $_selectedTime',
             'Seats': _seatsController.text,
             'Rate': 'Rs ${_pricePerSeatController.text}/seat',
+            if (isVoucherActive) 'Voucher': 'Applied (Free Fees)',
           },
           amount: _totalPrice,
           fee: fee,
@@ -146,13 +148,14 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
 
   void _completeBooking() {
     Navigator.pop(context); // Pop PIN screen
+    final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the transaction is now completed successfully)
     ref.read(balanceProvider.notifier).deductQuickAction(
       title: '${widget.provider} Ticket',
       amount: _totalPrice,
-      fee: TransactionService.getServiceCharge(TransactionType.movie, _totalPrice),
-      tax: TransactionService.getTax(TransactionType.movie, _totalPrice),
+      fee: TransactionService.getServiceCharge(TransactionType.movie, _totalPrice, isVoucherActive: isVoucherActive),
+      tax: TransactionService.getTax(TransactionType.movie, _totalPrice, isVoucherActive: isVoucherActive),
       icon: Icons.movie_rounded,
       color: widget.provider == 'QFX' ? const Color(0xFF6366F1) : const Color(0xFF0EA5E9),
       category: 'Movie',
@@ -162,6 +165,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
         'seats': _seatsController.text,
         'showTime': _selectedTime,
       },
+      isVoucherApplied: isVoucherActive,
     );
 
     showDialog(

@@ -8,9 +8,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AppDatabase appDatabase(Ref ref) {
-  return AppDatabase();
+  final db = AppDatabase();
+  return db;
 }
 
 /// Transactions table for offline storage and atomicity
@@ -25,7 +26,8 @@ class Transactions extends Table {
   IntColumn get colorValue => integer()();
   TextColumn get category => text().withDefault(const Constant('Other'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  TextColumn get metadata => text().nullable()(); // JSON string for additional data
+  TextColumn get metadata =>
+      text().nullable()(); // JSON string for additional data
 
   @override
   Set<Column> get primaryKey => {id};
@@ -74,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
   );
 
   // --- CRUD Operations for Transactions ---
-  
+
   /// Records a transaction atomically
   Future<void> recordTransaction(TransactionsCompanion entry) async {
     await transaction(() async {
@@ -83,18 +85,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<Transaction>> getAllTransactions() => select(transactions).get();
-  
-  Stream<List<Transaction>> watchAllTransactions() => 
-      (select(transactions)..orderBy([(t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)])).watch();
+
+  Stream<List<Transaction>> watchAllTransactions() =>
+      (select(transactions)..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ]))
+          .watch();
 
   // --- CRUD Operations for Preferences ---
 
   Future<void> setPreference(String key, String? value) async {
     await into(appPreferences).insertOnConflictUpdate(
-      AppPreferencesCompanion(
-        key: Value(key),
-        value: Value(value),
-      ),
+      AppPreferencesCompanion(key: Value(key), value: Value(value)),
     );
   }
 
@@ -106,10 +109,15 @@ class AppDatabase extends _$AppDatabase {
 
   // --- CRUD Operations for Notifications ---
 
-  Future<void> insertNotification(DbNotificationsCompanion entry) => into(dbNotifications).insert(entry);
+  Future<void> insertNotification(DbNotificationsCompanion entry) =>
+      into(dbNotifications).insert(entry);
 
-  Stream<List<DbNotification>> watchNotifications() => 
-      (select(dbNotifications)..orderBy([(t) => OrderingTerm(expression: t.receivedAt, mode: OrderingMode.desc)])).watch();
+  Stream<List<DbNotification>> watchNotifications() =>
+      (select(dbNotifications)..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.receivedAt, mode: OrderingMode.desc),
+          ]))
+          .watch();
 
   Future<void> markNotificationAsRead(int id) {
     return (update(dbNotifications)..where((t) => t.id.equals(id))).write(
