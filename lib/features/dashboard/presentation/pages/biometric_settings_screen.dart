@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
@@ -21,14 +20,12 @@ class _BiometricSettingsScreenState
   bool _transactionEnabled = false;
   bool _hardwareSupported = false;
   bool _isEnrolled = false;
-  bool _isLockedOut = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkSupportAndLockout();
-    _loadSettings();
+    _loadData();
   }
 
   @override
@@ -40,45 +37,41 @@ class _BiometricSettingsScreenState
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkSupportAndLockout();
+      _loadData();
     }
   }
 
-  Future<void> _checkSupportAndLockout() async {
+  Future<void> _loadData() async {
     final bool hasHardware = await BiometricService.hasHardwareSupport();
     final bool enrolled = await BiometricService.isEnrolled();
-    final bool locked = await BiometricService.isLockedOut();
-    setState(() {
-      _hardwareSupported = hasHardware;
-      _isEnrolled = enrolled;
-      _isLockedOut = locked;
-    });
-  }
-
-  Future<void> _loadSettings() async {
     final prefService = ref.read(preferenceServiceProvider);
     final loginEnabled =
         await prefService.getBool('biometrics_login_enabled') ?? false;
     final transactionEnabled =
         await prefService.getBool('biometrics_transaction_enabled') ?? false;
-    setState(() {
-      _loginEnabled = loginEnabled;
-      _transactionEnabled = transactionEnabled;
-    });
+
+    if (mounted) {
+      setState(() {
+        _hardwareSupported = hasHardware;
+        _isEnrolled = enrolled;
+        _loginEnabled = loginEnabled;
+        _transactionEnabled = transactionEnabled;
+      });
+    }
   }
 
   Future<void> _toggleLoginBiometrics(bool value) async {
     if (!_hardwareSupported || !_isEnrolled) return;
 
-    final prefService = ref.read(preferenceServiceProvider);
     if (value) {
-      // Authenticate once before enabling
-      final bool authenticated = await BiometricService.authenticate();
+      final bool authenticated = await BiometricService.authenticate(
+        localizedReason: 'Confirm to enable biometric login',
+      );
       if (!authenticated) return;
     }
 
+    final prefService = ref.read(preferenceServiceProvider);
     await prefService.setBool('biometrics_login_enabled', value);
-    // Backward compatibility
     await prefService.setBool('biometrics_enabled', value);
 
     if (mounted) {
@@ -91,12 +84,14 @@ class _BiometricSettingsScreenState
   Future<void> _toggleTransactionBiometrics(bool value) async {
     if (!_hardwareSupported || !_isEnrolled) return;
 
-    final prefService = ref.read(preferenceServiceProvider);
     if (value) {
-      final bool authenticated = await BiometricService.authenticate();
+      final bool authenticated = await BiometricService.authenticate(
+        localizedReason: 'Confirm to enable transaction biometrics',
+      );
       if (!authenticated) return;
     }
 
+    final prefService = ref.read(preferenceServiceProvider);
     await prefService.setBool('biometrics_transaction_enabled', value);
     if (mounted) {
       setState(() {
@@ -118,6 +113,10 @@ class _BiometricSettingsScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -194,20 +193,18 @@ class _BiometricSettingsScreenState
   }
 
   Widget _buildSettingCard(bool isDark) {
-    final bool canToggle = _hardwareSupported && _isEnrolled && !_isLockedOut;
+    final bool canToggle = _hardwareSupported && _isEnrolled;
 
     return Card(
       child: Column(
         children: [
           _buildToggleTile(
             title: "Biometric Login",
-            subtitle: _isLockedOut
-                ? "Biometrics are currently locked. Use device PIN."
-                : (!_hardwareSupported
-                      ? "Hardware unsupported on this device"
-                      : (!_isEnrolled
-                            ? "Activate biometrics in device settings"
-                            : "Access your account without password")),
+            subtitle: !_hardwareSupported
+                ? "Hardware unsupported on this device"
+                : (!_isEnrolled
+                    ? "Activate biometrics in device settings"
+                    : "Access your account without password"),
             value: _loginEnabled,
             onChanged: canToggle ? _toggleLoginBiometrics : null,
             isDark: isDark,
@@ -220,13 +217,11 @@ class _BiometricSettingsScreenState
           ),
           _buildToggleTile(
             title: "Transaction Validation",
-            subtitle: _isLockedOut
-                ? "Biometrics are currently locked."
-                : (!_hardwareSupported
-                      ? "Hardware unsupported on this device"
-                      : (!_isEnrolled
-                            ? "Activate biometrics in device settings"
-                            : "Confirm payments using your biometrics")),
+            subtitle: !_hardwareSupported
+                ? "Hardware unsupported on this device"
+                : (!_isEnrolled
+                    ? "Activate biometrics in device settings"
+                    : "Confirm payments using your biometrics"),
             value: _transactionEnabled,
             onChanged: canToggle ? _toggleTransactionBiometrics : null,
             isDark: isDark,

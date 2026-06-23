@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class BiometricPromptSheet extends ConsumerStatefulWidget {
   final List<BiometricType> biometrics;
-  final LocalAuthentication auth;
   final VoidCallback onEnrolled;
 
   const BiometricPromptSheet({
     super.key,
     required this.biometrics,
-    required this.auth,
     required this.onEnrolled,
   });
 
   @override
-  ConsumerState<BiometricPromptSheet> createState() => _BiometricPromptSheetState();
+  ConsumerState<BiometricPromptSheet> createState() =>
+      _BiometricPromptSheetState();
 }
 
 class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
@@ -62,7 +62,10 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
           const SizedBox(height: 12),
           _buildDescription(hasFace, isDark),
           const SizedBox(height: 40),
-          if (!_isEnrolled) _buildEnrollActions(isDark) else _buildSettingsActions(isDark),
+          if (!_isEnrolled)
+            _buildEnrollActions(isDark)
+          else
+            _buildSettingsActions(isDark),
           const SizedBox(height: 12),
         ],
       ),
@@ -88,9 +91,9 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
     return Text(
       _isEnrolled ? "Configure Security" : "Enable Biometric Login",
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.5,
+      ),
     );
   }
 
@@ -101,8 +104,10 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
           : "Use your ${hasFace ? 'Face ID' : 'fingerprint'} for faster and more secure access to your wallet.",
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
-          ),
+        color: isDark
+            ? AppTheme.textSecondaryDark
+            : AppTheme.textSecondaryColor,
+      ),
     );
   }
 
@@ -113,21 +118,14 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () async {
-              try {
-                final bool didAuthenticate = await widget.auth.authenticate(
-                  localizedReason: 'Please authenticate to enable biometric login',
-                  options: const AuthenticationOptions(
-                    stickyAuth: true,
-                    biometricOnly: true,
-                  ),
-                );
-                if (didAuthenticate) {
-                  setState(() {
-                    _isEnrolled = true;
-                  });
-                }
-              } catch (e) {
-                debugPrint(e.toString());
+              final bool didAuthenticate = await BiometricService.authenticate(
+                localizedReason:
+                    'Please authenticate to enable biometric login',
+              );
+              if (didAuthenticate) {
+                setState(() {
+                  _isEnrolled = true;
+                });
               }
             },
             child: const Text("Enroll Now"),
@@ -135,12 +133,14 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            final prefService = ref.read(preferenceServiceProvider);
+            await prefService.setBool('biometric_onboarding_completed', true);
+            if (mounted) Navigator.pop(context);
+          },
           child: Text(
             "Maybe Later",
-            style: TextStyle(
-              color: isDark ? Colors.white38 : Colors.black38,
-            ),
+            style: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
           ),
         ),
       ],
@@ -169,16 +169,22 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
         ElevatedButton(
           onPressed: () async {
             final prefService = ref.read(preferenceServiceProvider);
-            await prefService.setBool('biometrics_enabled', _loginAuth || _transactionAuth);
+            await prefService.setBool(
+              'biometrics_enabled',
+              _loginAuth || _transactionAuth,
+            );
             await prefService.setBool('biometrics_login_enabled', _loginAuth);
-            await prefService.setBool('biometrics_transaction_enabled', _transactionAuth);
+            await prefService.setBool(
+              'biometrics_transaction_enabled',
+              _transactionAuth,
+            );
             // Mark onboarding as completed
             await prefService.setBool('biometric_onboarding_completed', true);
 
             if (mounted) {
               Navigator.pop(context);
               widget.onEnrolled();
-              
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Security settings updated successfully!"),
@@ -203,10 +209,14 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.03)
+            : Colors.black.withValues(alpha: 0.02),
         borderRadius: AppTheme.radiusMedium,
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
@@ -217,13 +227,18 @@ class _BiometricPromptSheetState extends ConsumerState<BiometricPromptSheet> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 Text(
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
                   ),
                 ),
               ],

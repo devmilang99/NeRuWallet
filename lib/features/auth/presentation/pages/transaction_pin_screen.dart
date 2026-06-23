@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:local_auth/local_auth.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
@@ -31,7 +31,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
   final AuthService _authService = AuthService();
-  final LocalAuthentication _auth = LocalAuthentication();
 
   int _step = 1; // 1: PIN entry, 2: Confirmation (if setup/reset)
   bool _showMismatchError = false;
@@ -180,39 +179,40 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     }
   }
 
+  static const String _transactionBiometricPromptedKey =
+      'biometric_transaction_prompted';
+
   Future<void> _checkBiometricForVerification() async {
     if (widget.mode != PinMode.verify) return;
 
     final prefService = ref.read(preferenceServiceProvider);
     final bool isEnabled =
         await prefService.getBool('biometrics_transaction_enabled') ?? false;
-    final bool isFirstTime =
-        await prefService.getBool('is_first_time') ?? false;
+    final bool hasPromptedBefore =
+        await prefService.getBool(_transactionBiometricPromptedKey) ?? false;
 
-    if (!isEnabled && isFirstTime) {
-      final bool canCheck = await _auth.canCheckBiometrics;
-      final bool isSupported = await _auth.isDeviceSupported();
+    if (!isEnabled && !hasPromptedBefore) {
+      final bool isAvailable = await BiometricService.isBiometricAvailable();
 
-      if (mounted && (canCheck || isSupported)) {
+      if (mounted && isAvailable) {
+        await prefService.setBool(_transactionBiometricPromptedKey, true);
         GlassDialog.showConfirm(
           context,
           title: 'Enable Biometrics',
           message:
-              'Biometric authentication is available on your device. Would you like to enable it for faster transactions?',
-          confirmText: 'Go to Settings',
+              'Use biometric authentication for faster transaction approval. You can skip now and enable it later from Profile > Biometric Security.',
+          confirmText: 'Enable Now',
+          cancelText: 'Skip',
+          onCancel: () {},
           onConfirm: () => context.push('/profile/biometric-settings'),
         );
       }
       return;
     }
 
-    try {
-      final bool authenticated = await _auth.authenticate(
+    if (isEnabled) {
+      final bool authenticated = await BiometricService.authenticate(
         localizedReason: 'Confirm this transaction',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
       );
 
       if (authenticated && mounted) {
@@ -222,8 +222,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
           context.go('/dashboard');
         }
       }
-    } catch (e) {
-      debugPrint("Biometric auth failed: $e");
     }
   }
 

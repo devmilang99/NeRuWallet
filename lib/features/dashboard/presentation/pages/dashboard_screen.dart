@@ -33,7 +33,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   bool _hasPromptedThisSession = false;
   bool _isKycVerified = false;
   String _userName = 'User';
-  final LocalAuthentication _auth = LocalAuthentication();
+  bool _isAuthenticating = false;
 
   @override
   void initState() {
@@ -51,16 +51,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _handleBiometricSecurity() async {
+    if (_isAuthenticating) return;
+
     final prefService = ref.read(preferenceServiceProvider);
     final bool isEnabled =
-        await prefService.getBool('biometrics_enabled') ?? false;
+        await prefService.getBool('biometrics_login_enabled') ?? false;
 
     if (isEnabled) {
-      final bool authenticated = await BiometricService.authenticate();
-      if (!authenticated && mounted) {
-        // If authentication fails, we should ideally go back to login
-        // but for now, we'll just show a snackbar or take action
-        context.go('/auth/login');
+      setState(() => _isAuthenticating = true);
+      final bool authenticated = await BiometricService.authenticate(
+        localizedReason: 'Unlock NeRuWallet',
+      );
+      if (mounted) {
+        setState(() => _isAuthenticating = false);
+        if (!authenticated) {
+          context.go('/auth/login');
+        }
       }
     } else {
       _checkAndPromptBiometrics();
@@ -84,8 +90,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         final List<BiometricType> availableBiometrics =
             await BiometricService.getAvailableBiometrics();
 
-        // Mark onboarding as completed so we don't spam the user
-        await prefService.setBool('biometric_onboarding_completed', true);
+        // Only mark that we've prompted in this session; persistent onboarding
+        // completion is handled by the bottom sheet actions (Confirm or Skip).
         _hasPromptedThisSession = true;
 
         if (availableBiometrics.isNotEmpty && mounted) {
@@ -98,7 +104,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             useRootNavigator: true,
             builder: (context) => BiometricPromptSheet(
               biometrics: availableBiometrics,
-              auth: _auth,
               onEnrolled: () {
                 // Biometrics enrolled successfully
               },
@@ -144,6 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadKycStatus();
+      _handleBiometricSecurity();
     }
   }
 

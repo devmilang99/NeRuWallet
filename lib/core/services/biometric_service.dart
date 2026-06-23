@@ -6,9 +6,63 @@ import 'package:local_auth_darwin/local_auth_darwin.dart';
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
 
+  static Future<bool> isBiometricAvailable() async {
+    try {
+      final bool canCheckBiometrics = await _auth.canCheckBiometrics;
+      final bool isDeviceSupported = await _auth.isDeviceSupported();
+      final List<BiometricType> availableBiometrics = await _auth
+          .getAvailableBiometrics();
+      return canCheckBiometrics &&
+          isDeviceSupported &&
+          availableBiometrics.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<List<BiometricType>> getAvailableBiometrics() async {
+    try {
+      return await _auth.getAvailableBiometrics();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<bool> authenticate({
+    String localizedReason = 'Please authenticate to continue',
+  }) async {
+    try {
+      return await _auth.authenticate(
+        localizedReason: localizedReason,
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+          useErrorDialogs: true,
+        ),
+        authMessages: const [
+          AndroidAuthMessages(
+            signInTitle: 'Biometric Authentication',
+            biometricHint: 'Authenticate to continue',
+            cancelButton: 'Cancel',
+          ),
+          IOSAuthMessages(cancelButton: 'Cancel'),
+        ],
+      );
+    } on PlatformException catch (e) {
+      if (e.code == 'NotAvailable' ||
+          e.code == 'NotEnrolled' ||
+          e.code == 'LockedOut' ||
+          e.code == 'PermanentlyLockedOut') {
+        // Handle specific errors if needed
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static Future<bool> hasHardwareSupport() async {
     try {
-      // isDeviceSupported() returns true if biometrics OR a PIN/passcode is available.
       return await _auth.isDeviceSupported();
     } catch (_) {
       return false;
@@ -17,11 +71,6 @@ class BiometricService {
 
   static Future<bool> isEnrolled() async {
     try {
-      // canCheckBiometrics returns true if hardware is present AND biometrics are enrolled.
-      final bool canCheck = await _auth.canCheckBiometrics;
-      if (canCheck) return true;
-
-      // Fallback: check the list of available biometrics directly.
       final List<BiometricType> available = await _auth
           .getAvailableBiometrics();
       return available.isNotEmpty;
@@ -30,51 +79,14 @@ class BiometricService {
     }
   }
 
-  static Future<bool> canCheckBiometrics() async {
-    return await hasHardwareSupport() || await _auth.isDeviceSupported();
-  }
-
   static Future<bool> isLockedOut() async {
     try {
-      final List<BiometricType> availableBiometrics = await _auth
-          .getAvailableBiometrics();
-      if (availableBiometrics.isEmpty) return false;
-
-      // Attempt a silent authentication to check for lockout without showing UI?
-      // Actually local_auth doesn't have a direct "isLocked" check without attempting auth.
-      // But we can check for specific exceptions in a failed auth attempt.
+      // There's no direct way to check for lockout without trying to authenticate or checking available biometrics
+      // But we can check if available biometrics returns empty despite hardware support, which might indicate lockout
+      // Or we just rely on the authenticate() method returning false and handling the error there.
       return false;
-    } catch (e) {
-      if (e is PlatformException) {
-        return e.code == 'LockedOut' || e.code == 'PermanentlyLockedOut';
-      }
-      return false;
-    }
-  }
-
-  static Future<bool> authenticate() async {
-    try {
-      if (!await canCheckBiometrics()) return false;
-      return await _auth.authenticate(
-        localizedReason: 'Please authenticate to access your wallet',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-        authMessages: const [
-          AndroidAuthMessages(
-            signInTitle: 'Biometric Authentication',
-            biometricHint: 'Authenticate to continue',
-          ),
-          IOSAuthMessages(cancelButton: 'No thanks'),
-        ],
-      );
     } catch (e) {
       return false;
     }
-  }
-
-  static Future<List<BiometricType>> getAvailableBiometrics() async {
-    return await _auth.getAvailableBiometrics();
   }
 }

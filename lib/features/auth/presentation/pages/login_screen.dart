@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
@@ -21,7 +22,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  final LocalAuthentication _auth = LocalAuthentication();
   final AuthService _authService = AuthService();
 
   Future<void> _handleLogin() async {
@@ -180,25 +180,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         false;
 
     if (isBiometricEnabled) {
-      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-      final bool canAuthenticate =
-          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+      final bool canAuthenticate = await BiometricService.isBiometricAvailable();
 
       if (canAuthenticate) {
-        try {
-          final bool didAuthenticate = await _auth.authenticate(
-            localizedReason: 'Authenticate to access your NeRuWallet',
-            options: const AuthenticationOptions(
-              stickyAuth: true,
-              biometricOnly: true,
-            ),
-          );
+        final bool didAuthenticate = await BiometricService.authenticate(
+          localizedReason: 'Authenticate to access your NeRuWallet',
+        );
 
-          if (didAuthenticate && mounted) {
-            context.go('/dashboard');
-          }
-        } catch (e) {
-          debugPrint(e.toString());
+        if (didAuthenticate && mounted) {
+          context.go('/dashboard');
         }
       }
     }

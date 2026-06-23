@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:go_router/go_router.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
 
@@ -58,7 +58,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final hardwareSupported = await BiometricService.hasHardwareSupport();
     final enrolled = await BiometricService.isEnrolled();
     final locked = await BiometricService.isLockedOut();
-    
+
     if (mounted) {
       setState(() {
         _biometricHardwareSupported = hardwareSupported;
@@ -183,7 +183,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   radius: 36,
                   backgroundColor: Colors.white,
                   child: Text(
-                    _userName.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase(),
+                    _userName
+                        .split(' ')
+                        .map((e) => e.isNotEmpty ? e[0] : '')
+                        .take(2)
+                        .join()
+                        .toUpperCase(),
                     style: const TextStyle(
                       color: AppTheme.primaryColor,
                       fontWeight: FontWeight.w900,
@@ -301,10 +306,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildSecurityCard(bool isDark) {
     return FutureBuilder<bool?>(
-      future: ref.read(preferenceServiceProvider).getBool('biometrics_login_enabled'),
+      future: ref
+          .read(preferenceServiceProvider)
+          .getBool('biometrics_login_enabled'),
       builder: (context, snapshot) {
         final bool isBiometricEnabled = snapshot.data ?? false;
-        
+
         return Card(
           child: Column(
             children: [
@@ -314,33 +321,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 subtitle: !_biometricHardwareSupported
                     ? 'Hardware unsupported'
                     : (_isBiometricLocked
-                        ? 'Biometrics locked (Use PIN)'
-                        : (!_biometricEnrolled
-                            ? 'Not activated in device settings'
-                            : (isBiometricEnabled
-                                ? 'Manage Face ID/Fingerprint'
-                                : 'Tap to enable biometric security'))),
+                          ? 'Biometrics locked (Use PIN)'
+                          : (!_biometricEnrolled
+                                ? 'Not activated in device settings'
+                                : (isBiometricEnabled
+                                      ? 'Enabled - Manage Settings'
+                                      : 'Tap to enable biometric login'))),
                 isDark: isDark,
-                onTap: (!_biometricHardwareSupported ||
+                onTap:
+                    (!_biometricHardwareSupported ||
                         _isBiometricLocked ||
                         !_biometricEnrolled)
                     ? null
                     : () => context.push('/profile/biometric-settings'),
-                trailing: (!_biometricHardwareSupported ||
-                        _isBiometricLocked ||
-                        !_biometricEnrolled)
-                    ? const Icon(
-                        Icons.lock_clock_rounded,
-                        color: Colors.grey,
-                        size: 18,
-                      )
-                    : (!isBiometricEnabled
-                        ? const Icon(
-                            Icons.lock_outline_rounded,
-                            color: AppTheme.primaryColor,
-                            size: 18,
-                          )
-                        : null),
+                trailing: Switch.adaptive(
+                  value: isBiometricEnabled,
+                  onChanged:
+                      (!_biometricHardwareSupported ||
+                          _isBiometricLocked ||
+                          !_biometricEnrolled)
+                      ? null
+                      : (value) async {
+                          if (value) {
+                            final authenticated =
+                                await BiometricService.authenticate(
+                                  localizedReason:
+                                      'Confirm to enable biometric login',
+                                );
+                            if (!authenticated) return;
+                          }
+                          final prefService = ref.read(preferenceServiceProvider);
+                          await prefService.setBool('biometrics_login_enabled', value);
+                          await prefService.setBool('biometrics_enabled', value);
+                          setState(() {});
+                        },
+                  activeTrackColor: AppTheme.primaryColor,
+                ),
               ),
               _buildDivider(isDark),
               _buildSettingTile(
@@ -358,7 +374,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 isDark: isDark,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ChangePinProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePinProfileScreen(),
+                  ),
                 ),
               ),
             ],
