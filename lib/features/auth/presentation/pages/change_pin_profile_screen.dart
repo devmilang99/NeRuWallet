@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 
 class ChangePinProfileScreen extends ConsumerStatefulWidget {
   const ChangePinProfileScreen({super.key});
@@ -132,98 +134,117 @@ class _ChangePinProfileScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Change PIN"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: isDark
+            ? AppTheme.backgroundDark
+            : AppTheme.backgroundColor,
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const Icon(
-                Icons.lock_reset_rounded,
-                size: 80,
-                color: AppTheme.primaryColor,
-              ).animate().scale(delay: 200.ms),
-              const SizedBox(height: 32),
-              Text(
-                _step == 0
-                    ? "Verify your current identity to update your PIN"
-                    : "Choose a new 4-digit PIN for your transactions",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isDark
-                      ? AppTheme.textSecondaryDark
-                      : AppTheme.textSecondaryColor,
-                ),
-              ).animate().fadeIn(delay: 400.ms),
-              const SizedBox(height: 48),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Change PIN"),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(24, 20, 24, 20 + bottomInset),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                const Icon(
+                  Icons.lock_reset_rounded,
+                  size: 80,
+                  color: AppTheme.primaryColor,
+                ).animate().scale(delay: 200.ms),
+                const SizedBox(height: 32),
+                Text(
+                  _step == 0
+                      ? "Verify your current identity to update your PIN"
+                      : "Choose a new 4-digit PIN for your transactions",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryColor,
+                  ),
+                ).animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 48),
 
-              if (_step == 0)
-                _buildOtpSection(
-                  controller: _oldPinController,
-                  focusNode: _oldPinFocusNode,
-                  label: "Old PIN",
-                  isDark: isDark,
-                  onComplete: _handleComplete,
-                )
-              else ...[
-                _buildOtpSection(
-                  controller: _pinController,
-                  focusNode: _pinFocusNode,
-                  label: "New PIN",
-                  isDark: isDark,
-                  onComplete: () {
-                    setState(() => _step = 2);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _confirmPinFocusNode.requestFocus();
-                    });
-                  },
-                  enabled: _step == 1,
-                  // If user clicks the first PIN field while on confirm step,
-                  // bring them back to the first step.
-                  onTap: _step == 2
-                      ? () => setState(() {
-                          _step = 1;
-                          _pinFocusNode.requestFocus();
-                        })
-                      : null,
-                ),
-                if (_step == 2) ...[
-                  const SizedBox(height: 40),
+                if (_step == 0)
                   _buildOtpSection(
-                    controller: _confirmPinController,
-                    focusNode: _confirmPinFocusNode,
-                    label: "Confirm New PIN",
+                    controller: _oldPinController,
+                    focusNode: _oldPinFocusNode,
+                    label: "Old PIN",
                     isDark: isDark,
                     onComplete: _handleComplete,
-                    isConfirm: true,
-                  ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-                  if (_showMismatchError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
-                      child: const Text(
-                        "PINs do not match. Please try again.",
-                        style: TextStyle(
-                          color: AppTheme.errorColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ).animate().shake(),
-                    ),
+                  )
+                else ...[
+                  _buildOtpSection(
+                    controller: _pinController,
+                    focusNode: _pinFocusNode,
+                    label: "New PIN",
+                    isDark: isDark,
+                    onComplete: () {
+                      setState(() => _step = 2);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _confirmPinFocusNode.requestFocus();
+                      });
+                    },
+                    enabled: _step == 1,
+                    // If user clicks the first PIN field while on confirm step,
+                    // bring them back to the first step.
+                    onTap: _step == 2
+                        ? () => setState(() {
+                            _step = 1;
+                            _pinFocusNode.requestFocus();
+                          })
+                        : null,
+                  ),
+                  if (_step == 2) ...[
+                    const SizedBox(height: 40),
+                    _buildOtpSection(
+                      controller: _confirmPinController,
+                      focusNode: _confirmPinFocusNode,
+                      label: "Confirm New PIN",
+                      isDark: isDark,
+                      onComplete: _handleComplete,
+                      isConfirm: true,
+                    ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                    if (_showMismatchError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: const Text(
+                          "PINs do not match. Please try again.",
+                          style: TextStyle(
+                            color: AppTheme.errorColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ).animate().shake(),
+                      ),
+                  ],
                 ],
-              ],
 
-              const SizedBox(height: 48),
-              // Manual button removed - auto-submits on 4th digit
-            ],
+                const SizedBox(height: 48),
+                if (_step == 0)
+                  TextButton(
+                    onPressed: () => context.push(
+                      '/auth/pin-setup',
+                      extra: {'mode': PinMode.reset},
+                    ),
+                    child: const Text("Forgot PIN?"),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

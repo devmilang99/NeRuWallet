@@ -1,31 +1,47 @@
 import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
 
 @Riverpod(keepAlive: true)
 AppDatabase appDatabase(Ref ref) {
-  final db = AppDatabase();
+  final db = ref.watch(_appDatabaseInstanceProvider);
   return db;
 }
+
+final _appDatabaseInstanceProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
 
 /// Transactions table for offline storage and atomicity
 class Transactions extends Table {
   TextColumn get id => text()(); // Primary Key (Unique ID)
   TextColumn get title => text()();
+
   TextColumn get subtitle => text()();
+
   RealColumn get amount => real()();
+
   RealColumn get fee => real().withDefault(const Constant(0.0))();
+
   RealColumn get tax => real().withDefault(const Constant(0.0))();
+
   IntColumn get iconCode => integer()();
+
   IntColumn get colorValue => integer()();
+
   TextColumn get category => text().withDefault(const Constant('Other'))();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
   TextColumn get metadata =>
       text().nullable()(); // JSON string for additional data
 
@@ -36,6 +52,7 @@ class Transactions extends Table {
 /// Key-Value store to replace SharedPreferences
 class AppPreferences extends Table {
   TextColumn get key => text()();
+
   TextColumn get value => text().nullable()();
 
   @override
@@ -45,9 +62,13 @@ class AppPreferences extends Table {
 /// Notification history table
 class DbNotifications extends Table {
   IntColumn get id => integer().autoIncrement()();
+
   TextColumn get title => text()();
+
   TextColumn get body => text()();
+
   DateTimeColumn get receivedAt => dateTime().withDefault(currentDateAndTime)();
+
   BoolColumn get isRead => boolean().withDefault(const Constant(false))();
 }
 

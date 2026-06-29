@@ -154,7 +154,7 @@ class BalanceCard extends StatelessWidget {
                                       alignment: Alignment.centerLeft,
                                       children: [
                                         ...previousChildren,
-                                        if (currentChild != null) currentChild,
+                                        ?currentChild,
                                       ],
                                     ),
                                 child: isVisible

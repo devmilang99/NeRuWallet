@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
@@ -22,53 +21,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  bool _biometricEnabled = false;
   final AuthService _authService = AuthService();
 
-  Future<void> _handleLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      GlassDialog.showError(
-        context,
-        "Please enter both email and password to continue.",
-      );
-      return;
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPreferences();
+  }
+
+  Future<void> _loadSavedPreferences() async {
+    final prefService = ref.read(preferenceServiceProvider);
+    final rememberMe = await prefService.getBool('remember_me') ?? false;
+    final biometricEnabled =
+        await prefService.getBool('biometrics_login_enabled') ?? false;
+
+    // Check if hardware is supported to show the icon
+    final hardwareSupported = await BiometricService.canAuthenticate();
+
+    if (mounted) {
+      setState(() {
+        _rememberMe = rememberMe;
+        _biometricEnabled = biometricEnabled && hardwareSupported;
+      });
     }
+  }
 
-    GlassDialog.showLoading(context, message: 'Signing you in...');
+  Future<void> _handleBiometricLogin() async {
+    final success = await BiometricService.authenticate(
+      title: 'NeRuWallet Login',
+      subtitle: 'Authenticate to access your wallet',
+      reason: 'Use biometrics to securely log in.',
+      biometricOnly: true,
+    );
 
-    try {
-      final user = await _authService.signInWithEmailPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        if (user != null) {
-          final prefService = ref.read(preferenceServiceProvider);
-          if (user.isNewUser) {
-            context.go(
-              '/auth/security-setup',
-              extra: {
-                'isSocial': false,
-                'email': _emailController.text,
-                'isNewUser': true,
-              },
-            );
-          } else {
-            // Save 'remember me' preference for splash auto-login
-            await prefService.setBool('remember_me', _rememberMe);
-            await prefService.setBool('registration_complete', true);
-            if (mounted) context.go('/dashboard');
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading
-        GlassDialog.showError(
-          context,
-          "Authentication Failed: ${e.toString()}",
-        );
-      }
+    if (success && mounted) {
+      context.go('/dashboard');
     }
   }
 
@@ -153,43 +141,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedPreferences();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndStartBiometricLogin();
-    });
-  }
-
-  Future<void> _loadSavedPreferences() async {
-    final prefService = ref.read(preferenceServiceProvider);
-    final rememberMe = await prefService.getBool('remember_me') ?? false;
-    if (mounted) {
-      setState(() {
-        _rememberMe = rememberMe;
-      });
+  Future<void> _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      GlassDialog.showError(context, "Please enter both email and password.");
+      return;
     }
-  }
 
-  Future<void> _checkAndStartBiometricLogin() async {
-    final prefService = ref.read(preferenceServiceProvider);
-    final bool isBiometricEnabled =
-        await prefService.getBool('biometrics_login_enabled') ??
-        await prefService.getBool('biometrics_enabled') ??
-        false;
+    GlassDialog.showLoading(context, message: 'Signing you in...');
 
-    if (isBiometricEnabled) {
-      final bool canAuthenticate = await BiometricService.isBiometricAvailable();
-
-      if (canAuthenticate) {
-        final bool didAuthenticate = await BiometricService.authenticate(
-          localizedReason: 'Authenticate to access your NeRuWallet',
-        );
-
-        if (didAuthenticate && mounted) {
-          context.go('/dashboard');
+    try {
+      final user = await _authService.signInWithEmailPassword(
+        _emailController.text,
+        _passwordController.text,
+      );
+      if (mounted) {
+        Navigator.pop(context);
+        if (user != null) {
+          final prefService = ref.read(preferenceServiceProvider);
+          if (user.isNewUser) {
+            context.go(
+              '/auth/security-setup',
+              extra: {
+                'isSocial': false,
+                'email': _emailController.text,
+                'isNewUser': true,
+              },
+            );
+          } else {
+            await prefService.setBool('remember_me', _rememberMe);
+            await prefService.setBool('registration_complete', true);
+            if (mounted) context.go('/dashboard');
+          }
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        GlassDialog.showError(
+          context,
+          "Authentication Failed: ${e.toString()}",
+        );
       }
     }
   }
@@ -201,7 +192,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,145 +212,93 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
               const SizedBox(height: 48),
-              // Card for Login Fields
               Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppTheme.surfaceDark.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.8),
-                      borderRadius: AppTheme.radiusLarge,
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.white,
-                        width: 1.5,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppTheme.surfaceDark.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.8),
+                  borderRadius: AppTheme.radiusLarge,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: "Email address",
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.05,
-                          ),
-                          blurRadius: 30,
-                          offset: const Offset(0, 15),
-                        ),
-                      ],
                     ),
-                    child: Column(
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        suffixIcon: IconButton(
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Row(
                       children: [
-                        // Email
-                        TextField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: "Email address",
-                            hintText: "example@domain.com",
-                            prefixIcon: Icon(Icons.email_outlined),
-                          ),
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (v) =>
+                              setState(() => _rememberMe = v ?? false),
                         ),
-                        const SizedBox(height: 24),
-                        // Password
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            hintText: "••••••••",
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                size: 20,
-                              ),
-                            ),
-                          ),
+                        const Text(
+                          "Remember me",
+                          style: TextStyle(fontSize: 13),
                         ),
-                        // Row: Remember Me (left) + Forgot Password (right)
-                        Row(
-                          children: [
-                            // Remember Me checkbox
-                            Transform.scale(
-                              scale: 0.9,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                activeColor: AppTheme.primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                onChanged: (val) =>
-                                    setState(() => _rememberMe = val ?? false),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  setState(() => _rememberMe = !_rememberMe),
-                              child: Text(
-                                "Remember me",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : AppTheme.textSecondaryColor,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () =>
-                                  context.push('/auth/forgot-password'),
-                              child: Text(
-                                "Forgot password?",
-                                style: TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () =>
+                              context.push('/auth/forgot-password'),
+                          child: const Text("Forgot password?"),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 64),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppTheme.radiusMedium,
-                            ),
-                          ),
-                          child: const Text("Sign In"),
-                        ),
-                        if (_emailController
-                            .text
-                            .isEmpty) // Just a placeholder check if we should show biometric icon explicitly
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.fingerprint,
-                                size: 40,
-                                color: AppTheme.primaryColor,
-                              ),
-                              onPressed: _checkAndStartBiometricLogin,
-                            ),
-                          ),
                       ],
                     ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 400.ms)
-                  .scale(
-                    begin: const Offset(0.95, 0.95),
-                    end: const Offset(1, 1),
-                    curve: Curves.easeOutBack,
-                  ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 64),
+                      ),
+                      child: const Text("Sign In"),
+                    ),
+                    if (_biometricEnabled) ...[
+                      const SizedBox(height: 24),
+                      Center(
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.fingerprint_rounded,
+                            size: 56,
+                            color: AppTheme.primaryColor,
+                          ),
+                          onPressed: _handleBiometricLogin,
+                        ),
+                      ).animate().fadeIn(delay: 500.ms).scale(),
+                    ],
+                  ],
+                ),
+              ).animate().fadeIn(delay: 400.ms).scale(),
               const SizedBox(height: 32),
               const Row(
                 children: [
@@ -378,7 +316,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Expanded(
                     child: _buildSocialButton(
                       icon:
-                          "https://www.svgrepo.com/show/475656/google-color.svg",
+                          "https://www.vectorlogo.zone/logos/google/google-icon.svg",
                       label: "Google",
                       onPressed: _handleGoogleLogin,
                     ),
@@ -387,7 +325,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Expanded(
                     child: _buildSocialButton(
                       icon:
-                          "https://www.svgrepo.com/show/303108/apple-black-logo.svg",
+                          "https://www.vectorlogo.zone/logos/apple/apple-tile.svg",
                       label: "Apple",
                       onPressed: _handleAppleLogin,
                     ),
@@ -398,26 +336,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "New to NeRuWallet?",
-                    style: TextStyle(
-                      color: isDark
-                          ? AppTheme.textSecondaryDark
-                          : AppTheme.textSecondaryColor,
-                    ),
-                  ),
+                  const Text("New here? "),
                   TextButton(
                     onPressed: () => context.push('/auth/signup'),
                     child: const Text(
                       "Create Account",
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
-              ).animate().fadeIn(delay: 1000.ms),
+              ),
             ],
           ),
         ),

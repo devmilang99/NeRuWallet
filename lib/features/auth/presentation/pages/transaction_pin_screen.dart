@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,21 +31,43 @@ class TransactionPinScreen extends ConsumerStatefulWidget {
 class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _oldPinController = TextEditingController();
   final AuthService _authService = AuthService();
 
-  int _step = 1; // 1: PIN entry, 2: Confirmation (if setup/reset)
+  int _step =
+      1; // 0: Verification (Old PIN/Password), 1: PIN entry, 2: Confirmation
   bool _showMismatchError = false;
+  bool _obscurePassword = true;
 
   final _pinFocusNode = FocusNode();
   final _confirmPinFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _oldPinFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _step = 1;
+    // Initialize step based on mode
+    if (widget.mode == PinMode.reset || widget.mode == PinMode.change) {
+      _step = 0;
+    } else {
+      _step = 1;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _pinFocusNode.requestFocus();
+        if (_step == 0) {
+          if (widget.mode == PinMode.reset) {
+            _passwordFocusNode.requestFocus();
+          } else {
+            _oldPinFocusNode.requestFocus();
+          }
+        } else {
+          _pinFocusNode.requestFocus();
+        }
+
+        // Auto-initiate biometric for transaction verification at the beginning
         if (widget.mode == PinMode.verify) {
           _checkBiometricForVerification();
         }
@@ -56,15 +79,75 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   void dispose() {
     _pinFocusNode.dispose();
     _confirmPinFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _oldPinFocusNode.dispose();
+    _pinController.dispose();
+    _confirmPinController.dispose();
+    _passwordController.dispose();
+    _oldPinController.dispose();
     super.dispose();
   }
 
+  Future<void> _checkBiometricForVerification() async {
+    final prefService = ref.read(preferenceServiceProvider);
+    final isEnabled =
+        await prefService.getBool('biometrics_transaction_enabled') ?? false;
+
+    if (isEnabled) {
+      final bool authenticated = await BiometricService.authenticate(
+        title: 'Authorize Transaction',
+        subtitle: 'Confirm your identity to proceed',
+        reason:
+            'Please scan your fingerprint or face to authorize this transaction.',
+        biometricOnly: true, // Standard layout with fallback
+      );
+
+      if (authenticated && mounted) {
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else {
+          context.go('/dashboard');
+        }
+      }
+    }
+  }
+
   Future<void> _handleComplete() async {
+    final prefService = ref.read(preferenceServiceProvider);
+
+    if (_step == 0) {
+      if (widget.mode == PinMode.reset) {
+        final savedPassword = await prefService.getString(
+          'app_password',
+          encrypted: true,
+        );
+        if (_passwordController.text != savedPassword) {
+          if (mounted) GlassDialog.showError(context, "Incorrect password.");
+          return;
+        }
+      } else if (widget.mode == PinMode.change) {
+        final savedPin = await prefService.getString(
+          'transaction_pin',
+          encrypted: true,
+        );
+        if (_oldPinController.text != savedPin) {
+          if (mounted) GlassDialog.showError(context, "Old PIN is incorrect.");
+          _oldPinController.clear();
+          _oldPinFocusNode.requestFocus();
+          return;
+        }
+      }
+
+      setState(() => _step = 1);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pinFocusNode.requestFocus();
+      });
+      return;
+    }
+
     if (_step == 1) {
       if (_pinController.text.length != 4) {
-        if (mounted) {
-          GlassDialog.showError(context, "PIN must be 4 digits.");
-        }
+        if (mounted) GlassDialog.showError(context, "PIN must be 4 digits.");
         return;
       }
 
@@ -108,7 +191,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     final prefService = ref.read(preferenceServiceProvider);
     if (!mounted) return;
 
-    GlassDialog.showLoading(context, message: 'Completing your setup...');
+    GlassDialog.showLoading(context, message: 'Completing setup...');
     try {
       await prefService.setString(
         'transaction_pin',
@@ -119,7 +202,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       if (widget.signupData != null) {
         final data = widget.signupData!;
         final bool isSocial = data['isSocial'] ?? false;
-
         if (!isSocial) {
           await _authService.signUpWithEmailPassword(
             data['email'],
@@ -127,47 +209,14 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
             data['name'],
           );
         }
-
-        if (data.containsKey('security_question')) {
-          await prefService.setString(
-            'security_question',
-            data['security_question'],
-          );
-          await prefService.setString(
-            'security_answer',
-            data['security_answer'],
-            encrypted: true,
-          );
-        }
-
-        if (data.containsKey('login_pin')) {
-          await prefService.setString(
-            'login_pin',
-            data['login_pin'],
-            encrypted: true,
-          );
-        }
-
-        if (data.containsKey('password')) {
-          await prefService.setString(
-            'app_password',
-            data['password'],
-            encrypted: true,
-          );
-        }
+        await prefService.setBool('registration_complete', true);
       }
 
-      await prefService.setBool('registration_complete', true);
-
       if (mounted) {
-        Navigator.pop(context); // Close loading
-        String message = widget.signupData?['isSocial'] == true
-            ? "Account setup successfully! Welcome to NeRuWallet."
-            : "Registration successful!";
-
+        Navigator.pop(context);
         GlassDialog.showSuccess(
           context,
-          message,
+          "Transaction PIN setup successful!",
           onConfirm: () => context.go('/dashboard'),
         );
       }
@@ -175,52 +224,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       if (mounted) {
         Navigator.pop(context);
         GlassDialog.showError(context, "Setup failed: ${e.toString()}");
-      }
-    }
-  }
-
-  static const String _transactionBiometricPromptedKey =
-      'biometric_transaction_prompted';
-
-  Future<void> _checkBiometricForVerification() async {
-    if (widget.mode != PinMode.verify) return;
-
-    final prefService = ref.read(preferenceServiceProvider);
-    final bool isEnabled =
-        await prefService.getBool('biometrics_transaction_enabled') ?? false;
-    final bool hasPromptedBefore =
-        await prefService.getBool(_transactionBiometricPromptedKey) ?? false;
-
-    if (!isEnabled && !hasPromptedBefore) {
-      final bool isAvailable = await BiometricService.isBiometricAvailable();
-
-      if (mounted && isAvailable) {
-        await prefService.setBool(_transactionBiometricPromptedKey, true);
-        GlassDialog.showConfirm(
-          context,
-          title: 'Enable Biometrics',
-          message:
-              'Use biometric authentication for faster transaction approval. You can skip now and enable it later from Profile > Biometric Security.',
-          confirmText: 'Enable Now',
-          cancelText: 'Skip',
-          onCancel: () {},
-          onConfirm: () => context.push('/profile/biometric-settings'),
-        );
-      }
-      return;
-    }
-
-    if (isEnabled) {
-      final bool authenticated = await BiometricService.authenticate(
-        localizedReason: 'Confirm this transaction',
-      );
-
-      if (authenticated && mounted) {
-        if (widget.onSuccess != null) {
-          widget.onSuccess!();
-        } else {
-          context.go('/dashboard');
-        }
       }
     }
   }
@@ -260,16 +263,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       encrypted: true,
     );
 
-    if (savedPin == null || savedPin.isEmpty) {
-      if (mounted) {
-        GlassDialog.showError(
-          context,
-          "Transaction PIN not set. Please set it up in Settings.",
-        );
-      }
-      return;
-    }
-
     if (_pinController.text == savedPin) {
       if (!mounted) return;
       if (widget.onSuccess != null) {
@@ -287,6 +280,20 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   }
 
   Future<void> _handleBackActions() async {
+    if (_step == 1 &&
+        (widget.mode == PinMode.reset || widget.mode == PinMode.change)) {
+      setState(() {
+        _step = 0;
+        _pinController.clear();
+      });
+      if (widget.mode == PinMode.reset) {
+        _passwordFocusNode.requestFocus();
+      } else {
+        _oldPinFocusNode.requestFocus();
+      }
+      return;
+    }
+
     if (_step == 2) {
       setState(() {
         _step = 1;
@@ -297,51 +304,28 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       return;
     }
 
-    final isNewSocial =
-        widget.mode == PinMode.set &&
-        (widget.signupData?['isSocial'] ?? false) &&
-        (widget.signupData?['isNewUser'] ?? false);
-
-    if (isNewSocial) {
-      if (!mounted) return;
-      GlassDialog.showConfirm(
-        context,
-        title: "Cancel Registration?",
-        message:
-            "Your account connection is incomplete. If you leave now, your registration will be cancelled.",
-        confirmText: "Yes, Cancel",
-        cancelText: "Stay here",
-        isDestructive: true,
-        onConfirm: () async {
-          GlassDialog.showLoading(
-            context,
-            message: "Cancelling registration...",
-          );
-          try {
-            await _authService.deleteAccount();
-          } catch (e) {
-            debugPrint("Error: $e");
-          }
-          if (mounted) {
-            Navigator.pop(context);
-            context.go('/auth/login');
-          }
-        },
-      );
-    } else {
-      if (mounted) context.pop();
-    }
+    if (mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     String title = widget.mode == PinMode.verify
         ? "Enter PIN"
-        : "Transaction PIN";
-    String subtitle = widget.mode == PinMode.verify
-        ? "Authorize this transaction"
-        : "Create a 4-digit PIN for secure transactions";
+        : (widget.mode == PinMode.reset ? "Reset PIN" : "Transaction PIN");
+
+    String subtitle;
+    if (widget.mode == PinMode.verify) {
+      subtitle = "Authorize this transaction";
+    } else if (_step == 0) {
+      subtitle = widget.mode == PinMode.reset
+          ? "Verify your password to set a new PIN"
+          : "Enter your old PIN to continue";
+    } else {
+      subtitle = "Choose a 4-digit PIN for your transactions";
+    }
 
     return PopScope(
       canPop: false,
@@ -349,121 +333,175 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         if (didPop) return;
         await _handleBackActions();
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            onPressed: _handleBackActions,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          ),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: isDark
+              ? AppTheme.backgroundDark
+              : AppTheme.backgroundColor,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                const Icon(
-                  Icons.shield_rounded,
-                  size: 80,
-                  color: AppTheme.primaryColor,
-                ).animate().scale(delay: 200.ms),
-                const SizedBox(height: 32),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isDark
-                        ? AppTheme.textSecondaryDark
-                        : AppTheme.textSecondaryColor,
-                  ),
-                ).animate().fadeIn(delay: 400.ms),
-                const SizedBox(height: 48),
-                _buildOtpSection(
-                  controller: _pinController,
-                  focusNode: _pinFocusNode,
-                  label: widget.mode == PinMode.verify
-                      ? "Enter PIN"
-                      : "New PIN",
-                  isDark: isDark,
-                  onComplete: () {
-                    if (widget.mode == PinMode.verify) {
-                      _handleComplete();
-                    } else {
-                      setState(() => _step = 2);
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _confirmPinFocusNode.requestFocus();
-                      });
-                    }
-                  },
-                  enabled: _step == 1,
-                  onTap: _step == 2
-                      ? () => setState(() {
-                          _step = 1;
-                          _pinFocusNode.requestFocus();
-                        })
-                      : null,
-                ),
-                if (_step == 2) ...[
-                  const SizedBox(height: 40),
-                  _buildOtpSection(
-                    controller: _confirmPinController,
-                    focusNode: _confirmPinFocusNode,
-                    label: "Confirm PIN",
-                    isDark: isDark,
-                    onComplete: _handleComplete,
-                    isConfirm: true,
-                  ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-                  if (_showMismatchError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
-                      child: const Text(
-                        "PINs do not match",
-                        style: TextStyle(
-                          color: AppTheme.errorColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(title),
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              onPressed: _handleBackActions,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            ),
+          ),
+          body: SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(24, 20, 24, 20 + bottomInset),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Icon(
+                    _step == 0
+                        ? Icons.lock_person_rounded
+                        : Icons.shield_rounded,
+                    size: 80,
+                    color: AppTheme.primaryColor,
+                  ).animate().scale(delay: 200.ms),
+                  const SizedBox(height: 32),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isDark
+                          ? AppTheme.textSecondaryDark
+                          : AppTheme.textSecondaryColor,
+                    ),
+                  ).animate().fadeIn(delay: 400.ms),
+                  const SizedBox(height: 48),
+
+                  if (_step == 0) ...[
+                    if (widget.mode == PinMode.reset)
+                      Column(
+                        children: [
+                          TextField(
+                            controller: _passwordController,
+                            focusNode: _passwordFocusNode,
+                            obscureText: _obscurePassword,
+                            decoration: InputDecoration(
+                              labelText: "Login Password",
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  size: 20,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                            ),
+                            onSubmitted: (_) => _handleComplete(),
+                          ),
+                          const SizedBox(height: 32),
+                          ElevatedButton(
+                            onPressed: _handleComplete,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 56),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppTheme.radiusMedium,
+                              ),
+                            ),
+                            child: const Text("Verify Password"),
+                          ),
+                        ],
+                      )
+                    else
+                      _buildOtpSection(
+                        controller: _oldPinController,
+                        focusNode: _oldPinFocusNode,
+                        label: "Old PIN",
+                        isDark: isDark,
+                        onComplete: _handleComplete,
+                      ),
+                  ] else ...[
+                    _buildOtpSection(
+                      controller: _pinController,
+                      focusNode: _pinFocusNode,
+                      label: widget.mode == PinMode.verify
+                          ? "Enter PIN"
+                          : "New PIN",
+                      isDark: isDark,
+                      onComplete: () {
+                        if (widget.mode == PinMode.verify) {
+                          _handleComplete();
+                        } else {
+                          setState(() => _step = 2);
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _confirmPinFocusNode.requestFocus();
+                          });
+                        }
+                      },
+                      enabled: _step == 1,
+                      onTap: _step == 2
+                          ? () => setState(() {
+                              _step = 1;
+                              _pinFocusNode.requestFocus();
+                            })
+                          : null,
+                    ),
+                    if (_step == 2) ...[
+                      const SizedBox(height: 40),
+                      _buildOtpSection(
+                        controller: _confirmPinController,
+                        focusNode: _confirmPinFocusNode,
+                        label: "Confirm PIN",
+                        isDark: isDark,
+                        onComplete: _handleComplete,
+                        isConfirm: true,
+                      ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                      if (_showMismatchError)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: const Text(
+                            "PINs do not match. Please try again.",
+                            style: TextStyle(
+                              color: AppTheme.errorColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ).animate().shake(),
                         ),
-                      ).animate().shake(),
+                    ],
+                  ],
+                  const SizedBox(height: 48),
+                  if (widget.mode == PinMode.verify)
+                    Column(
+                      children: [
+                        TextButton(
+                          onPressed: () => context.push(
+                            '/auth/pin-setup',
+                            extra: {'mode': PinMode.reset},
+                          ),
+                          child: const Text("Forgot PIN?"),
+                        ),
+                        const SizedBox(height: 16),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.fingerprint_rounded,
+                            size: 64,
+                            color: AppTheme.primaryColor,
+                          ),
+                          onPressed: _checkBiometricForVerification,
+                        ).animate().scale(),
+                      ],
                     ),
                 ],
-                const SizedBox(height: 48),
-                if (widget.mode == PinMode.verify)
-                  TextButton(
-                    onPressed: () => context.push(
-                      '/auth/pin-setup',
-                      extra: {'mode': PinMode.reset},
-                    ),
-                    child: const Text("Forgot PIN?"),
-                  ),
-                if (widget.mode == PinMode.verify)
-                  FutureBuilder<bool>(
-                    future: ref
-                        .read(preferenceServiceProvider)
-                        .getBool('biometrics_transaction_enabled')
-                        .then((v) => v ?? false),
-                    builder: (context, snapshot) {
-                      if (snapshot.data == true) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.fingerprint_rounded,
-                              size: 48,
-                              color: AppTheme.primaryColor,
-                            ),
-                            onPressed: _checkBiometricForVerification,
-                          ),
-                        ).animate().fadeIn(delay: 600.ms).scale();
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -485,11 +523,15 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       onTap: () {
         if (onTap != null) {
           onTap();
-        } else {
-          focusNode.unfocus();
-          Future.delayed(const Duration(milliseconds: 50), () {
-            if (mounted) focusNode.requestFocus();
-          });
+        } else if (enabled || isConfirm) {
+          if (focusNode.hasFocus) {
+            focusNode.unfocus();
+            Future.delayed(const Duration(milliseconds: 10), () {
+              focusNode.requestFocus();
+            });
+          } else {
+            focusNode.requestFocus();
+          }
         }
       },
       behavior: HitTestBehavior.opaque,
@@ -502,34 +544,35 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              4,
-              (index) =>
-                  _buildOtpBox(index, controller, isDark, enabled || isConfirm),
-            ),
-          ),
-          IgnorePointer(
-            child: Opacity(
-              opacity: 0,
-              child: SizedBox(
-                height: 1,
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  autofocus: false,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  onChanged: (val) {
-                    if (_showMismatchError) {
-                      setState(() => _showMismatchError = false);
-                    } else {
-                      setState(() {});
-                    }
-                    if (val.length == 4) {
-                      onComplete();
-                    }
-                  },
+            children: [
+              ...List.generate(
+                4,
+                (index) => _buildOtpBox(
+                  index,
+                  controller,
+                  isDark,
+                  enabled || isConfirm,
                 ),
+              ),
+            ],
+          ),
+          Opacity(
+            opacity: 0,
+            child: SizedBox(
+              height: 1,
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                onChanged: (val) {
+                  if (_showMismatchError) {
+                    setState(() => _showMismatchError = false);
+                  } else {
+                    setState(() {});
+                  }
+                  if (val.length == 4) onComplete();
+                },
               ),
             ),
           ),
@@ -564,6 +607,16 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                     : (isDark ? Colors.white10 : Colors.black12)),
           width: 2,
         ),
+        boxShadow: isFocused
+            ? [
+                BoxShadow(
+                  color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor)
+                      .withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
+            : [],
       ),
       child: Center(
         child: Text(

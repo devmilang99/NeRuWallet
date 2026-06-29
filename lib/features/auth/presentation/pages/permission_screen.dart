@@ -1,9 +1,11 @@
 import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+
 import '../../../../core/theme/app_theme.dart';
 
 class PermissionScreen extends StatefulWidget {
@@ -13,7 +15,8 @@ class PermissionScreen extends StatefulWidget {
   State<PermissionScreen> createState() => _PermissionScreenState();
 }
 
-class _PermissionScreenState extends State<PermissionScreen> with WidgetsBindingObserver {
+class _PermissionScreenState extends State<PermissionScreen>
+    with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isRequesting = false;
@@ -76,7 +79,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     ];
 
     List<PermissionStep> ungrantedSteps = [];
-    
+
     int androidVersion = 0;
     if (Platform.isAndroid) {
       final deviceInfo = await DeviceInfoPlugin().androidInfo;
@@ -114,35 +117,39 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         _steps = ungrantedSteps;
         _permissionStates = List.filled(_steps.length, 0);
       });
-      
-      // If all granted, go to onboarding directly
+
+      // If all granted, go to theme selection directly
       if (_steps.isEmpty) {
-        context.go('/onboarding');
+        context.go('/theme-selection');
       }
     }
   }
 
   Future<void> _handlePermissionRequest() async {
     if (_isRequesting) return;
-    
+
     setState(() => _isRequesting = true);
-    
+
     try {
       final step = _steps[_currentStep];
-      
+
       // Special handling for storage on modern Android
       Permission targetPermission = step.permission;
-      
+
       if (step.title == "Media Storage" && Platform.isAndroid) {
         final deviceInfo = await DeviceInfoPlugin().androidInfo;
         if (deviceInfo.version.sdkInt >= 33) {
           // Request photos and videos for Android 13+
-          final results = await [Permission.photos, Permission.videos].request();
-          if (results[Permission.photos]!.isGranted && results[Permission.videos]!.isGranted) {
-             _updateState(1);
-             _nextPage();
+          final results = await [
+            Permission.photos,
+            Permission.videos,
+          ].request();
+          if (results[Permission.photos]!.isGranted &&
+              results[Permission.videos]!.isGranted) {
+            _updateState(1);
+            _nextPage();
           } else {
-             _handleDenied(results[Permission.photos]!, step);
+            _handleDenied(results[Permission.photos]!, step);
           }
           return;
         }
@@ -164,7 +171,10 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       _nextPage();
     } else if (status.isPermanentlyDenied) {
       _updateState(3);
-      _showErrorSnackBar("Permission permanently denied. Please enable it in settings.", isPermanent: true);
+      _showErrorSnackBar(
+        "Permission permanently denied. Please enable it in settings.",
+        isPermanent: true,
+      );
     } else {
       _updateState(2);
       _showErrorSnackBar("${step.title} is necessary for specific features.");
@@ -194,7 +204,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     // Check if Camera was in our steps and if it was granted
     bool cameraInSteps = _steps.any((s) => s.permission == Permission.camera);
     bool cameraGrantedLocally = false;
-    
+
     if (cameraInSteps) {
       int index = _steps.indexWhere((s) => s.permission == Permission.camera);
       cameraGrantedLocally = _permissionStates[index] == 1;
@@ -202,17 +212,23 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
     // Double check with actual system status
     bool isCameraGranted = await Permission.camera.isGranted;
-    
+
     if (!isCameraGranted && !cameraGrantedLocally) {
-      _showErrorSnackBar("Camera access is mandatory for security verification.");
+      _showErrorSnackBar(
+        "Camera access is mandatory for security verification.",
+      );
       if (cameraInSteps) {
         int index = _steps.indexWhere((s) => s.permission == Permission.camera);
-        _pageController.animateToPage(index, duration: 600.ms, curve: Curves.easeInOut);
+        _pageController.animateToPage(
+          index,
+          duration: 600.ms,
+          curve: Curves.easeInOut,
+        );
       }
       return;
     }
-    
-    if (mounted) context.go('/onboarding');
+
+    if (mounted) context.go('/theme-selection');
   }
 
   void _showErrorSnackBar(String message, {bool isPermanent = false}) {
@@ -222,9 +238,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         content: Text(message),
         backgroundColor: AppTheme.errorColor,
         behavior: SnackBarBehavior.floating,
-        action: isPermanent 
+        action: isPermanent
             ? SnackBarAction(
-                label: "Settings", 
+                label: "Settings",
                 textColor: Colors.white,
                 onPressed: () => openAppSettings(),
               )
@@ -236,7 +252,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
       body: SafeArea(
@@ -250,7 +266,11 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 onPageChanged: (i) => setState(() => _currentStep = i),
                 itemCount: _steps.length,
                 itemBuilder: (context, index) {
-                  return _buildPermissionPage(_steps[index], _permissionStates[index], isDark);
+                  return _buildPermissionPage(
+                    _steps[index],
+                    _permissionStates[index],
+                    isDark,
+                  );
                 },
               ),
             ),
@@ -277,8 +297,8 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
-                child: _steps.isEmpty 
-                    ? const SizedBox.shrink() 
+                child: _steps.isEmpty
+                    ? const SizedBox.shrink()
                     : FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: (_currentStep + 1) / _steps.length,
@@ -327,11 +347,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               color: step.color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              step.icon,
-              size: 100,
-              color: step.color,
-            ).animate(key: ValueKey(step.title)).scale(duration: 600.ms, curve: Curves.elasticOut),
+            child: Icon(step.icon, size: 100, color: step.color)
+                .animate(key: ValueKey(step.title))
+                .scale(duration: 600.ms, curve: Curves.elasticOut),
           ),
           const SizedBox(height: 48),
           Text(
@@ -401,7 +419,11 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -420,7 +442,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppTheme.radiusLarge,
+                ),
                 elevation: 4,
                 shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
@@ -428,19 +452,27 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                   : Text(
-                      _currentStep == _steps.length - 1 && _permissionStates[_currentStep] == 1 
-                        ? "Get Started" 
-                        : "Grant Access",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      _currentStep == _steps.length - 1 &&
+                              _permissionStates[_currentStep] == 1
+                          ? "Get Started"
+                          : "Grant Access",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
             ),
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () => _nextPage(), // Moves to the next slider when skipping
+            onPressed: () =>
+                _nextPage(), // Moves to the next slider when skipping
             child: Text(
               _currentStep == _steps.length - 1 ? "Finish Setup" : "Skip this",
               style: TextStyle(
@@ -486,5 +518,3 @@ class PermissionStep {
     );
   }
 }
-
-

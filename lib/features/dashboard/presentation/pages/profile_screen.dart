@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,9 +21,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final AuthService _authService = AuthService();
   bool _isKycVerified = false;
-  bool _biometricHardwareSupported = false;
-  bool _biometricEnrolled = false;
-  bool _isBiometricLocked = false;
+  bool _biometricsAvailable = false;
   String _userName = 'User';
   String _userEmail = '';
 
@@ -31,7 +30,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.initState();
     _loadUserInfo();
     _loadKycStatus();
-    _loadProfileCapabilities();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final isEnrolled = await BiometricService.isEnrolled();
+    if (mounted) setState(() => _biometricsAvailable = isEnrolled);
   }
 
   void _loadUserInfo() {
@@ -47,35 +51,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _loadKycStatus() async {
     final prefService = ref.read(preferenceServiceProvider);
     final isVerified = await prefService.getBool('is_kyc_verified') ?? false;
-    if (mounted) {
-      setState(() {
-        _isKycVerified = isVerified;
-      });
-    }
-  }
-
-  Future<void> _loadProfileCapabilities() async {
-    final hardwareSupported = await BiometricService.hasHardwareSupport();
-    final enrolled = await BiometricService.isEnrolled();
-    final locked = await BiometricService.isLockedOut();
-
-    if (mounted) {
-      setState(() {
-        _biometricHardwareSupported = hardwareSupported;
-        _biometricEnrolled = enrolled;
-        _isBiometricLocked = locked;
-      });
-    }
+    if (mounted) setState(() => _isKycVerified = isVerified);
   }
 
   void _handleLogout() {
     GlassDialog.showConfirm(
       context,
       title: 'Sign Out',
-      message: 'Are you sure you want to sign out of your NeRuWallet account?',
+      message: 'Are you sure you want to sign out?',
       confirmText: 'Sign Out',
       isDestructive: true,
       onConfirm: () async {
+        final prefService = ref.read(preferenceServiceProvider);
+
+        // Clear biometric preferences on sign out
+        await prefService.remove('biometrics_login_enabled');
+        await prefService.remove('biometrics_transaction_enabled');
+        await prefService.remove('biometrics_enabled');
+        await prefService.remove('biometrics_setup_prompt_shown');
+
         await _authService.signOut();
         if (mounted) context.go('/auth/login');
       },
@@ -86,73 +80,73 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.backgroundDark
-          : const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildAppBar(isDark),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(isDark),
-                  const SizedBox(height: 32),
-                  _buildSectionTitle('Security Settings', isDark),
-                  const SizedBox(height: 12),
-                  _buildSecurityCard(isDark),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Account Details', isDark),
-                  const SizedBox(height: 12),
-                  _buildAccountCard(isDark),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Support & Legal', isDark),
-                  const SizedBox(height: 12),
-                  _buildSupportCard(isDark),
-                  const SizedBox(height: 40),
-                  _buildLogoutButton(isDark),
-                  const SizedBox(height: 40),
-                ],
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: isDark
+            ? AppTheme.backgroundDark
+            : const Color(0xFFF8FAFC),
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppTheme.backgroundDark
+            : const Color(0xFFF8FAFC),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              title: const Text(
+                "Profile Settings",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              centerTitle: true,
+              pinned: true,
+              backgroundColor: isDark
+                  ? AppTheme.backgroundDark
+                  : const Color(0xFFF8FAFC),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
+                child: Column(
+                  children: [
+                    _buildHeader(isDark),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('Security Settings', isDark),
+                    const SizedBox(height: 12),
+                    _buildSecurityCard(isDark),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Support & Legal', isDark),
+                    const SizedBox(height: 12),
+                    _buildSupportCard(isDark),
+                    const SizedBox(height: 40),
+                    _buildLogoutButton(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAppBar(bool isDark) {
-    return SliverAppBar(
-      expandedHeight: 0,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: isDark
-          ? AppTheme.backgroundDark
-          : const Color(0xFFF8FAFC),
-      leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: isDark ? Colors.white : AppTheme.textBodyColor,
-          size: 20,
-        ),
-        onPressed: () => Navigator.pop(context),
+  Widget _buildSectionTitle(String title, bool isDark) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.2,
       ),
-      title: Text(
-        'Profile Settings',
-        style: TextStyle(
-          color: isDark ? Colors.white : AppTheme.textBodyColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
-      ),
-      centerTitle: true,
-    );
+    ).animate().fadeIn(delay: 100.ms);
   }
 
   Widget _buildHeader(bool isDark) {
@@ -161,60 +155,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         gradient: AppTheme.primaryGradient,
         borderRadius: AppTheme.radiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Row(
         children: [
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white24,
-                  shape: BoxShape.circle,
-                ),
-                child: CircleAvatar(
-                  radius: 36,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    _userName
-                        .split(' ')
-                        .map((e) => e.isNotEmpty ? e[0] : '')
-                        .take(2)
-                        .join()
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 24,
-                    ),
-                  ),
-                ),
-              ),
-              if (_isKycVerified)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.accentColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                ),
-            ],
+          CircleAvatar(
+            radius: 36,
+            child: Text(
+              _userName[0].toUpperCase(),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -231,177 +180,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 Text(
                   _userEmail,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: _isKycVerified
-                      ? null
-                      : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'KYC Verification is currently unavailable.',
-                              ),
-                            ),
-                          );
-                        },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: AppTheme.radiusFull,
-                      border: Border.all(color: Colors.white38),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _isKycVerified
-                              ? Icons.verified_user_rounded
-                              : Icons.shield_rounded,
-                          color: Colors.white,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _isKycVerified
-                              ? 'Verified Account'
-                              : 'Verify Your Account',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn().slideY(begin: 0.1, end: 0);
-  }
-
-  Widget _buildSectionTitle(String title, bool isDark) {
-    return Text(
-      title,
-      style: TextStyle(
-        color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1.2,
-      ),
-    ).animate().fadeIn(delay: 100.ms);
+    ).animate().fadeIn();
   }
 
   Widget _buildSecurityCard(bool isDark) {
-    return FutureBuilder<bool?>(
-      future: ref
-          .read(preferenceServiceProvider)
-          .getBool('biometrics_login_enabled'),
-      builder: (context, snapshot) {
-        final bool isBiometricEnabled = snapshot.data ?? false;
-
-        return Card(
-          child: Column(
-            children: [
-              _buildSettingTile(
-                icon: Icons.fingerprint_rounded,
-                title: 'Biometric Security',
-                subtitle: !_biometricHardwareSupported
-                    ? 'Hardware unsupported'
-                    : (_isBiometricLocked
-                          ? 'Biometrics locked (Use PIN)'
-                          : (!_biometricEnrolled
-                                ? 'Not activated in device settings'
-                                : (isBiometricEnabled
-                                      ? 'Enabled - Manage Settings'
-                                      : 'Tap to enable biometric login'))),
-                isDark: isDark,
-                onTap:
-                    (!_biometricHardwareSupported ||
-                        _isBiometricLocked ||
-                        !_biometricEnrolled)
-                    ? null
-                    : () => context.push('/profile/biometric-settings'),
-                trailing: Switch.adaptive(
-                  value: isBiometricEnabled,
-                  onChanged:
-                      (!_biometricHardwareSupported ||
-                          _isBiometricLocked ||
-                          !_biometricEnrolled)
-                      ? null
-                      : (value) async {
-                          if (value) {
-                            final authenticated =
-                                await BiometricService.authenticate(
-                                  localizedReason:
-                                      'Confirm to enable biometric login',
-                                );
-                            if (!authenticated) return;
-                          }
-                          final prefService = ref.read(preferenceServiceProvider);
-                          await prefService.setBool('biometrics_login_enabled', value);
-                          await prefService.setBool('biometrics_enabled', value);
-                          setState(() {});
-                        },
-                  activeTrackColor: AppTheme.primaryColor,
-                ),
-              ),
-              _buildDivider(isDark),
-              _buildSettingTile(
-                icon: Icons.lock_outline_rounded,
-                title: 'Change Password',
-                subtitle: 'Update login credentials',
-                isDark: isDark,
-                onTap: () => context.push('/profile/change-password'),
-              ),
-              _buildDivider(isDark),
-              _buildSettingTile(
-                icon: Icons.pin_rounded,
-                title: 'Transaction PIN',
-                subtitle: 'Set or reset your security PIN',
-                isDark: isDark,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ChangePinProfileScreen(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.05, end: 0);
-  }
-
-  Widget _buildAccountCard(bool isDark) {
     return Card(
       child: Column(
         children: [
+          if (_biometricsAvailable) ...[
+            _buildSettingTile(
+              Icons.fingerprint_rounded,
+              "Biometric Security",
+              "Manage logins & payments",
+              () => context.push('/profile/biometric-settings'),
+            ),
+            _buildDivider(isDark),
+          ],
           _buildSettingTile(
-            icon: Icons.person_outline_rounded,
-            title: 'Personal Information',
-            subtitle: 'Name, email, and phone',
-            isDark: isDark,
-            onTap: () => context.push('/profile/personal-info'),
+            Icons.lock_outline_rounded,
+            "Change Password",
+            "Update credentials",
+            () => context.push('/profile/change-password'),
           ),
           _buildDivider(isDark),
-          /* Removed Notifications item as requested */
+          _buildSettingTile(
+            Icons.pin_rounded,
+            "Transaction PIN",
+            "Manage security PIN",
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ChangePinProfileScreen()),
+            ),
+          ),
         ],
       ),
-    ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05, end: 0);
+    ).animate().fadeIn(delay: 200.ms);
   }
 
   Widget _buildSupportCard(bool isDark) {
@@ -409,36 +229,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         children: [
           _buildSettingTile(
-            icon: Icons.help_outline_rounded,
-            title: 'Help & Support',
-            subtitle: 'FAQs and direct contact',
-            isDark: isDark,
-            onTap: () => context.push('/profile/help-support'),
+            Icons.help_outline_rounded,
+            "Help & Support",
+            "FAQs and direct contact",
+            () => context.push('/profile/help-support'),
           ),
           _buildDivider(isDark),
           _buildSettingTile(
-            icon: Icons.privacy_tip_outlined,
-            title: 'Privacy Policy',
-            subtitle: 'How we protect your data',
-            isDark: isDark,
-            onTap: () => context.push('/profile/privacy-policy'),
+            Icons.privacy_tip_outlined,
+            "Privacy Policy",
+            "How we protect your data",
+            () => context.push('/profile/privacy-policy'),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.05, end: 0);
+    ).animate().fadeIn(delay: 400.ms);
   }
 
-  Widget _buildSettingTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isDark,
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
+  Widget _buildSettingTile(
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
     return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -449,28 +263,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: isDark ? Colors.white : AppTheme.textBodyColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: isDark
-              ? AppTheme.textSecondaryDark
-              : AppTheme.textSecondaryColor,
-          fontSize: 12,
-        ),
-      ),
-      trailing:
-          trailing ??
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 14,
-            color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
-          ),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+      onTap: onTap,
     );
   }
 
@@ -483,18 +280,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildLogoutButton(bool isDark) {
+  Widget _buildLogoutButton() {
     return OutlinedButton.icon(
       onPressed: _handleLogout,
-      icon: const Icon(Icons.logout_rounded, size: 20),
-      label: const Text('Sign Out'),
-
+      icon: const Icon(Icons.logout_rounded),
+      label: const Text("Sign Out"),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.errorColor,
-        side: const BorderSide(color: AppTheme.errorColor, width: 1.5),
+        side: const BorderSide(color: AppTheme.errorColor),
         minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMedium),
       ),
-    ).animate().fadeIn(delay: 500.ms);
+    );
   }
 }

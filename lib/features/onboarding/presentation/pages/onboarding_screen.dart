@@ -1,11 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -43,7 +44,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _onDone() async {
     final prefService = ref.read(preferenceServiceProvider);
     await prefService.setBool('is_first_time', false);
-    if (mounted) context.go('/theme-selection');
+    if (mounted) context.go('/auth/login');
   }
 
   @override
@@ -95,7 +96,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Text(
                     "Skip",
                     style: TextStyle(
-                      color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
+                      color: isDark
+                          ? Colors.white70
+                          : AppTheme.textSecondaryColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -159,7 +162,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         _currentPageIndex == _items.length - 1
                             ? "Get Started"
                             : "Next",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5, end: 0),
@@ -183,7 +189,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           decoration: BoxDecoration(
             color: AppTheme.primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
           ),
           child: Icon(item.icon, size: 100, color: AppTheme.primaryColor)
               .animate(onPlay: (controller) => controller.repeat(reverse: true))

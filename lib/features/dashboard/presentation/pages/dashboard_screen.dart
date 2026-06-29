@@ -6,16 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 import '../../data/models/nav_item_model.dart';
-import '../widgets/biometric_prompt_sheet.dart';
 import 'tabs/history_tab.dart';
 import 'tabs/home_tab.dart';
 
@@ -30,10 +28,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
   int _selectedTab = 0;
   bool _balanceVisible = true;
-  bool _hasPromptedThisSession = false;
   bool _isKycVerified = false;
   String _userName = 'User';
-  bool _isAuthenticating = false;
 
   @override
   void initState() {
@@ -43,77 +39,382 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _loadKycStatus();
     _loadUserName();
     _markOnboardingComplete();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _handleBiometricSecurity();
-      }
+      _checkBiometricSetup();
     });
   }
 
-  Future<void> _handleBiometricSecurity() async {
-    if (_isAuthenticating) return;
-
+  Future<void> _checkBiometricSetup() async {
     final prefService = ref.read(preferenceServiceProvider);
-    final bool isEnabled =
-        await prefService.getBool('biometrics_login_enabled') ?? false;
 
-    if (isEnabled) {
-      setState(() => _isAuthenticating = true);
-      final bool authenticated = await BiometricService.authenticate(
-        localizedReason: 'Unlock NeRuWallet',
-      );
-      if (mounted) {
-        setState(() => _isAuthenticating = false);
-        if (!authenticated) {
-          context.go('/auth/login');
-        }
-      }
-    } else {
-      _checkAndPromptBiometrics();
+    // Check if we've already shown the prompt
+    final promptShown =
+        await prefService.getBool('biometrics_setup_prompt_shown') ?? false;
+    if (promptShown) return;
+
+    // Check if biometrics are enrolled on the device level
+    final isEnrolled = await BiometricService.isEnrolled();
+    if (!isEnrolled) return;
+
+    // Check if either login or transaction biometrics are enabled
+    final loginEnabled =
+        await prefService.getBool('biometrics_login_enabled') ?? false;
+    final transEnabled =
+        await prefService.getBool('biometrics_transaction_enabled') ?? false;
+
+    if (!loginEnabled && !transEnabled) {
+      if (!mounted) return;
+      _showInitialBiometricPrompt();
     }
   }
 
-  Future<void> _checkAndPromptBiometrics() async {
-    if (_hasPromptedThisSession) return;
+  void _showInitialBiometricPrompt() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    try {
-      final prefService = ref.read(preferenceServiceProvider);
-      final bool onboardingCompleted =
-          await prefService.getBool('biometric_onboarding_completed') ?? false;
-
-      // If we've already shown the onboarding prompt, don't prompt again
-      if (onboardingCompleted) return;
-
-      final bool hasHardware = await BiometricService.hasHardwareSupport();
-
-      if (hasHardware && mounted) {
-        final List<BiometricType> availableBiometrics =
-            await BiometricService.getAvailableBiometrics();
-
-        // Only mark that we've prompted in this session; persistent onboarding
-        // completion is handled by the bottom sheet actions (Confirm or Skip).
-        _hasPromptedThisSession = true;
-
-        if (availableBiometrics.isNotEmpty && mounted) {
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            isDismissible: false,
-            enableDrag: false,
-            useRootNavigator: true,
-            builder: (context) => BiometricPromptSheet(
-              biometrics: availableBiometrics,
-              onEnrolled: () {
-                // Biometrics enrolled successfully
-              },
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: isDark
+              ? AppTheme.surfaceDark
+              : Colors.white,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
+        ),
+        child: PopScope(
+          canPop: false,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.surfaceDark : Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
             ),
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint("Biometric Check Error: $e");
-    }
+            padding: EdgeInsets.fromLTRB(
+              24,
+              32,
+              24,
+              32 + MediaQuery.of(context).padding.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.fingerprint_rounded,
+                    size: 48,
+                    color: AppTheme.primaryColor,
+                  ),
+                ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                const SizedBox(height: 24),
+                Text(
+                  "Biometric Authentication",
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Would you like to enable biometric authentication for a more secure and convenient experience?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: () async {
+                    final authenticated = await BiometricService.authenticate(
+                      title: 'Enable Biometrics',
+                      reason:
+                          'Please authenticate to confirm you want to enable biometric security.',
+                    );
+
+                    if (authenticated && context.mounted) {
+                      Navigator.pop(context);
+                      _showBiometricSetupDialog();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppTheme.radiusMedium,
+                    ),
+                  ),
+                  child: const Text(
+                    "Enable Biometrics",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () async {
+                    final prefService = ref.read(preferenceServiceProvider);
+                    await prefService.setBool(
+                      'biometrics_setup_prompt_shown',
+                      true,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            "You can also manage these settings later in your Profile.",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: AppTheme.primaryColor,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Skip for now",
+                      style: TextStyle(
+                        color: isDark ? Colors.white60 : Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBiometricSetupDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    bool enableLogin = false;
+    bool enableTrans = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      // Prevent closing by tapping outside
+      enableDrag: false,
+      // Prevent closing by dragging
+      backgroundColor: Colors.transparent,
+      builder: (context) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: isDark
+              ? AppTheme.surfaceDark
+              : Colors.white,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
+        ),
+        child: PopScope(
+          canPop: false, // Prevent closing via back button
+          child: StatefulBuilder(
+            builder: (context, setDialogState) => Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.surfaceDark : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                32 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.fingerprint_rounded,
+                    size: 64,
+                    color: AppTheme.primaryColor,
+                  ).animate().scale(),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Secure your wallet",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Enable biometrics for a faster and more secure experience.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildSetupToggle(
+                    "App Login",
+                    "Unlock wallet with biometrics",
+                    enableLogin,
+                    (v) => setDialogState(() => enableLogin = v),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSetupToggle(
+                    "Transactions",
+                    "Authorize payments securely",
+                    enableTrans,
+                    (v) => setDialogState(() => enableTrans = v),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "You can also manage these settings later in your Profile.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            final prefService = ref.read(
+                              preferenceServiceProvider,
+                            );
+                            // Mark as shown so it doesn't prompt again this session
+                            await prefService.setBool(
+                              'biometrics_setup_prompt_shown',
+                              true,
+                            );
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (!enableLogin && !enableTrans) {
+                              // If nothing selected, just treat as skip/done
+                              final prefService = ref.read(
+                                preferenceServiceProvider,
+                              );
+                              await prefService.setBool(
+                                'biometrics_setup_prompt_shown',
+                                true,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                              return;
+                            }
+
+                            final prefService = ref.read(
+                              preferenceServiceProvider,
+                            );
+                            await prefService.setBool(
+                              'biometrics_login_enabled',
+                              enableLogin,
+                            );
+                            await prefService.setBool(
+                              'biometrics_transaction_enabled',
+                              enableTrans,
+                            );
+                            await prefService.setBool(
+                              'biometrics_enabled',
+                              enableLogin,
+                            );
+                            await prefService.setBool(
+                              'biometrics_setup_prompt_shown',
+                              true,
+                            );
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              GlassDialog.showSuccess(
+                                context,
+                                "Biometrics setup successfully!",
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppTheme.radiusMedium,
+                            ),
+                          ),
+                          child: const Text("Enable"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSetupToggle(
+    String title,
+    String subtitle,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: AppTheme.primaryColor,
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _initializeSession() async {
@@ -149,7 +450,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadKycStatus();
-      _handleBiometricSecurity();
     }
   }
 

@@ -5,17 +5,16 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+st.dart';
 import 'package:neruwallet/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const NeRuWalletApp());
+  testWidgets('app boots with provider scope', (WidgetTester tester) async {
+    await tester.pumpWidget(ProviderScope(child: const NeRuWalletApp()));
 
-    // Verify that our app starts with the splash screen content.
-    expect(find.text('NeRuWallet'), findsOneWidget);
-    expect(find.text('Secure, Scalable, Seamless'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

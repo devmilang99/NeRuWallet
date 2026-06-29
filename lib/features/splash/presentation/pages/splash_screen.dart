@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -58,7 +60,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       setState(() => _statusMessage = "Loading user preferences...");
       final prefService = ref.read(preferenceServiceProvider);
-      final bool isFirstTime = await prefService.getBool('is_first_time') ?? true;
+      final bool isFirstTime =
+          await prefService.getBool('is_first_time') ?? true;
 
       // Wait for splash animation if it's faster than the checks
       await splashFuture;
@@ -70,6 +73,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       } else {
         // Check if user is already authenticated and can skip login
         final destination = await _resolveAuthDestination(prefService);
+
+        // If the destination is dashboard and the user enabled app-login via biometrics,
+        // prompt for biometric authentication before navigating.
+        if (destination == '/dashboard') {
+          final bool biometricEnabled =
+              await prefService.getBool('biometrics_login_enabled') ?? false;
+
+          final bool canAuth =
+              biometricEnabled && await BiometricService.canAuthenticate();
+
+          if (canAuth) {
+            final success = await BiometricService.authenticate(
+              title: 'NeRuWallet',
+              subtitle: 'Authenticate to continue',
+              reason: 'Please authenticate to access your wallet',
+              biometricOnly: true,
+            );
+
+            if (mounted) {
+              if (success) {
+                context.go(destination);
+              } else {
+                // Failed biometric: send to login so user can re-authenticate.
+                context.go('/auth/login');
+              }
+            }
+            return;
+          }
+        }
+
         if (mounted) context.go(destination);
       }
     } catch (e) {
@@ -96,8 +129,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     if (firebaseUser != null) {
       // Check the sign-in providers linked to this account
-      final providers =
-          firebaseUser.providerData.map((p) => p.providerId).toList();
+      final providers = firebaseUser.providerData
+          .map((p) => p.providerId)
+          .toList();
       final isSocialUser =
           providers.contains('google.com') || providers.contains('apple.com');
 
@@ -134,7 +168,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     if (mounted) {
       if (allPermissionsGranted) {
-        context.goNamed('login');
+        context.go('/theme-selection');
       } else {
         context.goNamed('permissions');
       }
