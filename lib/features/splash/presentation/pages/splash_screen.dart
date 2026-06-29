@@ -199,10 +199,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.account_balance_wallet_rounded,
-            size: 80,
-            color: AppTheme.primaryColor,
+          child: Image.asset(
+            "assets/icons/app_icon.png",
+            height: 80,
+            width: 80,
           ),
         )
         .animate()

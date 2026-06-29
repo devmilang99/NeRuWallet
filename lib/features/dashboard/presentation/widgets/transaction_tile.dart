@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/services/database/app_database.dart';
-import 'transaction_detail_sheet.dart';
 import 'package:intl/intl.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/icon_utils.dart';
+
+import 'transaction_detail_sheet.dart';
 
 class TransactionTile extends StatelessWidget {
   final Transaction transaction;
@@ -19,10 +21,13 @@ class TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCredit = transaction.amount > 0;
-    final double displayAmount = transaction.amount.abs() + transaction.fee + transaction.tax;
+    final double displayAmount =
+        transaction.amount.abs() + transaction.fee + transaction.tax;
     final Color iconColor = Color(transaction.colorValue);
-    final IconData iconData = IconData(transaction.iconCode, fontFamily: 'MaterialIcons');
-    final String formattedDate = DateFormat('hh:mm a').format(transaction.createdAt);
+    final IconData iconData = IconUtils.getIconData(transaction.iconCode);
+    final String formattedDate = DateFormat(
+      'hh:mm a',
+    ).format(transaction.createdAt);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
@@ -41,12 +46,11 @@ class TransactionTile extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            borderRadius: AppTheme.radiusMedium,
             onTap: () {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
-                isDismissible: false,
-                enableDrag: false,
                 backgroundColor: Colors.transparent,
                 builder: (context) => TransactionDetailSheet(
                   transaction: transaction,
@@ -54,41 +58,37 @@ class TransactionTile extends StatelessWidget {
                 ),
               );
             },
-            borderRadius: AppTheme.radiusMedium,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: 0.1),
-                      borderRadius: AppTheme.radiusMedium,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(iconData, color: iconColor, size: 20),
+                    child: Icon(iconData, color: iconColor, size: 24),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           transaction.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 15,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
-                          transaction.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          formattedDate,
                           style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
                             fontSize: 12,
-                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
                           ),
                         ),
                       ],
@@ -98,19 +98,34 @@ class TransactionTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${isCredit ? '+' : ''}NPR ${displayAmount.toStringAsFixed(0)}',
+                        "${isCredit ? '+' : '-'}Rs ${displayAmount.toStringAsFixed(2)}",
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: isCredit ? AppTheme.successColor : AppTheme.errorColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: isCredit
+                              ? AppTheme.successColor
+                              : AppTheme.errorColor,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        formattedDate,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white10
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          transaction.category,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -124,4 +139,3 @@ class TransactionTile extends StatelessWidget {
     );
   }
 }
-

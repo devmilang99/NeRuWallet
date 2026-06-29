@@ -1,9 +1,10 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:intl/intl.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/icon_utils.dart';
 
 class TransactionDetailSheet extends StatelessWidget {
   final Transaction transaction;
@@ -18,10 +19,13 @@ class TransactionDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isExpense = transaction.amount < 0;
-    final double total = transaction.amount.abs() + transaction.fee + transaction.tax;
+    final double total =
+        transaction.amount.abs() + transaction.fee + transaction.tax;
     final Color iconColor = Color(transaction.colorValue);
-    final IconData iconData = IconData(transaction.iconCode, fontFamily: 'MaterialIcons');
-    final String formattedDate = DateFormat('dd MMM, hh:mm a').format(transaction.createdAt);
+    final IconData iconData = IconUtils.getIconData(transaction.iconCode);
+    final String formattedDate = DateFormat(
+      'dd MMM, hh:mm a',
+    ).format(transaction.createdAt);
 
     Map<String, dynamic> metadata = {};
     if (transaction.metadata != null) {
@@ -39,16 +43,46 @@ class TransactionDetailSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Drag Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white24 : Colors.black12,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Header with Icon
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(width: 40), // Spacing
               Container(
-                width: 40,
-                height: 4,
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
+                  color: iconColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(iconData, color: iconColor, size: 32),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      transaction.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      formattedDate,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
@@ -57,202 +91,232 @@ class TransactionDetailSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          
-          // Icon and Title
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(iconData, size: 40, color: iconColor),
-          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
-          
-          const SizedBox(height: 16),
-          Text(
-            transaction.title,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : AppTheme.textBodyColor,
-            ),
-          ),
-          Text(
-            transaction.subtitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white54 : Colors.grey[600],
-            ),
-          ),
+
           const SizedBox(height: 32),
-          
-          // Financial Breakdown
-          Flexible(
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark ? AppTheme.surfaceDark : Colors.grey[50],
-                  borderRadius: AppTheme.radiusLarge,
-                  border: Border.all(
-                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+
+          // Amount Section
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppTheme.surfaceDark.withValues(alpha: 0.5)
+                  : AppTheme.backgroundColor,
+              borderRadius: AppTheme.radiusLarge,
+            ),
+            child: Column(
+              children: [
+                Text(
+                  isExpense ? "Amount Sent" : "Amount Received",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "${isExpense ? '-' : '+'}Rs ${transaction.amount.abs().toStringAsFixed(2)}",
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: isExpense
+                        ? AppTheme.errorColor
+                        : AppTheme.successColor,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                child: Column(
-                  children: [
-                    _buildDetailRow("Status", "Completed", isDark, valueColor: AppTheme.successColor),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Divider(height: 1),
-                    ),
-                    _buildDetailRow("Date & Time", formattedDate, isDark),
-                    const SizedBox(height: 12),
-                    _buildDetailRow("Transaction Type", transaction.category, isDark),
-                    
-                    if (metadata.isNotEmpty) ...[
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(height: 1),
-                      ),
-                      ...metadata.entries.map((e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildDetailRow(
-                          e.key[0].toUpperCase() + e.key.substring(1), 
-                          e.value is List ? (e.value as List).join(', ') : e.value.toString(), 
-                          isDark
-                        ),
-                      )),
-                    ],
-
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Divider(height: 1),
-                    ),
-                    _buildDetailRow("Base Amount", "Rs. ${transaction.amount.abs().toStringAsFixed(2)}", isDark),
-                    if (isExpense) ...[
-                      if (transaction.fee > 0) ...[
-                        const SizedBox(height: 12),
-                        _buildDetailRow("Service Fee", "Rs. ${transaction.fee.toStringAsFixed(2)}", isDark),
-                      ],
-                      if (transaction.tax > 0) ...[
-                        const SizedBox(height: 12),
-                        _buildDetailRow("Service Tax (VAT)", "Rs. ${transaction.tax.toStringAsFixed(2)}", isDark),
-                      ],
-                    ],
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Divider(height: 1),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Total Amount",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        Text(
-                          "Rs. ${total.toStringAsFixed(2)}",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            color: isExpense ? AppTheme.errorColor : AppTheme.successColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                if (transaction.fee > 0 || transaction.tax > 0) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1),
+                  ),
+                  _buildSummaryRow(
+                    "Service Fee",
+                    "Rs ${transaction.fee.toStringAsFixed(2)}",
+                    isDark,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildSummaryRow(
+                    "Taxes",
+                    "Rs ${transaction.tax.toStringAsFixed(2)}",
+                    isDark,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1),
+                  ),
+                  _buildSummaryRow(
+                    "Total Impact",
+                    "Rs ${total.toStringAsFixed(2)}",
+                    isDark,
+                    isBold: true,
+                  ),
+                ],
+              ],
             ),
           ),
-          
-          const SizedBox(height: 32),
-          
-          // Download/Share Buttons (Mocked for now as per request)
+
+          const SizedBox(height: 24),
+
+          // Status & Category
           Row(
             children: [
               Expanded(
-                child: _buildActionBtn(
-                  icon: Icons.download_rounded,
-                  label: "Download Receipt",
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Receipt downloaded to your gallery!')),
-                    );
-                  },
-                  isDark: isDark,
+                child: _buildInfoCard(
+                  "Status",
+                  "Completed",
+                  Icons.check_circle_rounded,
+                  AppTheme.successColor,
+                  isDark,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildActionBtn(
-                  icon: Icons.share_rounded,
-                  label: "Share",
-                  onTap: () {},
-                  isDark: isDark,
+                child: _buildInfoCard(
+                  "Category",
+                  transaction.category,
+                  iconData,
+                  AppTheme.primaryColor,
+                  isDark,
                 ),
               ),
             ],
-          ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
-          
-          const SizedBox(height: 24),
+          ),
+
+          if (metadata.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _buildMetadataSection(metadata, isDark),
+          ],
+
+          const SizedBox(height: 32),
+
+          // Actions
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text("Receipt"),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.share_rounded),
+                  label: const Text("Share"),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, bool isDark, {Color? valueColor}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    bool isDark, {
+    bool isBold = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: isDark ? Colors.white54 : Colors.grey[600],
-            fontSize: 14,
+            color: isDark ? Colors.white70 : Colors.black54,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: valueColor ?? (isDark ? Colors.white : AppTheme.textBodyColor),
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionBtn({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isDark ? AppTheme.surfaceDark : Colors.grey[100],
-        foregroundColor: isDark ? Colors.white : AppTheme.textBodyColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppTheme.radiusLarge,
-          side: BorderSide(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+  Widget _buildInfoCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
         ),
+        borderRadius: AppTheme.radiusMedium,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 10),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  value,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetadataSection(Map<String, dynamic> metadata, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.02),
+        borderRadius: AppTheme.radiusMedium,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Transaction Details",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...metadata.entries.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Text(
+                    "${e.key}: ",
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  Text(
+                    e.value.toString(),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
