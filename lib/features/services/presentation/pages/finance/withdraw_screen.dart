@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
-import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
 
 class WithdrawScreen extends ConsumerStatefulWidget {
   const WithdrawScreen({super.key});
@@ -19,9 +19,21 @@ class WithdrawScreen extends ConsumerStatefulWidget {
 class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
   final _amountController = TextEditingController();
   final List<Map<String, dynamic>> _methods = [
-    {'name': 'Bank Account', 'icon': Icons.account_balance_rounded, 'color': AppTheme.primaryColor},
-    {'name': 'ATM QR Cash', 'icon': Icons.qr_code_rounded, 'color': Colors.orange},
-    {'name': 'Agent Network', 'icon': Icons.storefront_rounded, 'color': Colors.green},
+    {
+      'name': 'Bank Account',
+      'icon': Icons.account_balance_rounded,
+      'color': AppTheme.primaryColor,
+    },
+    {
+      'name': 'ATM QR Cash',
+      'icon': Icons.qr_code_rounded,
+      'color': Colors.orange,
+    },
+    {
+      'name': 'Agent Network',
+      'icon': Icons.storefront_rounded,
+      'color': Colors.green,
+    },
   ];
   int _selectedMethodIndex = 0;
 
@@ -34,8 +46,14 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(TransactionType.withdraw, amount);
-    final double tax = TransactionService.getTax(TransactionType.withdraw, amount);
+    final double fee = TransactionService.getServiceCharge(
+      TransactionType.withdraw,
+      amount,
+    );
+    final double tax = TransactionService.getTax(
+      TransactionType.withdraw,
+      amount,
+    );
     final double totalPayable = amount + fee + tax;
     final double currentBalance = ref.read(balanceProvider).totalBalance;
 
@@ -80,33 +98,41 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
 
   void _executeWithdrawal(double amount, String target) {
     // Deduct balance here upon successful PIN verification
-    ref.read(balanceProvider.notifier).deductQuickAction(
-      title: 'Withdrawal',
-      amount: amount,
-      fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
-      tax: TransactionService.getTax(TransactionType.withdraw, amount),
-      icon: Icons.account_balance_wallet_rounded,
-      color: Colors.redAccent,
-      category: 'Withdraw',
-      metadata: {'method': target},
-    );
+    ref
+        .read(balanceProvider.notifier)
+        .deductQuickAction(
+          title: 'Withdrawal',
+          amount: amount,
+          fee: TransactionService.getServiceCharge(
+            TransactionType.withdraw,
+            amount,
+          ),
+          tax: TransactionService.getTax(TransactionType.withdraw, amount),
+          icon: Icons.account_balance_wallet_rounded,
+          color: Colors.redAccent,
+          category: 'Withdraw',
+          metadata: {'method': target},
+        );
 
     // Close PIN screen
     Navigator.pop(context);
 
     GlassDialog.showLoading(context, message: 'Processing Withdrawal...');
-    
+
     // Simulate API call
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       Navigator.pop(context); // Pop loading
-      
+
       TransactionReceiptSheet.showSuccess(
         context: context,
         title: 'Withdrawal',
         target: target,
         amount: amount,
-        fee: TransactionService.getServiceCharge(TransactionType.withdraw, amount),
+        fee: TransactionService.getServiceCharge(
+          TransactionType.withdraw,
+          amount,
+        ),
         tax: TransactionService.getTax(TransactionType.withdraw, amount),
       );
     });
@@ -119,13 +145,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
     return BaseServicePage(
       title: 'Withdraw Money',
       children: [
-        const ServiceHeader(
-          title: 'Withdraw Funds',
-          subtitle: 'Transfer money from your wallet to bank or cash agent.',
-          icon: Icons.file_download_outlined,
-          color: AppTheme.warningColor,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         ServiceInputSection(
           label: 'Withdrawal Information',
           child: Column(
@@ -135,11 +155,17 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: AppTheme.radiusMedium,
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -147,7 +173,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.orange[200] : Colors.orange[800],
+                          color: isDark
+                              ? Colors.orange[200]
+                              : Colors.orange[800],
                         ),
                       ),
                     ),
@@ -158,7 +186,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
                 decoration: InputDecoration(
                   hintText: '0.00',
                   prefixText: 'Rs ',
@@ -211,13 +242,17 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                       color: isDark ? AppTheme.surfaceDark : Colors.white,
                       borderRadius: AppTheme.radiusMedium,
                       border: Border.all(
-                        color: selected ? AppTheme.primaryColor : Colors.transparent,
+                        color: selected
+                            ? AppTheme.primaryColor
+                            : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: [
                         if (selected)
                           BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.15,
+                            ),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -231,7 +266,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                             color: _methods[i]['color'].withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(_methods[i]['icon'], color: _methods[i]['color']),
+                          child: Icon(
+                            _methods[i]['icon'],
+                            color: _methods[i]['color'],
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Text(
@@ -243,7 +281,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                         ),
                         const Spacer(),
                         if (selected)
-                          const Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: AppTheme.primaryColor,
+                          ),
                       ],
                     ),
                   ),
@@ -253,14 +294,15 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        
+
         ListenableBuilder(
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0) return const SizedBox.shrink();
+            if (val.isEmpty || double.tryParse(val) == 0)
+              return const SizedBox.shrink();
             final amount = double.tryParse(val) ?? 0;
-            
+
             return Column(
               children: [
                 const SizedBox(height: 32),
@@ -269,15 +311,32 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
-                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark),
+                      _buildInfoRow(
+                        'Service Charge',
+                        'Rs. ${TransactionService.getServiceCharge(TransactionType.withdraw, amount).toStringAsFixed(2)}',
+                        isDark,
+                      ),
                       const SizedBox(height: 8),
-                      _buildInfoRow('Processing Fee', 'Rs. ${TransactionService.getTax(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark),
+                      _buildInfoRow(
+                        'Processing Fee',
+                        'Rs. ${TransactionService.getTax(TransactionType.withdraw, amount).toStringAsFixed(2)}',
+                        isDark,
+                      ),
                       const Divider(height: 24),
-                      _buildInfoRow('Total Payable', 'Rs. ${TransactionService.getTotalPayable(TransactionType.withdraw, amount).toStringAsFixed(2)}', isDark, isTotal: true),
+                      _buildInfoRow(
+                        'Total Payable',
+                        'Rs. ${TransactionService.getTotalPayable(TransactionType.withdraw, amount).toStringAsFixed(2)}',
+                        isDark,
+                        isTotal: true,
+                      ),
                     ],
                   ),
                 ).animate().fadeIn().slideY(begin: 0.1, end: 0),
@@ -295,7 +354,12 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, bool isDark, {bool isTotal = false}) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    bool isDark, {
+    bool isTotal = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -312,7 +376,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: isTotal ? 18 : 14,
-            color: isTotal ? AppTheme.primaryColor : (isDark ? Colors.white : Colors.black),
+            color: isTotal
+                ? AppTheme.primaryColor
+                : (isDark ? Colors.white : Colors.black),
           ),
         ),
       ],

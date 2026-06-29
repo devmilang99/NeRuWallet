@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
 
 class SendMoneyScreen extends ConsumerStatefulWidget {
   const SendMoneyScreen({super.key});
@@ -219,20 +219,23 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     GlassDialog.showLoading(context, message: 'Processing Transfer...');
 
     // 3. Process Transaction via Provider (includes mock delay)
-    await ref.read(transactionProvider.notifier).processTransaction(
-          type: 'Send Money',
-          amount: amount,
-          target: phone,
-        );
+    await ref
+        .read(transactionProvider.notifier)
+        .processTransaction(type: 'Send Money', amount: amount, target: phone);
 
     final state = ref.read(transactionProvider);
 
     if (state.isSuccess) {
       // 4. Perform actual balance deduction on success
-      final fee = TransactionService.getServiceCharge(TransactionType.sendMoney, amount);
+      final fee = TransactionService.getServiceCharge(
+        TransactionType.sendMoney,
+        amount,
+      );
       final tax = TransactionService.getTax(TransactionType.sendMoney, amount);
 
-      ref.read(balanceProvider.notifier).deductQuickAction(
+      ref
+          .read(balanceProvider.notifier)
+          .deductQuickAction(
             title: 'Send Money',
             amount: amount,
             fee: fee,
@@ -248,9 +251,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
           );
 
       if (!mounted) return;
-      
+
       // 5. Close loading dialog & Show Receipt
-      Navigator.pop(context); 
+      Navigator.pop(context);
       TransactionReceiptSheet.showSuccess(
         context: context,
         title: 'Send Money',
@@ -280,14 +283,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     return BaseServicePage(
       title: 'Send Money',
       children: [
-        const ServiceHeader(
-          title: 'Transfer Funds',
-          subtitle:
-              'Send money instantly to any NeRuWallet user via phone number.',
-          icon: Icons.send_rounded,
-          color: AppTheme.accentColor,
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _buildInfoBox(isDark),
         const SizedBox(height: 32),
         ServiceInputSection(
@@ -371,8 +367,6 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       ],
     );
   }
-
-
 
   Widget _buildInfoBox(bool isDark) {
     return Container(

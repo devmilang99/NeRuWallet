@@ -36,13 +36,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final biometricEnabled =
         await prefService.getBool('biometrics_login_enabled') ?? false;
 
-    // Check if hardware is supported to show the icon
-    final hardwareSupported = await BiometricService.canAuthenticate();
+    // Check if biometrics are enrolled by the system
+    final isEnrolled = await BiometricService.isEnrolled();
 
     if (mounted) {
       setState(() {
         _rememberMe = rememberMe;
-        _biometricEnabled = biometricEnabled && hardwareSupported;
+        _biometricEnabled = biometricEnabled && isEnrolled;
       });
     }
   }

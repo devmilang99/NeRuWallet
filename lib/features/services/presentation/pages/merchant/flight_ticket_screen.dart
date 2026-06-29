@@ -113,13 +113,7 @@ class _FlightTicketScreenState extends State<FlightTicketScreen> {
     return BaseServicePage(
       title: 'Flight Ticket',
       children: [
-        const ServiceHeader(
-          title: 'Boarding Pass',
-          subtitle: 'Your flight confirmation and e-ticket',
-          icon: Icons.flight_takeoff_rounded,
-          color: Color(0xFF10B981),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         _buildBoardingPass(context, isDark, _flightData),
 
@@ -145,17 +139,11 @@ class FlightTicketScreenWithData extends StatelessWidget {
     return BaseServicePage(
       title: 'Flight Ticket',
       children: [
-        const ServiceHeader(
-          title: 'Boarding Pass',
-          subtitle: 'Your flight confirmation and e-ticket',
-          icon: Icons.flight_takeoff_rounded,
-          color: Color(0xFF10B981),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         _buildBoardingPass(context, isDark, ticketData),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 10),
 
         _buildHomeButton(context),
 
@@ -236,18 +224,21 @@ Widget _buildBoardingPass(
 
           // Route Details
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildCityInfo(
-                      data['fromCode'] ?? 'KTM',
-                      data['fromCity'] ?? 'Kathmandu',
-                      CrossAxisAlignment.start,
-                      isDark,
+                    Expanded(
+                      child: _buildCityInfo(
+                        data['fromCode'] ?? 'KTM',
+                        data['fromCity'] ?? 'Kathmandu',
+                        CrossAxisAlignment.start,
+                        isDark,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Column(
                       children: [
                         Icon(
@@ -265,17 +256,20 @@ Widget _buildBoardingPass(
                         ),
                       ],
                     ),
-                    _buildCityInfo(
-                      data['toCode'] ?? 'DEL',
-                      data['toCity'] ?? 'Delhi',
-                      CrossAxisAlignment.end,
-                      isDark,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCityInfo(
+                        data['toCode'] ?? 'DEL',
+                        data['toCity'] ?? 'Delhi',
+                        CrossAxisAlignment.end,
+                        isDark,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 22),
                 _buildModernDashedDivider(isDark),
-                const SizedBox(height: 32),
+                const SizedBox(height: 22),
 
                 // Flight Information Grid
                 GridView.count(
@@ -319,7 +313,7 @@ Widget _buildBoardingPass(
                   ],
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
                 // Barcode Section
                 Container(
@@ -337,8 +331,8 @@ Widget _buildBoardingPass(
                   child: Column(
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(40, (index) {
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: List.generate(42, (index) {
                           return Container(
                             width: (index % 3 == 0) ? 4 : 2,
                             height: 60,
@@ -412,6 +406,8 @@ Widget _buildCityInfo(
       ),
       Text(
         city,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 12,
           color: isDark ? Colors.white54 : Colors.black54,

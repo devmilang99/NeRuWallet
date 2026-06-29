@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:intl/intl.dart';
+
 import 'flight_selection_screen.dart';
 
 class FlightBookingScreen extends StatefulWidget {
@@ -125,13 +126,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     return BaseServicePage(
       title: 'Nepal Airways',
       children: [
-        const ServiceHeader(
-          title: 'Premium Flights',
-          subtitle: 'Flying you across the Himalayas and beyond',
-          icon: Icons.flight_takeoff_rounded,
-          color: providerColor,
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
 
         Form(
           key: _formKey,
@@ -602,9 +597,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text(
+                  Text(
                     title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),

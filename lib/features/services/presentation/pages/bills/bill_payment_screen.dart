@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/widgets/glass_dialog.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
-import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
 
 class BillPaymentScreen extends ConsumerStatefulWidget {
   final String billType;
@@ -39,15 +39,23 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     'Koshi': ['Morang', 'Sunsari', 'Jhapa', 'Ilam'],
     'Madhesh': ['Parsa', 'Dhanusha', 'Bara', 'Saptari'],
     'Karnali': ['Surkhet', 'Dailekh', 'Jajarkot', 'Humla'],
-    'Sudurpashchim': ['Kailali', 'Kanchanpur', 'Doti', 'Achham']
+    'Sudurpashchim': ['Kailali', 'Kanchanpur', 'Doti', 'Achham'],
   };
 
   final List<String> _internetProviders = [
-    'WorldLink', 'Vianet', 'Subisu', 'Classic Tech', 'DishHome Fibernet'
+    'WorldLink',
+    'Vianet',
+    'Subisu',
+    'Classic Tech',
+    'DishHome Fibernet',
   ];
 
   final List<String> _serviceCenters = [
-    'NEA Baneshwor', 'NEA Kuleshwor', 'NEA Ratnapark', 'NEA Pulchowk', 'KUKL Central'
+    'NEA Baneshwor',
+    'NEA Kuleshwor',
+    'NEA Ratnapark',
+    'NEA Pulchowk',
+    'KUKL Central',
   ];
 
   String? _selectedProvince;
@@ -66,8 +74,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     }
 
     if (widget.billType == 'Electricity' || widget.billType == 'Water') {
-      if (_selectedProvince == null || _selectedDistrict == null || _selectedCenter == null) {
-        GlassDialog.showError(context, 'Please select your Province, District, and Center.');
+      if (_selectedProvince == null ||
+          _selectedDistrict == null ||
+          _selectedCenter == null) {
+        GlassDialog.showError(
+          context,
+          'Please select your Province, District, and Center.',
+        );
         return;
       }
     }
@@ -82,8 +95,14 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(TransactionType.utility, amount);
-    final double tax = TransactionService.getTax(TransactionType.utility, amount);
+    final double fee = TransactionService.getServiceCharge(
+      TransactionType.utility,
+      amount,
+    );
+    final double tax = TransactionService.getTax(
+      TransactionType.utility,
+      amount,
+    );
     final double totalPayable = amount + fee + tax;
     final double currentBalance = ref.read(balanceProvider).totalBalance;
 
@@ -129,34 +148,42 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     Navigator.pop(context);
 
     // Deduct balance here (as the utility transaction is now completed successfully)
-    ref.read(balanceProvider.notifier).deductQuickAction(
-      title: '${widget.billType} Bill',
-      amount: amount,
-      fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
-      tax: TransactionService.getTax(TransactionType.utility, amount),
-      icon: widget.icon,
-      color: widget.color,
-      category: 'Utility',
-      metadata: {
-        'customerId': customerId,
-        'type': widget.billType,
-        'center': _selectedCenter,
-      },
-    );
+    ref
+        .read(balanceProvider.notifier)
+        .deductQuickAction(
+          title: '${widget.billType} Bill',
+          amount: amount,
+          fee: TransactionService.getServiceCharge(
+            TransactionType.utility,
+            amount,
+          ),
+          tax: TransactionService.getTax(TransactionType.utility, amount),
+          icon: widget.icon,
+          color: widget.color,
+          category: 'Utility',
+          metadata: {
+            'customerId': customerId,
+            'type': widget.billType,
+            'center': _selectedCenter,
+          },
+        );
 
     GlassDialog.showLoading(context, message: 'Processing Bill Payment...');
-    
+
     // Simulate API call
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       Navigator.pop(context); // Pop loading
-      
+
       TransactionReceiptSheet.showSuccess(
         context: context,
         title: '${widget.billType} Payment',
         target: customerId,
         amount: amount,
-        fee: TransactionService.getServiceCharge(TransactionType.utility, amount),
+        fee: TransactionService.getServiceCharge(
+          TransactionType.utility,
+          amount,
+        ),
         tax: TransactionService.getTax(TransactionType.utility, amount),
       );
     });
@@ -169,16 +196,12 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     return BaseServicePage(
       title: '${widget.billType} Payment',
       children: [
-        ServiceHeader(
-          title: widget.billType,
-          subtitle: 'Securely pay your ${widget.billType.toLowerCase()} bills anywhere, anytime.',
-          icon: widget.icon,
-          color: widget.color,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         // Province Dropdown (Always Visible)
-        if (widget.billType == 'Electricity' || widget.billType == 'Water' || widget.billType.contains('Fine'))
+        if (widget.billType == 'Electricity' ||
+            widget.billType == 'Water' ||
+            widget.billType.contains('Fine'))
           _buildDropdown(
             label: 'Province',
             hint: 'Select Province',
@@ -196,7 +219,10 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           ),
 
         // District Dropdown (Visible only after Province)
-        if (_selectedProvince != null && (widget.billType == 'Electricity' || widget.billType == 'Water' || widget.billType.contains('Fine')))
+        if (_selectedProvince != null &&
+            (widget.billType == 'Electricity' ||
+                widget.billType == 'Water' ||
+                widget.billType.contains('Fine')))
           _buildDropdown(
             label: 'District',
             hint: 'Select District',
@@ -213,7 +239,8 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           ),
 
         // Center Dropdown (Visible only after District)
-        if (_selectedDistrict != null && (widget.billType == 'Electricity' || widget.billType == 'Water'))
+        if (_selectedDistrict != null &&
+            (widget.billType == 'Electricity' || widget.billType == 'Water'))
           _buildDropdown(
             label: 'Service Center',
             hint: 'Select Service Center',
@@ -268,9 +295,10 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0) return const SizedBox.shrink();
+            if (val.isEmpty || double.tryParse(val) == 0)
+              return const SizedBox.shrink();
             final amount = double.tryParse(val) ?? 0;
-            
+
             return Column(
               children: [
                 const SizedBox(height: 32),
@@ -279,19 +307,41 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
                   decoration: BoxDecoration(
                     color: widget.color.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
-                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Column(
                     children: [
-                      if (TransactionService.getServiceCharge(TransactionType.utility, amount) > 0) ...[
-                        _buildInfoRow('Service Charge', 'Rs. ${TransactionService.getServiceCharge(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                      if (TransactionService.getServiceCharge(
+                            TransactionType.utility,
+                            amount,
+                          ) >
+                          0) ...[
+                        _buildInfoRow(
+                          'Service Charge',
+                          'Rs. ${TransactionService.getServiceCharge(TransactionType.utility, amount).toStringAsFixed(2)}',
+                        ),
                         const SizedBox(height: 8),
                       ],
-                      if (TransactionService.getTax(TransactionType.utility, amount) > 0) ...[
-                        _buildInfoRow('Service Tax (VAT)', 'Rs. ${TransactionService.getTax(TransactionType.utility, amount).toStringAsFixed(2)}'),
+                      if (TransactionService.getTax(
+                            TransactionType.utility,
+                            amount,
+                          ) >
+                          0) ...[
+                        _buildInfoRow(
+                          'Service Tax (VAT)',
+                          'Rs. ${TransactionService.getTax(TransactionType.utility, amount).toStringAsFixed(2)}',
+                        ),
                       ],
                       const Divider(height: 24),
-                      _buildInfoRow('Total Payable', 'Rs. ${TransactionService.getTotalPayable(TransactionType.utility, amount).toStringAsFixed(2)}', isTotal: true),
+                      _buildInfoRow(
+                        'Total Payable',
+                        'Rs. ${TransactionService.getTotalPayable(TransactionType.utility, amount).toStringAsFixed(2)}',
+                        isTotal: true,
+                      ),
                     ],
                   ),
                 ).animate().fadeIn().slideY(begin: 0.1, end: 0),
@@ -325,8 +375,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           label: label,
           child: DropdownButtonFormField<String>(
             initialValue: value,
-            hint: Text(hint, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            hint: Text(
+              hint,
+              style: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+            ),
+            items: items
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               fillColor: isDark ? AppTheme.surfaceDark : Colors.white,

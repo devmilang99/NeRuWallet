@@ -13,13 +13,7 @@ class RewardsScreen extends StatelessWidget {
     return BaseServicePage(
       title: 'Rewards & Points',
       children: [
-        const ServiceHeader(
-          title: 'My Points',
-          subtitle: 'Check your loyalty points and redeem them for exciting offers.',
-          icon: Icons.stars_rounded,
-          color: Color(0xFFFF6B6B),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
@@ -55,14 +49,20 @@ class RewardsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: AppTheme.radiusFull,
                 ),
                 child: const Text(
                   'Worth Rs. 245.00',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -92,14 +92,24 @@ class RewardsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOfferItem(bool isDark, String title, String desc, IconData icon, Color color) {
+  Widget _buildOfferItem(
+    bool isDark,
+    String title,
+    String desc,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusLarge,
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
@@ -127,7 +137,11 @@ class RewardsScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: Colors.grey,
+          ),
         ],
       ),
     ).animate().fadeIn().slideY(begin: 0.1, end: 0);

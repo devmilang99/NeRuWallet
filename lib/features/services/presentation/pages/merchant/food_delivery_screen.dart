@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/merchant_collection.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+
 import 'food_items_screen.dart';
 
 class FoodDeliveryScreen extends StatelessWidget {
@@ -41,14 +42,7 @@ class FoodDeliveryScreen extends StatelessWidget {
     return BaseServicePage(
       title: 'Food & Dining',
       children: [
-        const ServiceHeader(
-          title: 'Hungry?',
-          subtitle:
-              'Pay at your favorite restaurants or order food online with NeRuWallet.',
-          icon: Icons.restaurant_rounded,
-          color: Color(0xFFEC4899),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         // Browse Categories Button
         Container(

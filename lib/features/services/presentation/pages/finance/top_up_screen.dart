@@ -730,13 +730,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
     return BaseServicePage(
       title: 'Top Up Wallet',
       children: [
-        const ServiceHeader(
-          title: 'Add Funds',
-          subtitle: 'Instantly add money to your wallet from various sources.',
-          icon: Icons.account_balance_wallet_rounded,
-          color: AppTheme.primaryColor,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         ServiceInputSection(
           label: 'Saved Sources',
           trailing: TextButton(

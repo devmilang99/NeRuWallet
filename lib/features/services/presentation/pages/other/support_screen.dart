@@ -13,21 +13,33 @@ class SupportScreen extends StatelessWidget {
     return BaseServicePage(
       title: 'Customer Support',
       children: [
-        const ServiceHeader(
-          title: 'How can we help?',
-          subtitle: 'Our team is here 24/7 to help you with your queries and issues.',
-          icon: Icons.headset_mic_rounded,
-          color: Color(0xFF6366F1),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         const Text(
           'Contact Channels',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         const SizedBox(height: 16),
-        _buildContactCard(isDark, 'Live Chat', 'Chat with our support agent instantly.', Icons.chat_bubble_outline_rounded, Colors.blue),
-        _buildContactCard(isDark, 'Email Us', 'support@neruwallet.com', Icons.alternate_email_rounded, Colors.orange),
-        _buildContactCard(isDark, 'Phone Call', '1660-01-2026 (Toll Free)', Icons.phone_rounded, Colors.green),
+        _buildContactCard(
+          isDark,
+          'Live Chat',
+          'Chat with our support agent instantly.',
+          Icons.chat_bubble_outline_rounded,
+          Colors.blue,
+        ),
+        _buildContactCard(
+          isDark,
+          'Email Us',
+          'support@neruwallet.com',
+          Icons.alternate_email_rounded,
+          Colors.orange,
+        ),
+        _buildContactCard(
+          isDark,
+          'Phone Call',
+          '1660-01-2026 (Toll Free)',
+          Icons.phone_rounded,
+          Colors.green,
+        ),
         const SizedBox(height: 32),
         const Text(
           'Frequently Asked Questions',
@@ -41,14 +53,24 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactCard(bool isDark, String title, String subtitle, IconData icon, Color color) {
+  Widget _buildContactCard(
+    bool isDark,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusLarge,
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
@@ -65,12 +87,22 @@ class SupportScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: Colors.grey,
+          ),
         ],
       ),
     ).animate().fadeIn().slideX(begin: 0.05, end: 0);
@@ -81,7 +113,9 @@ class SupportScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark.withValues(alpha: 0.5) : Colors.white70,
+        color: isDark
+            ? AppTheme.surfaceDark.withValues(alpha: 0.5)
+            : Colors.white70,
         borderRadius: AppTheme.radiusMedium,
       ),
       child: Row(

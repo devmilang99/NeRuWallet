@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,18 +45,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         throw Exception("No internet connection detected.");
       }
 
-      // Verify actual internet access (Connectivity only checks radio)
-      try {
-        final result = await InternetAddress.lookup(
-          'google.com',
-        ).timeout(const Duration(seconds: 5));
-        if (result.isEmpty || result[0].rawAddress.isEmpty) {
-          throw Exception("No internet access.");
-        }
-      } catch (_) {
-        throw Exception("Server unreachable. Check your connection.");
-      }
-
       setState(() => _statusMessage = "Loading user preferences...");
       final prefService = ref.read(preferenceServiceProvider);
       final bool isFirstTime =
@@ -81,7 +68,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               await prefService.getBool('biometrics_login_enabled') ?? false;
 
           final bool canAuth =
-              biometricEnabled && await BiometricService.canAuthenticate();
+              biometricEnabled && await BiometricService.isEnrolled();
 
           if (canAuth) {
             final success = await BiometricService.authenticate(

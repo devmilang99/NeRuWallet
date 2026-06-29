@@ -32,7 +32,7 @@ class _BiometricSettingsScreenState
         await prefService.getBool('biometrics_login_enabled') ?? false;
     final trans =
         await prefService.getBool('biometrics_transaction_enabled') ?? false;
-    final supported = await BiometricService.canAuthenticate();
+    final supported = await BiometricService.isEnrolled();
 
     if (mounted) {
       setState(() {

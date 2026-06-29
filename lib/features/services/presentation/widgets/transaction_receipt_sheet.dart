@@ -284,6 +284,7 @@ class TransactionReceiptSheet extends StatelessWidget {
   Widget _buildReceiptRow(String label, String value, bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -292,12 +293,16 @@ class TransactionReceiptSheet extends StatelessWidget {
             fontSize: 14,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            color: isDark ? Colors.white : AppTheme.textBodyColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: isDark ? Colors.white : AppTheme.textBodyColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
           ),
         ),
       ],

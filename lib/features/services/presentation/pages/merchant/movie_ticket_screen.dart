@@ -107,7 +107,8 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
     'totalPrice': 'Rs 1,350',
     'bookingDate': '10 April 2024',
     'status': 'Confirmed',
-    'posterUrl': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop',
+    'posterUrl':
+        'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1000&auto=format&fit=crop',
   };
 
   @override
@@ -117,13 +118,7 @@ class _MovieTicketScreenState extends State<MovieTicketScreen> {
     return BaseServicePage(
       title: '${widget.provider} Tickets',
       children: [
-        const ServiceHeader(
-          title: 'Movie Ticket',
-          subtitle: 'Your cinema booking details and e-ticket',
-          icon: Icons.movie_rounded,
-          color: AppTheme.warningColor,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         _buildTicketCard(context, isDark, widget.provider, _ticketData),
 
@@ -154,17 +149,11 @@ class MovieTicketScreenWithData extends StatelessWidget {
     return BaseServicePage(
       title: '$provider Tickets',
       children: [
-        const ServiceHeader(
-          title: 'Movie Ticket',
-          subtitle: 'Your cinema booking details and e-ticket',
-          icon: Icons.movie_rounded,
-          color: AppTheme.warningColor,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
 
         _buildTicketCard(context, isDark, provider, ticketData),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 20),
 
         _buildHomeButton(context, provider),
 
@@ -174,7 +163,12 @@ class MovieTicketScreenWithData extends StatelessWidget {
   }
 }
 
-Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<String, dynamic> data) {
+Widget _buildTicketCard(
+  BuildContext context,
+  bool isDark,
+  String provider,
+  Map<String, dynamic> data,
+) {
   return Stack(
     children: [
       Container(
@@ -195,10 +189,12 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
             children: [
               // Header with Poster-style Gradient
               Container(
-                height: 200,
+                height: 220,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: const NetworkImage('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop'),
+                    image: const NetworkImage(
+                      'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=1000&auto=format&fit=crop',
+                    ),
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
                       Colors.black.withValues(alpha: 0.5),
@@ -227,12 +223,16 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
@@ -251,12 +251,20 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                                 children: [
                                   _buildTopIconButton(
                                     icon: Icons.download_rounded,
-                                    onTap: () => _downloadTicket(context, provider: provider, data: data),
+                                    onTap: () => _downloadTicket(
+                                      context,
+                                      provider: provider,
+                                      data: data,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   _buildTopIconButton(
                                     icon: Icons.share_rounded,
-                                    onTap: () => _shareTicket(context, provider: provider, data: data),
+                                    onTap: () => _shareTicket(
+                                      context,
+                                      provider: provider,
+                                      data: data,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -271,9 +279,11 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                                   children: [
                                     Text(
                                       data['movieName'] ?? 'Movie Name',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 28,
+                                        fontSize: 26,
                                         fontWeight: FontWeight.bold,
                                         height: 1.1,
                                       ),
@@ -281,9 +291,15 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        _buildModernBadge(data['genre'] ?? 'Genre', Colors.white24),
+                                        _buildModernBadge(
+                                          data['genre'] ?? 'Genre',
+                                          Colors.white24,
+                                        ),
                                         const SizedBox(width: 8),
-                                        _buildModernBadge(data['format'] ?? 'Format', Colors.white24),
+                                        _buildModernBadge(
+                                          data['format'] ?? 'Format',
+                                          Colors.white24,
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -295,14 +311,22 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                                 height: 110,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white24, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white24,
+                                    width: 2,
+                                  ),
                                   image: DecorationImage(
-                                    image: NetworkImage(data['posterUrl'] ?? 'https://images.unsplash.com/photo-1536440136628-849c177e76a1'),
+                                    image: NetworkImage(
+                                      data['posterUrl'] ??
+                                          'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0',
+                                    ),
                                     fit: BoxFit.cover,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.3),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
                                     ),
@@ -326,9 +350,33 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildTicketInfo(context, 'DATE', data['date'] ?? 'N/A', Icons.calendar_today_rounded, isDark),
-                        _buildTicketInfo(context, 'TIME', data['time'] ?? 'N/A', Icons.access_time_rounded, isDark),
-                        _buildTicketInfo(context, 'SCREEN', data['screen'] ?? 'N/A', Icons.tv_rounded, isDark),
+                        Expanded(
+                          child: _buildTicketInfo(
+                            context,
+                            'DATE',
+                            data['date'] ?? 'N/A',
+                            Icons.calendar_today_rounded,
+                            isDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTicketInfo(
+                            context,
+                            'TIME',
+                            data['time'] ?? 'N/A',
+                            Icons.access_time_rounded,
+                            isDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTicketInfo(
+                            context,
+                            'SCREEN',
+                            data['screen'] ?? 'N/A',
+                            Icons.tv_rounded,
+                            isDark,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 32),
@@ -337,8 +385,24 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildTicketInfo(context, 'SEATS', (data['seatsBooked'] as List?)?.join(', ') ?? 'N/A', Icons.event_seat_rounded, isDark),
-                        _buildTicketInfo(context, 'TOTAL', data['totalPrice'] ?? 'N/A', Icons.payments_rounded, isDark),
+                        Expanded(
+                          child: _buildTicketInfo(
+                            context,
+                            'SEATS',
+                            (data['seatsBooked'] as List?)?.join(', ') ?? 'N/A',
+                            Icons.event_seat_rounded,
+                            isDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTicketInfo(
+                            context,
+                            'TOTAL',
+                            data['totalPrice'] ?? 'N/A',
+                            Icons.payments_rounded,
+                            isDark,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 40),
@@ -346,17 +410,19 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             Icons.qr_code_2_rounded,
-                            size: 140,
+                            size: 100,
                             color: isDark ? Colors.white : Colors.black87,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           Text(
                             data['bookingRef'] ?? 'REF-000000',
                             style: TextStyle(
@@ -379,7 +445,7 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
       // Ticket Side Cutouts
       Positioned(
         left: -15,
-        top: 185,
+        top: 205,
         child: Container(
           width: 30,
           height: 30,
@@ -391,7 +457,7 @@ Widget _buildTicketCard(BuildContext context, bool isDark, String provider, Map<
       ),
       Positioned(
         right: -15,
-        top: 185,
+        top: 205,
         child: Container(
           width: 30,
           height: 30,
@@ -429,7 +495,10 @@ Widget _buildHomeButton(BuildContext context, String provider) {
   ).animate(delay: 400.ms).fadeIn().scale();
 }
 
-Widget _buildTopIconButton({required IconData icon, required VoidCallback onTap}) {
+Widget _buildTopIconButton({
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
   return GestureDetector(
     onTap: onTap,
     child: Container(
@@ -452,12 +521,22 @@ Widget _buildModernBadge(String text, Color color) {
     ),
     child: Text(
       text,
-      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+      ),
     ),
   );
 }
 
-Widget _buildTicketInfo(BuildContext context, String label, String value, IconData icon, bool isDark) {
+Widget _buildTicketInfo(
+  BuildContext context,
+  String label,
+  String value,
+  IconData icon,
+  bool isDark,
+) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -465,13 +544,17 @@ Widget _buildTicketInfo(BuildContext context, String label, String value, IconDa
         children: [
           Icon(icon, size: 14, color: AppTheme.primaryColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white54 : Colors.black54,
-              letterSpacing: 1,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white54 : Colors.black54,
+                letterSpacing: 1,
+              ),
             ),
           ),
         ],
@@ -479,6 +562,8 @@ Widget _buildTicketInfo(BuildContext context, String label, String value, IconDa
       const SizedBox(height: 4),
       Text(
         value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
@@ -498,9 +583,9 @@ Widget _buildModernDashedDivider(bool isDark) {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           height: 2,
           decoration: BoxDecoration(
-            color: index.isEven 
-              ? (isDark ? Colors.white12 : Colors.black12) 
-              : Colors.transparent,
+            color: index.isEven
+                ? (isDark ? Colors.white12 : Colors.black12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -511,6 +596,7 @@ Widget _buildModernDashedDivider(bool isDark) {
 
 class TicketPatternPainter extends CustomPainter {
   final Color color;
+
   TicketPatternPainter({required this.color});
 
   @override
@@ -521,7 +607,11 @@ class TicketPatternPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     for (var i = 0; i < size.width; i += 20) {
-      canvas.drawLine(Offset(i.toDouble(), 0), Offset(i.toDouble() + 10, size.height), paint);
+      canvas.drawLine(
+        Offset(i.toDouble(), 0),
+        Offset(i.toDouble() + 10, size.height),
+        paint,
+      );
     }
   }
 

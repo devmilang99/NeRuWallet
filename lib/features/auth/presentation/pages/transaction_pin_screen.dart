@@ -39,6 +39,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       1; // 0: Verification (Old PIN/Password), 1: PIN entry, 2: Confirmation
   bool _showMismatchError = false;
   bool _obscurePassword = true;
+  bool _biometricsAvailable = false;
 
   final _pinFocusNode = FocusNode();
   final _confirmPinFocusNode = FocusNode();
@@ -57,6 +58,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _checkBiometricAvailability();
         if (_step == 0) {
           if (widget.mode == PinMode.reset) {
             _passwordFocusNode.requestFocus();
@@ -88,26 +90,36 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     super.dispose();
   }
 
-  Future<void> _checkBiometricForVerification() async {
+  Future<void> _checkBiometricAvailability() async {
     final prefService = ref.read(preferenceServiceProvider);
     final isEnabled =
         await prefService.getBool('biometrics_transaction_enabled') ?? false;
+    final isEnrolled = await BiometricService.isEnrolled();
 
-    if (isEnabled) {
-      final bool authenticated = await BiometricService.authenticate(
-        title: 'Authorize Transaction',
-        subtitle: 'Confirm your identity to proceed',
-        reason:
-            'Please scan your fingerprint or face to authorize this transaction.',
-        biometricOnly: true, // Standard layout with fallback
-      );
+    if (mounted) {
+      setState(() => _biometricsAvailable = isEnabled && isEnrolled);
+    }
 
-      if (authenticated && mounted) {
-        if (widget.onSuccess != null) {
-          widget.onSuccess!();
-        } else {
-          context.go('/dashboard');
-        }
+    // Auto-initiate biometric for transaction verification at the beginning
+    if (widget.mode == PinMode.verify && isEnabled && isEnrolled) {
+      _checkBiometricForVerification();
+    }
+  }
+
+  Future<void> _checkBiometricForVerification() async {
+    final bool authenticated = await BiometricService.authenticate(
+      title: 'Authorize Transaction',
+      subtitle: 'Confirm your identity to proceed',
+      reason:
+          'Please scan your fingerprint or face to authorize this transaction.',
+      biometricOnly: true, // Standard layout with fallback
+    );
+
+    if (authenticated && mounted) {
+      if (widget.onSuccess != null) {
+        widget.onSuccess!();
+      } else {
+        context.go('/dashboard');
       }
     }
   }
@@ -193,6 +205,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     GlassDialog.showLoading(context, message: 'Completing setup...');
     try {
+      // 1. Save Transaction PIN
       await prefService.setString(
         'transaction_pin',
         _pinController.text,
@@ -202,6 +215,28 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       if (widget.signupData != null) {
         final data = widget.signupData!;
         final bool isSocial = data['isSocial'] ?? false;
+
+        // 2. Save Security Information
+        if (data.containsKey('password')) {
+          await prefService.setString(
+            'app_password',
+            data['password'],
+            encrypted: true,
+          );
+        }
+        if (data.containsKey('security_question')) {
+          await prefService.setString(
+            'security_question',
+            data['security_question'],
+          );
+          await prefService.setString(
+            'security_answer',
+            data['security_answer'],
+            encrypted: true,
+          );
+        }
+
+        // 3. Register user in Firebase if not social login
         if (!isSocial) {
           await _authService.signUpWithEmailPassword(
             data['email'],
@@ -209,20 +244,21 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
             data['name'],
           );
         }
+
         await prefService.setBool('registration_complete', true);
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close loading
         GlassDialog.showSuccess(
           context,
-          "Transaction PIN setup successful!",
+          "Account & Security setup successful!",
           onConfirm: () => context.go('/dashboard'),
         );
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close loading
         GlassDialog.showError(context, "Setup failed: ${e.toString()}");
       }
     }
@@ -489,15 +525,17 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                           ),
                           child: const Text("Forgot PIN?"),
                         ),
-                        const SizedBox(height: 16),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.fingerprint_rounded,
-                            size: 64,
-                            color: AppTheme.primaryColor,
-                          ),
-                          onPressed: _checkBiometricForVerification,
-                        ).animate().scale(),
+                        if (_biometricsAvailable) ...[
+                          const SizedBox(height: 16),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.fingerprint_rounded,
+                              size: 64,
+                              color: AppTheme.primaryColor,
+                            ),
+                            onPressed: _checkBiometricForVerification,
+                          ).animate().scale(),
+                        ],
                       ],
                     ),
                 ],

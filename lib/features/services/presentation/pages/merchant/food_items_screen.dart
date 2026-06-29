@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 
 class FoodItemsScreen extends StatelessWidget {
@@ -72,13 +71,7 @@ class FoodItemsScreen extends StatelessWidget {
     return BaseServicePage(
       title: 'Food Items',
       children: [
-        const ServiceHeader(
-          title: 'Browse Categories',
-          subtitle: 'Choose from a wide variety of delicious food items.',
-          icon: Icons.category_rounded,
-          color: AppTheme.primaryColor,
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
