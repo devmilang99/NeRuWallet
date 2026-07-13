@@ -72,12 +72,25 @@ class DbNotifications extends Table {
   BoolColumn get isRead => boolean().withDefault(const Constant(false))();
 }
 
-@DriftDatabase(tables: [Transactions, AppPreferences, DbNotifications])
+/// AI Memory and Chat history
+class AiMemories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  TextColumn get role => text()(); // 'user' or 'model'
+  TextColumn get content => text()(); // Message or JSON string
+  TextColumn get type =>
+      text().withDefault(const Constant('text'))(); // 'text' or 'json'
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(
+  tables: [Transactions, AppPreferences, DbNotifications, AiMemories],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -85,9 +98,8 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // Logic for migration between versions will go here
       if (from < 2) {
-        // Example: await m.addColumn(notifications, notifications.isRead);
+        await m.createTable(aiMemories);
       }
     },
     beforeOpen: (details) async {
@@ -145,6 +157,24 @@ class AppDatabase extends _$AppDatabase {
       const DbNotificationsCompanion(isRead: Value(true)),
     );
   }
+
+  // --- CRUD Operations for AI Memories ---
+
+  Future<int> saveAiMemory(AiMemoriesCompanion entry) =>
+      into(aiMemories).insert(entry);
+
+  Future<List<AiMemory>> getAiMemories({int limit = 50}) =>
+      (select(aiMemories)
+            ..orderBy([
+              (t) => OrderingTerm(
+                expression: t.createdAt,
+                mode: OrderingMode.desc,
+              ),
+            ])
+            ..limit(limit))
+          .get();
+
+  Future<void> clearAiMemories() => delete(aiMemories).go();
 }
 
 LazyDatabase _openConnection() {

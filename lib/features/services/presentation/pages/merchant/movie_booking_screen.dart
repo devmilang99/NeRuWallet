@@ -639,11 +639,12 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                               children: [
                                 _miniCountButton(Icons.remove, () {
                                   int seats = int.parse(_seatsController.text);
-                                  if (seats > 1)
+                                  if (seats > 1) {
                                     setState(
                                       () => _seatsController.text = (seats - 1)
                                           .toString(),
                                     );
+                                  }
                                 }, providerColor),
                                 Container(
                                   constraints: const BoxConstraints(
@@ -660,11 +661,12 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                                 ),
                                 _miniCountButton(Icons.add, () {
                                   int seats = int.parse(_seatsController.text);
-                                  if (seats < 10)
+                                  if (seats < 10) {
                                     setState(
                                       () => _seatsController.text = (seats + 1)
                                           .toString(),
                                     );
+                                  }
                                 }, providerColor),
                               ],
                             ),

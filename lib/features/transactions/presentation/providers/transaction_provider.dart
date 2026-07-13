@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
 
 class TransactionState {
   final bool isLoading;
@@ -11,11 +13,7 @@ class TransactionState {
     this.isSuccess = false,
   });
 
-  TransactionState copyWith({
-    bool? isLoading,
-    String? error,
-    bool? isSuccess,
-  }) {
+  TransactionState copyWith({bool? isLoading, String? error, bool? isSuccess}) {
     return TransactionState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -25,7 +23,9 @@ class TransactionState {
 }
 
 class TransactionNotifier extends StateNotifier<TransactionState> {
-  TransactionNotifier() : super(TransactionState());
+  final Ref _ref;
+
+  TransactionNotifier(this._ref) : super(TransactionState());
 
   Future<void> processTransaction({
     required String type,
@@ -34,14 +34,37 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
+    // Get current limit settings
+    final prefService = _ref.read(preferenceServiceProvider);
+    final limitEnabled =
+        await prefService.getBool('monthly_limit_enabled') ?? false;
+    final limitStr =
+        await prefService.getString('monthly_spending_limit') ?? '0.0';
+    final monthlyLimit = double.tryParse(limitStr) ?? 0.0;
+
+    final currentSpending = _ref.read(balanceProvider).monthlyExpenses;
+
+    // Validation: Check if the new transaction will exceed the user's monthly limit
+    if (limitEnabled &&
+        monthlyLimit > 0 &&
+        (currentSpending + amount) > monthlyLimit) {
+      state = state.copyWith(
+        isLoading: false,
+        error:
+            'Monthly spending limit of Rs. ${monthlyLimit.toStringAsFixed(0)} would be exceeded. You have already spent Rs. ${currentSpending.toStringAsFixed(2)} this month.',
+      );
+      return;
+    }
+
     // Mock Process
     await Future.delayed(const Duration(seconds: 2));
 
-    // Simulate random mock error
-    if (amount > 10000) {
+    // Basic system limit
+    if (amount > 500000) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Monthly transaction limit exceeded for $type.',
+        error:
+            'Transaction amount exceeds maximum allowed per transaction (Rs. 5,00,000).',
       );
       return;
     }
@@ -64,5 +87,5 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
 final transactionProvider =
     StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
-      return TransactionNotifier();
+      return TransactionNotifier(ref);
     });

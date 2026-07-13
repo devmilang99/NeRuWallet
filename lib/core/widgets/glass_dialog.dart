@@ -41,7 +41,11 @@ class GlassDialog {
     );
   }
 
-  static void showError(BuildContext context, String message) {
+  static void showError(
+    BuildContext context,
+    String message, {
+    VoidCallback? onRetry,
+  }) {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
@@ -78,7 +82,10 @@ class GlassDialog {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+                if (onRetry != null) onRetry();
+              },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(180, 60),
                 backgroundColor: AppTheme.errorColor,

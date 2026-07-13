@@ -1,11 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
@@ -20,17 +21,33 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final AuthService _authService = AuthService();
-  bool _isKycVerified = false;
   bool _biometricsAvailable = false;
   String _userName = 'User';
   String _userEmail = '';
+
+  bool _limitEnabled = false;
+  double _monthlyLimit = 0.0;
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
-    _loadKycStatus();
     _checkBiometrics();
+    _loadSpendingLimit();
+  }
+
+  Future<void> _loadSpendingLimit() async {
+    final prefService = ref.read(preferenceServiceProvider);
+    final enabled = await prefService.getBool('monthly_limit_enabled') ?? false;
+    final limit =
+        await prefService.getString('monthly_spending_limit') ?? '0.0';
+
+    if (mounted) {
+      setState(() {
+        _limitEnabled = enabled;
+        _monthlyLimit = double.tryParse(limit) ?? 0.0;
+      });
+    }
   }
 
   Future<void> _checkBiometrics() async {
@@ -39,19 +56,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _loadUserInfo() {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _authService.currentUser;
     if (user != null) {
       setState(() {
-        _userName = user.displayName ?? 'User';
-        _userEmail = user.email ?? '';
+        _userName = user.name;
+        _userEmail = user.email;
       });
     }
-  }
-
-  Future<void> _loadKycStatus() async {
-    final prefService = ref.read(preferenceServiceProvider);
-    final isVerified = await prefService.getBool('is_kyc_verified') ?? false;
-    if (mounted) setState(() => _isKycVerified = isVerified);
   }
 
   void _handleLogout() {
@@ -122,6 +133,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 12),
                     _buildSecurityCard(isDark),
                     const SizedBox(height: 24),
+                    _buildSectionTitle('Spending Controls', isDark),
+                    const SizedBox(height: 12),
+                    _buildSpendingLimitCard(isDark),
+                    const SizedBox(height: 24),
                     _buildSectionTitle('Support & Legal', isDark),
                     const SizedBox(height: 12),
                     _buildSupportCard(isDark),
@@ -133,6 +148,187 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSpendingLimitCard(bool isDark) {
+    final balanceState = ref.watch(balanceProvider);
+    final currentSpending = balanceState.monthlyExpenses;
+    final progress = _monthlyLimit > 0
+        ? (currentSpending / _monthlyLimit).clamp(0.0, 1.0)
+        : 0.0;
+    final isExceeded =
+        _limitEnabled && _monthlyLimit > 0 && currentSpending > _monthlyLimit;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.speed_rounded,
+                    color: Colors.orange,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Monthly Spending Limit",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        "Track and limit monthly expenses",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _limitEnabled,
+                  onChanged: (val) async {
+                    setState(() => _limitEnabled = val);
+                    await ref
+                        .read(preferenceServiceProvider)
+                        .setBool('monthly_limit_enabled', val);
+                    // Sync to cloud in background
+                    ref.read(syncServiceProvider).performFullSync().catchError((
+                      e,
+                    ) {
+                      debugPrint('Background sync failed: $e');
+                    });
+                  },
+                  activeTrackColor: AppTheme.primaryColor,
+                ),
+              ],
+            ),
+            if (_limitEnabled) ...[
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Current: Rs. ${currentSpending.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isExceeded ? AppTheme.errorColor : null,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _showLimitDialog,
+                    child: Text(
+                      "Limit: Rs. ${_monthlyLimit.toStringAsFixed(0)}",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.05),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isExceeded ? AppTheme.errorColor : AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+              if (isExceeded)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppTheme.errorColor,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      const Expanded(
+                        child: Text(
+                          "Monthly limit exceeded!",
+                          style: TextStyle(
+                            color: AppTheme.errorColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 300.ms);
+  }
+
+  void _showLimitDialog() {
+    final controller = TextEditingController(
+      text: _monthlyLimit.toInt().toString(),
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Set Monthly Limit"),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: "Amount (Rs.)",
+            prefixText: "Rs. ",
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newLimit = double.tryParse(controller.text) ?? 0.0;
+              setState(() => _monthlyLimit = newLimit);
+              await ref
+                  .read(preferenceServiceProvider)
+                  .setString('monthly_spending_limit', newLimit.toString());
+              // Sync to cloud in background
+              ref.read(syncServiceProvider).performFullSync().catchError((e) {
+                debugPrint('Background sync failed: $e');
+              });
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
       ),
     );
   }

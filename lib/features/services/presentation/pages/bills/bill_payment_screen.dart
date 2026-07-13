@@ -295,8 +295,9 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0)
+            if (val.isEmpty || double.tryParse(val) == 0) {
               return const SizedBox.shrink();
+            }
             final amount = double.tryParse(val) ?? 0;
 
             return Column(

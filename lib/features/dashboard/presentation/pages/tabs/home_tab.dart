@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
@@ -66,6 +67,7 @@ class HomeTab extends StatelessWidget {
             totalExpenses: totalExpenses,
             showStats: transactions.isNotEmpty,
             onToggleVisibility: onToggleBalance,
+            onAiAdvisorTap: () => context.push('/ai-advisor'),
             onIncomeTap: () => _showTransactionListBottomSheet(
               context,
               'Income',
@@ -210,11 +212,7 @@ class HomeTab extends StatelessWidget {
           const SizedBox(width: 12),
           ElevatedButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('KYC Verification is currently unavailable.'),
-                ),
-              );
+              context.push('/ekyc');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,

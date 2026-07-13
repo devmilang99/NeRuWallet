@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
@@ -78,6 +79,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             },
           );
         } else {
+          // Sync data from cloud in background before navigating
+          ref.read(syncServiceProvider).performFullSync().catchError((e) {
+            debugPrint('Background sync failed: $e');
+          });
+
           final prefService = ref.read(preferenceServiceProvider);
           await prefService.setBool('registration_complete', true);
           if (!mounted) return;
@@ -87,12 +93,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        String errorMessage = 'Google Sign-In failed. Please try again.';
+        debugPrint('Google Login Detail Error: $e');
+        String errorMessage = 'Google Sign-In failed: ${e.toString()}';
         if (e.toString().contains('cancelled')) {
           errorMessage = 'Google Sign-In was cancelled.';
-        } else if (e.toString().contains('token')) {
-          errorMessage =
-              'Failed to retrieve Google credentials. Please try again.';
         }
         GlassDialog.showError(context, errorMessage);
       }
@@ -117,6 +121,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             },
           );
         } else {
+          // Sync data from cloud in background before navigating
+          ref.read(syncServiceProvider).performFullSync().catchError((e) {
+            debugPrint('Background sync failed: $e');
+          });
+
           final prefService = ref.read(preferenceServiceProvider);
           await prefService.setBool('registration_complete', true);
           if (!mounted) return;
@@ -168,6 +177,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               },
             );
           } else {
+            // Sync data from cloud in background for returning email users
+            ref.read(syncServiceProvider).performFullSync().catchError((e) {
+              debugPrint('Background sync failed: $e');
+            });
+
             await prefService.setBool('remember_me', _rememberMe);
             await prefService.setBool('registration_complete', true);
             if (mounted) context.go('/dashboard');

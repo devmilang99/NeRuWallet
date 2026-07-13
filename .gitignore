@@ -52,6 +52,9 @@ app.*.symbols
 # Android Studio will regenerate this file for you
 local.properties
 
+# Secrets
+.env
+
 # Flutter web build artifact
 build/web/
 

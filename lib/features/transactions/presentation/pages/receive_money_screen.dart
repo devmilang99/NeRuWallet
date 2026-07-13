@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class ReceiveMoneyScreen extends StatelessWidget {
   const ReceiveMoneyScreen({super.key});
@@ -10,15 +10,16 @@ class ReceiveMoneyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
-    final String walletId =
-        user != null
-            ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
-            : "NRW-GUEST-USER";
+    final authService = AuthService();
+    final user = authService.currentUser;
+    final String walletId = user != null
+        ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
+        : "NRW-GUEST-USER";
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
           'Receive Money',

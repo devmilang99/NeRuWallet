@@ -25,6 +25,18 @@ class BalanceState {
       .where((t) => t.amount < 0)
       .fold(0.0, (sum, t) => sum + (t.amount.abs() + t.fee + t.tax));
 
+  double get monthlyExpenses {
+    final now = DateTime.now();
+    return transactions
+        .where(
+          (t) =>
+              t.amount < 0 &&
+              t.createdAt.month == now.month &&
+              t.createdAt.year == now.year,
+        )
+        .fold(0.0, (sum, t) => sum + (t.amount.abs() + t.fee + t.tax));
+  }
+
   double get totalIncome => transactions
       .where((t) => t.amount > 0)
       .fold(0.0, (sum, t) => sum + t.amount);

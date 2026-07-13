@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
-
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,10 +15,62 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final AuthService _authService = AuthService();
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
 
+  Future<void> _handleNext() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (name.isEmpty) {
+      GlassDialog.showError(context, "Please enter your full name.");
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      GlassDialog.showError(context, "Please enter a valid email address.");
+      return;
+    }
+
+    // Show loading while validating with Supabase
+    GlassDialog.showLoading(context, message: "Validating email...");
+
+    try {
+      final isAvailable = await _authService.isEmailAvailable(email);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+
+      if (!isAvailable) {
+        GlassDialog.showError(
+          context,
+          "This email is already registered. Please login instead.",
+        );
+        return;
+      }
+
+      // Proceed to security setup
+      context.push(
+        '/auth/security-setup',
+        extra: {
+          'isSocial': false,
+          'email': email,
+          'name': name,
+          'isNewUser': true,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      GlassDialog.showError(
+        context,
+        "An error occurred. Please try again later.",
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,32 +147,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: "Password",
-                          hint: "••••••••",
-                          icon: Icons.lock_outline_rounded,
-                          isPassword: true,
-                          obscureText: _obscurePassword,
-                          togglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 30),
                         ElevatedButton(
-                          onPressed: () {
-                            if (_nameController.text.isEmpty || !_emailController.text.contains('@') || _passwordController.text.length < 6) {
-                              GlassDialog.showError(context, "Please enter a valid name, email, and password (min 6 chars).");
-                              return;
-                            }
-                            // Move to security setup which will handle PINs
-                            context.push('/auth/security-setup', extra: {
-                              'isSocial': false,
-                              'email': _emailController.text,
-                              'name': _nameController.text,
-                              'password': _passwordController.text,
-                              'isNewUser': true,
-                            });
-                          },
+                          onPressed: _handleNext,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
@@ -129,7 +158,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           child: const Text("Next"),
                         ),
-
                       ],
                     ),
                   )

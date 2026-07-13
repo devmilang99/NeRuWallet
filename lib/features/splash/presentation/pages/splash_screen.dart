@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/providers/init_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -30,30 +31,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    setState(() {
-      _hasError = false;
-      _statusMessage = "Checking connectivity...";
-    });
-
-    // Minimum delay for branding
-    final splashFuture = Future.delayed(const Duration(seconds: 3));
+    // Minimum branding delay to show the logo
+    final splashFuture = Future.delayed(const Duration(seconds: 2));
 
     try {
-      // 1. Check Connectivity
-      final connectivityResult = await Connectivity().checkConnectivity();
+      // 1. Core System Initialization (Supabase/Firebase started in main.dart)
+      if (mounted) setState(() => _statusMessage = "Starting systems...");
+      await ref.read(appInitProvider);
+
+      // 2. Connectivity & User Data (Parallel)
+      if (mounted) setState(() => _statusMessage = "Syncing data...");
+
+      final results = await Future.wait([
+        Connectivity().checkConnectivity(),
+        ref.read(preferenceServiceProvider).getBool('is_first_time'),
+        splashFuture, // Ensure we stay at least 2 seconds for branding
+      ]);
+
+      final connectivityResult = results[0] as List<ConnectivityResult>;
+      final bool isFirstTime = (results[1] as bool?) ?? true;
+
+      // 3. Check Connectivity
       if (connectivityResult.contains(ConnectivityResult.none)) {
         throw Exception("No internet connection detected.");
       }
 
-      setState(() => _statusMessage = "Loading user preferences...");
-      final prefService = ref.read(preferenceServiceProvider);
-      final bool isFirstTime =
-          await prefService.getBool('is_first_time') ?? true;
-
-      // Wait for splash animation if it's faster than the checks
-      await splashFuture;
-
       if (!mounted) return;
+
+      final prefService = ref.read(preferenceServiceProvider);
 
       if (isFirstTime) {
         await _navigateBasedOnPermissions();
@@ -110,32 +115,38 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   ///   enabled, go to dashboard directly.
   /// - Otherwise, route to the login screen.
   Future<String> _resolveAuthDestination(PreferenceService prefService) async {
-    final firebaseUser = FirebaseAuth.instance.currentUser;
+    final supabaseUser = sb.Supabase.instance.client.auth.currentUser;
     final bool registrationComplete =
         await prefService.getBool('registration_complete') ?? false;
 
-    if (firebaseUser != null) {
-      // Check the sign-in providers linked to this account
-      final providers = firebaseUser.providerData
-          .map((p) => p.providerId)
-          .toList();
+    if (supabaseUser != null) {
+      final providers =
+          supabaseUser.appMetadata['providers'] as List<dynamic>? ?? [];
       final isSocialUser =
-          providers.contains('google.com') || providers.contains('apple.com');
+          providers.contains('google') || providers.contains('apple');
 
-      // If registration was never finished (PINs not set), and it's a social user,
-      // the user should be removed according to requirements.
-      if (!registrationComplete && isSocialUser) {
-        final authService = AuthService();
-        await authService.deleteAccount();
-        return '/auth/login';
+      // If local registration is marked as incomplete, we trigger sync in the background
+      // and let the user proceed if they are a social user (who are already authenticated).
+      if (!registrationComplete) {
+        // TRIGGER BACKGROUND SYNC WITHOUT AWAITING
+        ref
+            .read(syncServiceProvider)
+            .performFullSync()
+            .then((_) async {
+              final restored =
+                  await prefService.getBool('registration_complete') ?? false;
+              if (!restored && isSocialUser) {
+                // If sync failed to restore completion state for a social user,
+                // we might eventually need to handle that, but don't block splash.
+              }
+            })
+            .catchError((e) => debugPrint('Background sync failed: $e'));
+
+        if (isSocialUser) return '/dashboard';
       }
 
-      if (isSocialUser) {
-        // Social users: always go straight to dashboard on app reopen IF registration is complete
-        return '/dashboard';
-      }
+      if (isSocialUser) return '/dashboard';
 
-      // Email/password user: only skip login if "Remember Me" was enabled
       final bool rememberMe = await prefService.getBool('remember_me') ?? false;
       if (rememberMe && registrationComplete) {
         return '/dashboard';
@@ -167,7 +178,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

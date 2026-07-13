@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/ai_advisor/presentation/pages/ai_advisor_screen.dart';
+import '../../features/ai_integration/presentation/pages/ekyc_flow_screen.dart';
 import '../../features/auth/presentation/pages/change_password_screen.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
@@ -129,6 +131,16 @@ final GoRouter appRouter = GoRouter(
       path: '/send-money',
       pageBuilder: (context, state) =>
           _buildPageWithSlideTransition(child: const SendMoneyScreen()),
+    ),
+    GoRoute(
+      path: '/ekyc',
+      pageBuilder: (context, state) =>
+          _buildPageWithSlideTransition(child: const EKYCFlowScreen()),
+    ),
+    GoRoute(
+      path: '/ai-advisor',
+      pageBuilder: (context, state) =>
+          _buildPageWithSlideTransition(child: const AIAdvisorScreen()),
     ),
 
     // Bills Routes

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -248,8 +248,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                         amount,
                       );
                       final double totalPayable = amount + fee + tax;
-                      final double currentBalance =
-                          ref.read(balanceProvider).totalBalance;
+                      final double currentBalance = ref
+                          .read(balanceProvider)
+                          .totalBalance;
 
                       if (totalPayable > currentBalance) {
                         GlassDialog.showError(
@@ -274,7 +275,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                           fee: fee,
                           tax: tax,
                           onConfirm: () {
-                            ref.read(balanceProvider.notifier).recordQrPayment(
+                            ref
+                                .read(balanceProvider.notifier)
+                                .recordQrPayment(
                                   amount: amount,
                                   merchant: code,
                                   fee: fee,
@@ -305,7 +308,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   }
 
   Widget _buildMyQrView(bool isDark) {
-    final user = FirebaseAuth.instance.currentUser;
+    final authService = AuthService();
+    final user = authService.currentUser;
     final String walletId = user != null
         ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
         : "NRW-GUEST-USER";

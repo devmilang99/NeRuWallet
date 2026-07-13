@@ -1,17 +1,19 @@
 import 'dart:ui';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/providers/kyc_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
 import '../../data/models/nav_item_model.dart';
 import 'tabs/history_tab.dart';
@@ -28,7 +30,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
   int _selectedTab = 0;
   bool _balanceVisible = true;
-  bool _isKycVerified = false;
   String _userName = 'User';
 
   @override
@@ -36,11 +37,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeSession();
-    _loadKycStatus();
     _loadUserName();
     _markOnboardingComplete();
 
+    // Start background sync with Supabase
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(syncServiceProvider).startPeriodicSync();
       _checkBiometricSetup();
     });
   }
@@ -425,10 +427,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   void _loadUserName() {
-    final user = FirebaseAuth.instance.currentUser;
+    final authService = AuthService();
+    final user = authService.currentUser;
     if (user != null && mounted) {
       setState(() {
-        _userName = user.displayName ?? 'User';
+        _userName = user.name;
       });
     }
   }
@@ -449,23 +452,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadKycStatus();
-    }
-  }
-
-  Future<void> _loadKycStatus() async {
-    final prefService = ref.read(preferenceServiceProvider);
-    final isVerified = await prefService.getBool('is_kyc_verified') ?? false;
-    if (mounted) {
-      setState(() {
-        _isKycVerified = isVerified;
-      });
+      ref.invalidate(kycStateProvider);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kycState = ref.watch(kycStateProvider);
+    final isKycVerified = kycState.valueOrNull ?? false;
 
     final balanceState = ref.watch(balanceProvider);
     final List<Transaction> transactions = balanceState.transactions;
@@ -500,7 +495,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   isDark: isDark,
                   userName: _userName,
                   balanceVisible: _balanceVisible,
-                  isKycVerified: _isKycVerified,
+                  isKycVerified: isKycVerified,
                   onToggleBalance: () =>
                       setState(() => _balanceVisible = !_balanceVisible),
                   onProfileTap: () {

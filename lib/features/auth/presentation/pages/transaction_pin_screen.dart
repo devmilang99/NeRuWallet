@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
@@ -212,6 +213,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         encrypted: true,
       );
 
+      // Sync the new PIN to the cloud in background
+      ref.read(syncServiceProvider).performFullSync().catchError((e) {
+        debugPrint('Cloud sync failed: $e');
+      });
+
       if (widget.signupData != null) {
         final data = widget.signupData!;
         final bool isSocial = data['isSocial'] ?? false;
@@ -246,6 +252,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         }
 
         await prefService.setBool('registration_complete', true);
+
+        // 4. Sync setup data to cloud in background
+        ref.read(syncServiceProvider).performFullSync().catchError((e) {
+          debugPrint('Cloud sync failed: $e');
+        });
       }
 
       if (mounted) {
@@ -275,6 +286,11 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         _pinController.text,
         encrypted: true,
       );
+
+      // Sync the new PIN to the cloud in background
+      ref.read(syncServiceProvider).performFullSync().catchError((e) {
+        debugPrint('Cloud sync failed: $e');
+      });
 
       if (mounted) {
         Navigator.pop(context);
