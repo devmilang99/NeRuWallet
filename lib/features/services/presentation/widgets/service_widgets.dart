@@ -79,7 +79,7 @@ class ServiceInputSection extends StatelessWidget {
                   fontSize: 15,
                 ),
               ),
-              ?trailing,
+              if (trailing != null) trailing!,
             ],
           ),
         ),

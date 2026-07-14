@@ -505,6 +505,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   totalBalance: balanceState.totalBalance,
                   totalIncome: balanceState.totalIncome,
                   totalExpenses: balanceState.totalExpenses,
+                  onViewAll: () => setState(() => _selectedTab = 1),
                 ),
                 _selectedTab == 1
                     ? HistoryTab(isDark: isDark, transactions: transactions)

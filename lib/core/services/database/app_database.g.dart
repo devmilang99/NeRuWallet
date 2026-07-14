@@ -103,6 +103,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant('Other'),
   );
+  static const VerificationMeta _transactionTypeMeta = const VerificationMeta(
+    'transactionType',
+  );
+  @override
+  late final GeneratedColumn<String> transactionType = GeneratedColumn<String>(
+    'transaction_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -138,6 +149,7 @@ class $TransactionsTable extends Transactions
     iconCode,
     colorValue,
     category,
+    transactionType,
     createdAt,
     metadata,
   ];
@@ -219,6 +231,15 @@ class $TransactionsTable extends Transactions
         category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
       );
     }
+    if (data.containsKey('transaction_type')) {
+      context.handle(
+        _transactionTypeMeta,
+        transactionType.isAcceptableOrUnknown(
+          data['transaction_type']!,
+          _transactionTypeMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -277,6 +298,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       )!,
+      transactionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_type'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -304,6 +329,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int iconCode;
   final int colorValue;
   final String category;
+  final String? transactionType;
   final DateTime createdAt;
   final String? metadata;
 
@@ -317,6 +343,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.iconCode,
     required this.colorValue,
     required this.category,
+    this.transactionType,
     required this.createdAt,
     this.metadata,
   });
@@ -333,6 +360,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['icon_code'] = Variable<int>(iconCode);
     map['color_value'] = Variable<int>(colorValue);
     map['category'] = Variable<String>(category);
+    if (!nullToAbsent || transactionType != null) {
+      map['transaction_type'] = Variable<String>(transactionType);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || metadata != null) {
       map['metadata'] = Variable<String>(metadata);
@@ -351,6 +381,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       iconCode: Value(iconCode),
       colorValue: Value(colorValue),
       category: Value(category),
+      transactionType: transactionType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionType),
       createdAt: Value(createdAt),
       metadata: metadata == null && nullToAbsent
           ? const Value.absent()
@@ -373,6 +406,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       iconCode: serializer.fromJson<int>(json['iconCode']),
       colorValue: serializer.fromJson<int>(json['colorValue']),
       category: serializer.fromJson<String>(json['category']),
+      transactionType: serializer.fromJson<String?>(json['transactionType']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       metadata: serializer.fromJson<String?>(json['metadata']),
     );
@@ -391,6 +425,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'iconCode': serializer.toJson<int>(iconCode),
       'colorValue': serializer.toJson<int>(colorValue),
       'category': serializer.toJson<String>(category),
+      'transactionType': serializer.toJson<String?>(transactionType),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'metadata': serializer.toJson<String?>(metadata),
     };
@@ -406,6 +441,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? iconCode,
     int? colorValue,
     String? category,
+    Value<String?> transactionType = const Value.absent(),
     DateTime? createdAt,
     Value<String?> metadata = const Value.absent(),
   }) => Transaction(
@@ -418,6 +454,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     iconCode: iconCode ?? this.iconCode,
     colorValue: colorValue ?? this.colorValue,
     category: category ?? this.category,
+    transactionType: transactionType.present
+        ? transactionType.value
+        : this.transactionType,
     createdAt: createdAt ?? this.createdAt,
     metadata: metadata.present ? metadata.value : this.metadata,
   );
@@ -435,6 +474,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? data.colorValue.value
           : this.colorValue,
       category: data.category.present ? data.category.value : this.category,
+      transactionType: data.transactionType.present
+          ? data.transactionType.value
+          : this.transactionType,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       metadata: data.metadata.present ? data.metadata.value : this.metadata,
     );
@@ -452,6 +494,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('iconCode: $iconCode, ')
           ..write('colorValue: $colorValue, ')
           ..write('category: $category, ')
+          ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
           ..write('metadata: $metadata')
           ..write(')'))
@@ -469,6 +512,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     iconCode,
     colorValue,
     category,
+    transactionType,
     createdAt,
     metadata,
   );
@@ -486,6 +530,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.iconCode == this.iconCode &&
           other.colorValue == this.colorValue &&
           other.category == this.category &&
+          other.transactionType == this.transactionType &&
           other.createdAt == this.createdAt &&
           other.metadata == this.metadata);
 }
@@ -500,6 +545,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> iconCode;
   final Value<int> colorValue;
   final Value<String> category;
+  final Value<String?> transactionType;
   final Value<DateTime> createdAt;
   final Value<String?> metadata;
   final Value<int> rowid;
@@ -514,6 +560,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.iconCode = const Value.absent(),
     this.colorValue = const Value.absent(),
     this.category = const Value.absent(),
+    this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -529,6 +576,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int iconCode,
     required int colorValue,
     this.category = const Value.absent(),
+    this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -549,6 +597,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? iconCode,
     Expression<int>? colorValue,
     Expression<String>? category,
+    Expression<String>? transactionType,
     Expression<DateTime>? createdAt,
     Expression<String>? metadata,
     Expression<int>? rowid,
@@ -563,6 +612,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (iconCode != null) 'icon_code': iconCode,
       if (colorValue != null) 'color_value': colorValue,
       if (category != null) 'category': category,
+      if (transactionType != null) 'transaction_type': transactionType,
       if (createdAt != null) 'created_at': createdAt,
       if (metadata != null) 'metadata': metadata,
       if (rowid != null) 'rowid': rowid,
@@ -579,6 +629,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? iconCode,
     Value<int>? colorValue,
     Value<String>? category,
+    Value<String?>? transactionType,
     Value<DateTime>? createdAt,
     Value<String?>? metadata,
     Value<int>? rowid,
@@ -593,6 +644,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       iconCode: iconCode ?? this.iconCode,
       colorValue: colorValue ?? this.colorValue,
       category: category ?? this.category,
+      transactionType: transactionType ?? this.transactionType,
       createdAt: createdAt ?? this.createdAt,
       metadata: metadata ?? this.metadata,
       rowid: rowid ?? this.rowid,
@@ -629,6 +681,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (category.present) {
       map['category'] = Variable<String>(category.value);
     }
+    if (transactionType.present) {
+      map['transaction_type'] = Variable<String>(transactionType.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -653,6 +708,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('iconCode: $iconCode, ')
           ..write('colorValue: $colorValue, ')
           ..write('category: $category, ')
+          ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
           ..write('metadata: $metadata, ')
           ..write('rowid: $rowid')
@@ -1637,6 +1693,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int iconCode,
       required int colorValue,
       Value<String> category,
+      Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
       Value<int> rowid,
@@ -1652,6 +1709,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> iconCode,
       Value<int> colorValue,
       Value<String> category,
+      Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
       Value<int> rowid,
@@ -1709,6 +1767,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1778,6 +1841,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1828,6 +1896,11 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
+  GeneratedColumn<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -1875,6 +1948,7 @@ class $$TransactionsTableTableManager
                 Value<int> iconCode = const Value.absent(),
                 Value<int> colorValue = const Value.absent(),
                 Value<String> category = const Value.absent(),
+                Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1888,6 +1962,7 @@ class $$TransactionsTableTableManager
                 iconCode: iconCode,
                 colorValue: colorValue,
                 category: category,
+                transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
                 rowid: rowid,
@@ -1903,6 +1978,7 @@ class $$TransactionsTableTableManager
                 required int iconCode,
                 required int colorValue,
                 Value<String> category = const Value.absent(),
+                Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1916,6 +1992,7 @@ class $$TransactionsTableTableManager
                 iconCode: iconCode,
                 colorValue: colorValue,
                 category: category,
+                transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
                 rowid: rowid,

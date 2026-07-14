@@ -192,6 +192,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
               ? const Color(0xFF6366F1)
               : const Color(0xFF0EA5E9),
           category: 'Movie',
+          type: TransactionType.movie,
           metadata: {
             'movie': _movies[_selectedMovieIndex],
             'cinema': _cinemas[_selectedCinemaIndex],

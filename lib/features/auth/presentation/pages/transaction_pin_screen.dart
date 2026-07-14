@@ -4,11 +4,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
+import 'package:neruwallet/core/services/encryption_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 enum PinMode { set, change, verify, reset }
 
@@ -206,30 +208,30 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     GlassDialog.showLoading(context, message: 'Completing setup...');
     try {
-      // 1. Save Transaction PIN
-      await prefService.setString(
-        'transaction_pin',
-        _pinController.text,
-        encrypted: true,
-      );
+      final String pin = _pinController.text;
 
-      // Sync the new PIN to the cloud in background
-      ref.read(syncServiceProvider).performFullSync().catchError((e) {
-        debugPrint('Cloud sync failed: $e');
-      });
+      // 1. Prepare all data to be saved locally
+      await prefService.setString('transaction_pin', pin, encrypted: true);
+
+      Map<String, String> initialPrefs = {
+        'transaction_pin': EncryptionService.encrypt(pin),
+      };
 
       if (widget.signupData != null) {
         final data = widget.signupData!;
         final bool isSocial = data['isSocial'] ?? false;
 
-        // 2. Save Security Information
         if (data.containsKey('password')) {
           await prefService.setString(
             'app_password',
             data['password'],
             encrypted: true,
           );
+          initialPrefs['app_password'] = EncryptionService.encrypt(
+            data['password'],
+          );
         }
+
         if (data.containsKey('security_question')) {
           await prefService.setString(
             'security_question',
@@ -240,24 +242,44 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
             data['security_answer'],
             encrypted: true,
           );
+          initialPrefs['security_question'] = data['security_question'];
+          initialPrefs['security_answer'] = EncryptionService.encrypt(
+            data['security_answer'],
+          );
         }
 
-        // 3. Register user in Firebase if not social login
+        // 2. Register or Sync based on auth type
         if (!isSocial) {
+          // New Email/Password User
           await _authService.signUpWithEmailPassword(
             data['email'],
             data['password'],
             data['name'],
+            initialPreferences: initialPrefs,
           );
+        } else {
+          // Social User - Already logged in, just sync preferences
+          final user = sb.Supabase.instance.client.auth.currentUser;
+          if (user != null) {
+            final List<Map<String, dynamic>> prefsToSync = initialPrefs.entries
+                .map(
+                  (e) => {'user_id': user.id, 'key': e.key, 'value': e.value},
+                )
+                .toList();
+
+            await sb.Supabase.instance.client
+                .from('app_preferences')
+                .upsert(prefsToSync, onConflict: 'user_id,key');
+          }
         }
 
         await prefService.setBool('registration_complete', true);
-
-        // 4. Sync setup data to cloud in background
-        ref.read(syncServiceProvider).performFullSync().catchError((e) {
-          debugPrint('Cloud sync failed: $e');
-        });
       }
+
+      // 3. Final Sync to ensure everything is matched
+      ref.read(syncServiceProvider).performFullSync().catchError((e) {
+        debugPrint('Final sync failed: $e');
+      });
 
       if (mounted) {
         Navigator.pop(context); // Close loading

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -25,6 +26,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   Map<String, dynamic>? _structuredSummary;
+  String _selectedPeriod = '1D';
 
   final List<Map<String, dynamic>> _currentSessionMessages = [];
   final TextEditingController _chatController = TextEditingController();
@@ -34,6 +36,42 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   void initState() {
     super.initState();
     _loadLatestAnalysis();
+    _checkConsentAndAnalyze();
+  }
+
+  Future<void> _checkConsentAndAnalyze() async {
+    // Check if consent was already given in previous sessions
+    final memories = await ref
+        .read(appDatabaseProvider)
+        .getAiMemories(limit: 100);
+    final consentMemory = memories.firstWhereOrNull((m) => m.type == 'consent');
+
+    if (consentMemory != null && consentMemory.content == 'true') {
+      if (mounted) {
+        setState(() {
+          _hasConsent = true;
+        });
+        _getSummary();
+      }
+    }
+  }
+
+  Future<void> _saveConsent() async {
+    await ref
+        .read(appDatabaseProvider)
+        .saveAiMemory(
+          AiMemoriesCompanion.insert(
+            content: 'true',
+            type: const Value('consent'),
+            role: 'user',
+          ),
+        );
+    if (mounted) {
+      setState(() {
+        _hasConsent = true;
+      });
+      _getSummary();
+    }
   }
 
   Future<bool> _checkConnectivity() async {
@@ -94,6 +132,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
 
     if (!await _checkConnectivity()) return;
 
+    FocusScope.of(context).unfocus();
     _chatController.clear();
     setState(() {
       _isLoading = true;
@@ -220,32 +259,26 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   }
 
   Widget _buildAnalysisTab(bool isDark) {
-    return RefreshIndicator(
-      onRefresh: () async => _getSummary(),
-      color: const Color(0xFF10B981),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            if (_errorMessage != null) ...[
-              _buildErrorRetry(),
-              const SizedBox(height: 16),
-            ],
-            _buildChart(isDark),
-            const SizedBox(height: 24),
-            _buildImpactSummary(isDark),
-            const SizedBox(height: 24),
-            if (_isLoading && _structuredSummary == null)
-              const Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(color: Color(0xFF10B981)),
-              )
-            else
-              _buildStructuredSummaryView(isDark),
-            const SizedBox(height: 100),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          if (_errorMessage != null) ...[
+            _buildErrorRetry(),
+            const SizedBox(height: 16),
           ],
-        ),
+          _buildChart(isDark),
+          const SizedBox(height: 24),
+          if (_isLoading && _structuredSummary == null)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: Color(0xFF10B981)),
+            )
+          else
+            _buildStructuredSummaryView(isDark),
+          const SizedBox(height: 100),
+        ],
       ),
     );
   }
@@ -441,7 +474,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          _buildChatInput(isDark),
         ],
       ),
     );
@@ -568,29 +600,49 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   String _parseChatResponse(String rawContent) {
     try {
       String cleaned = rawContent.trim();
+
       // Remove markdown backticks if present
       if (cleaned.contains('```')) {
         final lines = cleaned.split('\n');
         cleaned = lines
-            .where((l) => !l.trim().startsWith('```'))
+            .where(
+              (l) => !l.trim().startsWith('```') && !l.trim().endsWith('```'),
+            )
             .join('\n')
             .trim();
       }
 
+      // Try to find the first '{' and last '}' to handle text before/after JSON
+      final firstBrace = cleaned.indexOf('{');
+      final lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
+        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+      }
+
       final data = jsonDecode(cleaned);
       if (data is Map) {
-        return data['text']?.toString() ?? "Analysis complete.";
+        return data['text']?.toString() ??
+            data['message']?.toString() ??
+            "Analysis complete.";
       } else if (data is List && data.isNotEmpty) {
-        // Handle unexpected array wrapping
         final first = data.first;
         if (first is Map) {
-          return first['text']?.toString() ?? "Analysis complete.";
+          return first['text']?.toString() ??
+              first['message']?.toString() ??
+              "Analysis complete.";
         }
       }
     } catch (e) {
       debugPrint("Failed to parse AI JSON: $e");
+
+      // Fallback: If JSON parsing fails, try to extract content between "text": " and "
+      final textPattern = RegExp(r'"text"\s*:\s*"([^"]*)"');
+      final match = textPattern.firstMatch(rawContent);
+      if (match != null && match.groupCount >= 1) {
+        return match.group(1) ?? rawContent;
+      }
     }
-    return rawContent; // Fallback to raw if all else fails
+    return rawContent;
   }
 
   Widget _buildChatInput(bool isDark) {
@@ -699,22 +751,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     }
 
     if (_structuredSummary == null || _structuredSummary!.isEmpty) {
-      return _buildStatusCard(
-        Icons.analytics_outlined,
-        "Ready to Analyze",
-        "Tap the button below to generate your financial insights.",
-        ElevatedButton(
-          onPressed: _getSummary,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: const Text("Generate Analysis"),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     return Column(
@@ -877,71 +914,350 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   }
 
   Widget _buildChart(bool isDark) {
-    final transactions = _getFilteredTransactions();
-    if (transactions.isEmpty) return const SizedBox.shrink();
+    final allTransactions = ref.watch(balanceProvider).transactions;
+    final now = DateTime.now();
+    DateTime startDate;
+    Duration interval;
+    int numPoints;
+    DateFormat labelFormat;
 
-    final Map<DateTime, double> expenseMap = {};
-    for (var tx in transactions) {
-      if (tx.amount < 0) {
-        final date = DateTime(
-          tx.createdAt.year,
-          tx.createdAt.month,
-          tx.createdAt.day,
-        );
-        expenseMap[date] = (expenseMap[date] ?? 0) + tx.amount.abs();
+    switch (_selectedPeriod) {
+      case '1D':
+        startDate = now.subtract(const Duration(hours: 24));
+        interval = const Duration(hours: 2);
+        numPoints = 12;
+        labelFormat = DateFormat('HH:mm');
+        break;
+      case '1W':
+        startDate = now.subtract(const Duration(days: 6));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day);
+        interval = const Duration(days: 1);
+        numPoints = 7;
+        labelFormat = DateFormat('E');
+        break;
+      case '1M':
+        startDate = now.subtract(const Duration(days: 29));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day);
+        interval = const Duration(days: 2);
+        numPoints = 15;
+        labelFormat = DateFormat('dd MMM');
+        break;
+      case '6M':
+        startDate = now.subtract(const Duration(days: 180));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day);
+        interval = const Duration(days: 15);
+        numPoints = 12;
+        labelFormat = DateFormat('MMM');
+        break;
+      case '1Y':
+        startDate = now.subtract(const Duration(days: 365));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day);
+        interval = const Duration(days: 30);
+        numPoints = 12;
+        labelFormat = DateFormat('MMM');
+        break;
+      default:
+        startDate = now.subtract(const Duration(days: 29));
+        interval = const Duration(days: 2);
+        numPoints = 15;
+        labelFormat = DateFormat('dd MMM');
+    }
+
+    List<FlSpot> incomeSpots = [];
+    List<FlSpot> expenseSpots = [];
+    List<DateTime> pointDates = [];
+
+    for (int i = 0; i < numPoints; i++) {
+      final pointStart = startDate.add(interval * i);
+      final pointEnd = pointStart.add(interval);
+      pointDates.add(pointStart);
+
+      final periodTransactions = allTransactions.where(
+        (t) =>
+            t.createdAt.isAfter(pointStart) && t.createdAt.isBefore(pointEnd),
+      );
+
+      double income = 0;
+      double expense = 0;
+      for (var t in periodTransactions) {
+        if (t.amount > 0) {
+          income += t.amount;
+        } else {
+          expense += t.amount.abs();
+        }
       }
+
+      incomeSpots.add(FlSpot(i.toDouble(), income));
+      expenseSpots.add(FlSpot(i.toDouble(), expense));
     }
 
-    if (expenseMap.isEmpty) return const SizedBox.shrink();
-
-    final sortedDates = expenseMap.keys.toList()..sort();
-    List<FlSpot> spots = [];
-    for (int i = 0; i < sortedDates.length; i++) {
-      spots.add(FlSpot(i.toDouble(), expenseMap[sortedDates[i]]!));
+    // Find max value for Y axis scaling
+    double maxY = 0;
+    for (var s in incomeSpots) {
+      if (s.y > maxY) maxY = s.y;
     }
+    for (var s in expenseSpots) {
+      if (s.y > maxY) maxY = s.y;
+    }
+    maxY = (maxY * 1.2).ceilToDouble();
+    if (maxY < 100) maxY = 100;
 
     return Container(
-      height: 200,
+      height: 320,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Spending Trend",
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 4,
+                      children: [
+                        _buildLegendItem("Income", const Color(0xFF10B981)),
+                        _buildLegendItem("Expense", const Color(0xFF8B5CF6)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildPeriodSelector(),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Expanded(
             child: LineChart(
               LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
+                minY: 0,
+                maxY: maxY,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 38,
+                      getTitlesWidget: (value, meta) {
+                        if (value == meta.max || value == meta.min) {
+                          return const SizedBox.shrink();
+                        }
+                        String text = '';
+                        if (value >= 1000) {
+                          text = '${(value / 1000).toStringAsFixed(0)}k';
+                        } else {
+                          text = value.toStringAsFixed(0);
+                        }
+                        return Text(
+                          text,
+                          style: const TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        int index = value.toInt();
+                        if (index < 0 || index >= pointDates.length) {
+                          return const SizedBox.shrink();
+                        }
+
+                        // Label frequency
+                        bool showLabel = false;
+                        if (_selectedPeriod == '1D') {
+                          showLabel = index % 3 == 0;
+                        } else if (_selectedPeriod == '1W') {
+                          showLabel = true;
+                        } else if (_selectedPeriod == '1M') {
+                          showLabel = index % 4 == 0;
+                        } else {
+                          showLabel = index % 3 == 0;
+                        }
+
+                        if (!showLabel) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            labelFormat.format(pointDates[index]),
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 10,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: spots,
+                    spots: incomeSpots,
                     isCurved: true,
                     color: const Color(0xFF10B981),
+                    barWidth: 2,
+                    isStrokeCapRound: true,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(show: false),
+                  ),
+                  LineChartBarData(
+                    spots: expenseSpots,
+                    isCurved: true,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF8B5CF6), Color(0xFFD946EF)],
+                    ),
                     barWidth: 3,
+                    isStrokeCapRound: true,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                          const Color(0xFFD946EF).withValues(alpha: 0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                     ),
                   ),
                 ],
+                lineTouchData: LineTouchData(
+                  handleBuiltInTouches: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (spot) => const Color(0xFF1F2937),
+                    tooltipRoundedRadius: 12,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final date = pointDates[spot.x.toInt()];
+                        final isIncome = spot.barIndex == 0;
+                        return LineTooltipItem(
+                          isIncome ? "Income\n" : "Expense\n",
+                          TextStyle(
+                            color: isIncome
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFF8B5CF6),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text:
+                                  "Rs. ${NumberFormat('#,###').format(spot.y)}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  "\n${DateFormat('dd MMM HH:mm').format(date)}",
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 9,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList();
+                    },
+                  ),
+                  getTouchedSpotIndicator:
+                      (LineChartBarData barData, List<int> spotIndexes) {
+                        return spotIndexes.map((index) {
+                          return TouchedSpotIndicatorData(
+                            FlLine(
+                              color: barData.color ?? const Color(0xFF8B5CF6),
+                              strokeWidth: 2,
+                            ),
+                            FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) =>
+                                  FlDotCirclePainter(
+                                    radius: 6,
+                                    color:
+                                        barData.color ??
+                                        const Color(0xFF8B5CF6),
+                                    strokeWidth: 2,
+                                    strokeColor: Colors.white,
+                                  ),
+                            ),
+                          );
+                        }).toList();
+                      },
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final periods = ['1D', '1W', '1M', '6M', '1Y'];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1117),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: periods.map((period) {
+          final isSelected = _selectedPeriod == period;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedPeriod = period),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF8B5CF6)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                period,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white38,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -999,10 +1315,25 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   List<Transaction> _getFilteredTransactions() {
     final all = ref.watch(balanceProvider).transactions;
     final now = DateTime.now();
+
+    int days;
+    switch (_selectedPeriod) {
+      case '1D':
+        days = 1;
+      case '1W':
+        days = 7;
+      case '1M':
+        days = 30;
+      case '6M':
+        days = 180;
+      case '1Y':
+        days = 365;
+      default:
+        days = 30;
+    }
+
     return all
-        .where(
-          (tx) => tx.createdAt.isAfter(now.subtract(const Duration(days: 30))),
-        )
+        .where((tx) => tx.createdAt.isAfter(now.subtract(Duration(days: days))))
         .toList();
   }
 
@@ -1050,7 +1381,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () => setState(() => _hasConsent = true),
+                onPressed: _saveConsent,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.black,
@@ -1109,6 +1440,23 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white38, fontSize: 11),
         ),
       ],
     );

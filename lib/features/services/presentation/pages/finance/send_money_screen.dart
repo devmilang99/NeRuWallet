@@ -243,6 +243,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
             icon: Icons.send_rounded,
             color: AppTheme.accentColor,
             category: 'Transfer',
+            type: TransactionType.sendMoney,
             metadata: {
               'to': phone,
               'purpose': _selectedPurpose,

@@ -111,6 +111,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
           icon: Icons.account_balance_wallet_rounded,
           color: Colors.redAccent,
           category: 'Withdraw',
+          type: TransactionType.withdraw,
           metadata: {'method': target},
         );
 

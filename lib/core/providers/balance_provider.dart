@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../services/database/app_database.dart';
+import '../services/sync_service.dart';
+import '../services/transaction_service.dart';
 import 'database_provider.dart';
 
 class BalanceState {
@@ -56,9 +58,10 @@ class BalanceState {
 
 class BalanceNotifier extends StateNotifier<BalanceState> {
   final AppDatabase _db;
+  final Ref _ref;
   final _uuid = const Uuid();
 
-  BalanceNotifier(this._db)
+  BalanceNotifier(this._db, this._ref)
     : super(BalanceState(totalBalance: 0.0, transactions: [])) {
     _loadData();
   }
@@ -90,6 +93,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     required IconData icon,
     required Color color,
     String category = 'Other',
+    TransactionType? type,
     Map<String, dynamic>? metadata,
     bool isVoucherApplied = false,
   }) async {
@@ -106,6 +110,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
       iconCode: drift.Value(icon.codePoint),
       colorValue: drift.Value(color.toARGB32()),
       category: drift.Value(category),
+      transactionType: drift.Value(type?.name),
       createdAt: drift.Value(DateTime.now()),
       metadata: drift.Value(metadata != null ? jsonEncode(metadata) : null),
     );
@@ -124,6 +129,11 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     await _db.setPreference('total_balance', newBalance.toString());
 
     state = state.copyWith(totalBalance: newBalance, transactions: updatedTxs);
+
+    // Sync to cloud in background
+    _ref.read(syncServiceProvider).performFullSync().catchError((e) {
+      debugPrint('Sync after transaction failed: $e');
+    });
 
     // If it was a debit transaction, decrement voucher limit if active (now using Drift)
     if (amount < 0 && isVoucherApplied) {
@@ -161,6 +171,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     double fee = 0.0,
     double tax = 0.0,
     String category = 'Other',
+    TransactionType? type,
     Map<String, dynamic>? metadata,
     bool isVoucherApplied = false,
   }) {
@@ -173,6 +184,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
       icon: icon,
       color: color,
       category: category,
+      type: type,
       metadata: metadata,
       isVoucherApplied: isVoucherApplied,
     );
@@ -200,6 +212,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
           ? const Color(0xFF10B981)
           : const Color(0xFFEC4899),
       category: 'Travel',
+      type: mode == 'Flight' ? TransactionType.flight : TransactionType.bus,
       metadata: metadata,
       isVoucherApplied: isVoucherApplied,
     );
@@ -220,6 +233,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
       icon: Icons.qr_code_scanner_rounded,
       color: AppTheme.primaryColor,
       category: 'Payment',
+      type: TransactionType.qrPayment,
     );
   }
 
@@ -233,6 +247,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
       icon: Icons.add_circle_rounded,
       color: Colors.green,
       category: 'TopUp',
+      type: TransactionType.topUp,
     );
   }
 }
@@ -241,5 +256,5 @@ final balanceProvider = StateNotifierProvider<BalanceNotifier, BalanceState>((
   ref,
 ) {
   final db = ref.watch(databaseProvider);
-  return BalanceNotifier(db);
+  return BalanceNotifier(db, ref);
 });

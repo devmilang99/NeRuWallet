@@ -307,7 +307,8 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 10,
+                spacing: 12,
+                runSpacing: 12,
                 children: _seatClasses.map((sClass) {
                   final isSelected = _seatController.text == sClass;
                   return GestureDetector(

@@ -160,7 +160,10 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           tax: TransactionService.getTax(TransactionType.utility, amount),
           icon: widget.icon,
           color: widget.color,
-          category: 'Utility',
+          category: widget.billType.contains('Fine') ? 'Fine' : 'Utility',
+          type: widget.billType.contains('Fine')
+              ? TransactionType.fine
+              : TransactionType.utility,
           metadata: {
             'customerId': customerId,
             'type': widget.billType,

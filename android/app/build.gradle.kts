@@ -37,8 +37,14 @@ android {
 
     buildTypes {
         debug {
-            // Use a single APK for faster debug builds and installs.
-            multiDexEnabled = false
+
+            isDebuggable = true
+            // Disable PNG crunching in debug builds
+            isCrunchPngs = false
+
+            // Disables resource shrinking/obfuscation on debug runs to save time
+            isMinifyEnabled = false
+
         }
 
         release {

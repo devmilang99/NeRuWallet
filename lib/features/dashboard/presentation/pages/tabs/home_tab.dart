@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/widgets/glass_dialog.dart';
 
 import '../../widgets/balance_card.dart';
 import '../../widgets/dashboard_header.dart';
@@ -20,6 +21,7 @@ class HomeTab extends StatelessWidget {
   final double totalBalance;
   final double totalIncome;
   final double totalExpenses;
+  final VoidCallback? onViewAll;
 
   const HomeTab({
     super.key,
@@ -33,6 +35,7 @@ class HomeTab extends StatelessWidget {
     required this.totalBalance,
     required this.totalIncome,
     required this.totalExpenses,
+    this.onViewAll,
   });
 
   @override
@@ -67,7 +70,22 @@ class HomeTab extends StatelessWidget {
             totalExpenses: totalExpenses,
             showStats: transactions.isNotEmpty,
             onToggleVisibility: onToggleBalance,
-            onAiAdvisorTap: () => context.push('/ai-advisor'),
+            onAiAdvisorTap: () {
+              final totalVolume = transactions.fold(
+                0.0,
+                (sum, t) => sum + t.amount.abs(),
+              );
+              if (totalVolume < 10000) {
+                GlassDialog.showInfo(
+                  context,
+                  title: 'Analysis Unavailable',
+                  message:
+                      'You must have a total transaction volume of at least Rs. 10,000 to unlock AI insights and conversation.',
+                );
+              } else {
+                context.push('/ai-advisor');
+              }
+            },
             onIncomeTap: () => _showTransactionListBottomSheet(
               context,
               'Income',
@@ -84,7 +102,12 @@ class HomeTab extends StatelessWidget {
         SliverToBoxAdapter(child: QuickActionsGrid(isDark: isDark)),
         SliverToBoxAdapter(child: PromoCard(isDark: isDark)),
         SliverToBoxAdapter(
-          child: _buildSectionHeader(context, 'Recent Transactions', isDark),
+          child: _buildSectionHeader(
+            context,
+            'Recent Transactions',
+            isDark,
+            onViewAll,
+          ),
         ),
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 120),
@@ -142,7 +165,9 @@ class HomeTab extends StatelessWidget {
                       isDark: isDark,
                       index: i,
                     ),
-                    childCount: transactions.length,
+                    childCount: transactions.length > 5
+                        ? 5
+                        : transactions.length,
                   ),
                 ),
         ),
@@ -235,7 +260,12 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, bool isDark) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    bool isDark,
+    VoidCallback? onViewAll,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 8),
       child: Row(
@@ -247,6 +277,17 @@ class HomeTab extends StatelessWidget {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
+          if (onViewAll != null)
+            TextButton(
+              onPressed: onViewAll,
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -29,8 +29,9 @@ class AuthService {
   Future<UserModel?> signUpWithEmailPassword(
     String email,
     String password,
-    String name,
-  ) async {
+    String name, {
+    Map<String, String>? initialPreferences,
+  }) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email,
@@ -40,19 +41,31 @@ class AuthService {
 
       if (response.user == null) return null;
 
-      // Move upsert to a background task so it doesn't block or fail the flow if DB schema/RLS has issues
-      _supabase
+      final userId = response.user!.id;
+
+      // Batch upsert initial preferences (PIN, Question, etc.)
+      final List<Map<String, dynamic>> prefsToSync = [
+        {
+          'user_id': userId,
+          'key': 'registration_data',
+          'value': 'Email: $email, Name: $name',
+        },
+      ];
+
+      if (initialPreferences != null) {
+        initialPreferences.forEach((key, value) {
+          prefsToSync.add({'user_id': userId, 'key': key, 'value': value});
+        });
+      }
+
+      await _supabase
           .from('app_preferences')
-          .upsert({
-            'user_id': response.user!.id,
-            'key': 'registration_data',
-            'value': 'Email: $email, Name: $name',
-          })
-          .then((_) => debugPrint('Registration data synced'))
-          .catchError((e) => debugPrint('Registration sync failed: $e'));
+          .upsert(prefsToSync, onConflict: 'user_id,key')
+          .then((_) => debugPrint('Initial security data synced'))
+          .catchError((e) => debugPrint('Initial sync failed: $e'));
 
       return UserModel(
-        uid: response.user!.id,
+        uid: userId,
         email: response.user!.email ?? '',
         name: name,
         isNewUser: true,

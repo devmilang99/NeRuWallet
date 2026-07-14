@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -15,6 +16,7 @@ class SyncService {
   final Ref _ref;
   final sb.SupabaseClient _supabase = sb.Supabase.instance.client;
   Timer? _periodicSync;
+  bool _isSyncing = false;
 
   SyncService(this._ref);
 
@@ -32,11 +34,44 @@ class SyncService {
 
   void stopPeriodicSync() => _periodicSync?.cancel();
 
+  /// Manually fetches specific transaction data from Supabase.
+  /// Useful for verifying status or getting deep details for a specific "process".
+  Future<List<Map<String, dynamic>>> getTransactionsFromCloud({
+    String? type,
+    int limit = 20,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return [];
+
+    try {
+      var query = _supabase
+          .from('transactions')
+          .select()
+          .eq('user_id', user.id);
+
+      if (type != null) {
+        query = query.eq('transaction_type', type);
+      }
+
+      final List<dynamic> data = await query
+          .order('created_at', ascending: false)
+          .limit(limit);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Cloud Get Failed: $e');
+      return [];
+    }
+  }
+
   /// Orchestrates a full atomic sync between Supabase and Drift
   Future<void> performFullSync() async {
+    if (_isSyncing) return;
+    _isSyncing = true;
+
     final user = _supabase.auth.currentUser;
     if (user == null) {
       debugPrint('⚠️ Sync skipped: No authenticated Supabase user.');
+      _isSyncing = false;
       return;
     }
 
@@ -60,6 +95,8 @@ class SyncService {
       debugPrint('✅ Sync Complete.');
     } catch (e) {
       debugPrint('❌ Sync Orchestration Failed: $e');
+    } finally {
+      _isSyncing = false;
     }
   }
 
@@ -75,7 +112,7 @@ class SyncService {
       // 2. Fetch local data
       final localData = await _db.getAllTransactions();
 
-      // 3. Atomic Batch Update to Drift
+      // 3. Atomic Batch Update to Drift (Incoming from Cloud)
       await _db.transaction(() async {
         for (var row in remoteData) {
           await _db
@@ -91,20 +128,30 @@ class SyncService {
                   iconCode: row['icon_code'],
                   colorValue: row['color_value'],
                   category: Value(row['category']),
+                  transactionType: Value(row['transaction_type']),
                   createdAt: Value(DateTime.parse(row['created_at'])),
-                  metadata: Value(row['metadata']),
+                  metadata: Value(
+                    row['metadata'] is Map
+                        ? jsonEncode(row['metadata'])
+                        : row['metadata'],
+                  ),
                 ),
               );
         }
+      });
 
-        // 4. Push local-only transactions to cloud
-        final remoteIds = remoteData.map((e) => e['id']).toSet();
-        final localOnly = localData
-            .where((tx) => !remoteIds.contains(tx.id))
-            .toList();
+      // 4. Push local-only transactions to cloud
+      final remoteIds = remoteData.map((e) => e['id']).toSet();
+      final localOnly = localData
+          .where((tx) => !remoteIds.contains(tx.id))
+          .toList();
 
-        for (var tx in localOnly) {
-          await _supabase.from('transactions').upsert({
+      if (localOnly.isNotEmpty) {
+        debugPrint(
+          '📤 Pushing ${localOnly.length} local transactions to cloud...',
+        );
+        final List<Map<String, dynamic>> toUpsert = localOnly.map((tx) {
+          return {
             'id': tx.id,
             'user_id': userId,
             'title': tx.title,
@@ -115,13 +162,25 @@ class SyncService {
             'icon_code': tx.iconCode,
             'color_value': tx.colorValue,
             'category': tx.category,
+            'transaction_type': tx.transactionType,
             'created_at': tx.createdAt.toIso8601String(),
             'metadata': tx.metadata,
-          });
-        }
-      });
+          };
+        }).toList();
+
+        await _supabase.from('transactions').upsert(toUpsert, onConflict: 'id');
+        debugPrint('✅ Cloud sync for transactions successful.');
+      }
     } catch (e) {
-      debugPrint('Transaction Sync Error: $e');
+      if (e is sb.PostgrestException) {
+        debugPrint('❌ Supabase Transaction Sync Error:');
+        debugPrint('Message: ${e.message}');
+        debugPrint('Details: ${e.details}');
+        debugPrint('Hint: ${e.hint}');
+        debugPrint('Code: ${e.code}');
+      } else {
+        debugPrint('Transaction Sync Error: $e');
+      }
     }
   }
 
@@ -138,21 +197,28 @@ class SyncService {
         'monthly_limit_enabled',
         'registration_complete',
         'registration_data',
+        'total_balance',
+        'voucher_active',
+        'voucher_limit',
       ];
 
-      // 1. Push local changes to remote first (Source of truth is often local for these UI settings)
+      // 1. Collect local changes
+      final List<Map<String, dynamic>> prefsToPush = [];
       for (var key in syncKeys) {
         final val = await prefService.getString(key);
         if (val != null && val.isNotEmpty) {
-          await _supabase.from('app_preferences').upsert({
-            'user_id': userId,
-            'key': key,
-            'value': val,
-          });
+          prefsToPush.add({'user_id': userId, 'key': key, 'value': val});
         }
       }
 
-      // 2. Fetch remote and update local (in case of new device)
+      // 2. Batch Push to Remote
+      if (prefsToPush.isNotEmpty) {
+        await _supabase
+            .from('app_preferences')
+            .upsert(prefsToPush, onConflict: 'user_id,key');
+      }
+
+      // 3. Fetch remote and update local (in case of new device)
       final remoteData = await _supabase
           .from('app_preferences')
           .select()

@@ -40,6 +40,8 @@ class Transactions extends Table {
 
   TextColumn get category => text().withDefault(const Constant('Other'))();
 
+  TextColumn get transactionType => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   TextColumn get metadata =>
@@ -90,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,6 +102,11 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.createTable(aiMemories);
+      }
+      if (from < 3) {
+        await m.issueCustomQuery(
+          'ALTER TABLE transactions ADD COLUMN transaction_type TEXT',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -118,6 +125,10 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<Transaction>> getAllTransactions() => select(transactions).get();
+
+  Future<List<Transaction>> getTransactionsByType(String type) => (select(
+    transactions,
+  )..where((t) => t.transactionType.equals(type))).get();
 
   Stream<List<Transaction>> watchAllTransactions() =>
       (select(transactions)..orderBy([
