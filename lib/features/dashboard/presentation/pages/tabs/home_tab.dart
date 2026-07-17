@@ -110,7 +110,9 @@ class HomeTab extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.only(bottom: 120),
+          padding: EdgeInsets.only(
+            bottom: 110 + MediaQuery.of(context).padding.bottom,
+          ),
           sliver: transactions.isEmpty
               ? SliverToBoxAdapter(
                   child: Padding(
@@ -165,8 +167,8 @@ class HomeTab extends StatelessWidget {
                       isDark: isDark,
                       index: i,
                     ),
-                    childCount: transactions.length > 5
-                        ? 5
+                    childCount: transactions.length > 3
+                        ? 3
                         : transactions.length,
                   ),
                 ),

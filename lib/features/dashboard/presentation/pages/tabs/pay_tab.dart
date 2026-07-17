@@ -5,10 +5,7 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 class PayTab extends StatelessWidget {
   final bool isDark;
 
-  const PayTab({
-    super.key,
-    required this.isDark,
-  });
+  const PayTab({super.key, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +17,15 @@ class PayTab extends StatelessWidget {
           floating: false,
           pinned: true,
           stretch: true,
-          backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF1F5F9),
+          backgroundColor: isDark
+              ? AppTheme.backgroundDark
+              : const Color(0xFFF1F5F9),
           elevation: 0,
           flexibleSpace: FlexibleSpaceBar(
-            stretchModes: const [StretchMode.blurBackground, StretchMode.zoomBackground],
+            stretchModes: const [
+              StretchMode.blurBackground,
+              StretchMode.zoomBackground,
+            ],
             centerTitle: false,
             titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
             title: Text(
@@ -57,9 +59,21 @@ class PayTab extends StatelessWidget {
                     _buildContactAvatar('+', null, 'Add'),
                     _buildContactAvatar('RS', const Color(0xFF6366F1), 'Rajan'),
                     _buildContactAvatar('ST', const Color(0xFF10B981), 'Suraj'),
-                    _buildContactAvatar('PK', const Color(0xFFF59E0B), 'Pratik'),
-                    _buildContactAvatar('AK', const Color(0xFFEC4899), 'Anisha'),
-                    _buildContactAvatar('BS', const Color(0xFF0EA5E9), 'Bishal'),
+                    _buildContactAvatar(
+                      'PK',
+                      const Color(0xFFF59E0B),
+                      'Pratik',
+                    ),
+                    _buildContactAvatar(
+                      'AK',
+                      const Color(0xFFEC4899),
+                      'Anisha',
+                    ),
+                    _buildContactAvatar(
+                      'BS',
+                      const Color(0xFF0EA5E9),
+                      'Bishal',
+                    ),
                   ],
                 ),
               ),
@@ -95,7 +109,7 @@ class PayTab extends StatelessWidget {
                   ],
                 ),
               ).animate().fadeIn(delay: 300.ms),
-              const SizedBox(height: 100),
+              SizedBox(height: 110 + MediaQuery.of(context).padding.bottom),
             ],
           ),
         ),
@@ -119,10 +133,7 @@ class PayTab extends StatelessWidget {
       child: const TextField(
         decoration: InputDecoration(
           hintText: 'Search name or number...',
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: AppTheme.primaryColor,
-          ),
+          prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryColor),
           border: InputBorder.none,
           filled: false,
           contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -139,10 +150,9 @@ class PayTab extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           TextButton(
             onPressed: () {},
@@ -160,43 +170,44 @@ class PayTab extends StatelessWidget {
     final isAdd = initials == '+';
     return Padding(
       padding: const EdgeInsets.only(right: 20),
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isAdd ? null : color?.withValues(alpha: 0.15),
-              border: isAdd
-                  ? Border.all(
-                      color: AppTheme.textHintColor.withValues(alpha: 0.4),
-                      width: 1.5,
-                      style: BorderStyle.solid,
-                    )
-                  : null,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: isAdd ? AppTheme.textHintColor : color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isAdd ? 22 : 16,
+      child:
+          Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isAdd ? null : color?.withValues(alpha: 0.15),
+                  border: isAdd
+                      ? Border.all(
+                          color: AppTheme.textHintColor.withValues(alpha: 0.4),
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: TextStyle(
+                      color: isAdd ? AppTheme.textHintColor : color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isAdd ? 22 : 16,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ).animate().fadeIn().scale(
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ).animate().fadeIn().scale(
             begin: const Offset(0.8, 0.8),
             end: const Offset(1, 1),
           ),

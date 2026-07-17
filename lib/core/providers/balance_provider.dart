@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart' as drift;
@@ -60,10 +61,44 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
   final AppDatabase _db;
   final Ref _ref;
   final _uuid = const Uuid();
+  StreamSubscription? _txSubscription;
+  StreamSubscription? _balanceSubscription;
+  StreamSubscription? _voucherSubscription;
 
   BalanceNotifier(this._db, this._ref)
     : super(BalanceState(totalBalance: 0.0, transactions: [])) {
     _loadData();
+    _listenToDatabase();
+  }
+
+  void _listenToDatabase() {
+    _txSubscription?.cancel();
+    _txSubscription = _db.watchAllTransactions().listen((txs) {
+      if (mounted) state = state.copyWith(transactions: txs);
+    });
+
+    _balanceSubscription?.cancel();
+    _balanceSubscription = _db.watchPreference('total_balance').listen((val) {
+      if (val != null && mounted) {
+        final balance = double.tryParse(val) ?? 0.0;
+        state = state.copyWith(totalBalance: balance);
+      }
+    });
+
+    _voucherSubscription?.cancel();
+    _voucherSubscription = _db.watchPreference('voucher_active').listen((val) {
+      if (mounted) {
+        state = state.copyWith(isVoucherActive: val == 'true');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _txSubscription?.cancel();
+    _balanceSubscription?.cancel();
+    _voucherSubscription?.cancel();
+    super.dispose();
   }
 
   /// Initial load of transactions and balance from Drift database
@@ -116,24 +151,27 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     );
 
     // Atomic operation using Drift's transaction wrapper
-    await _db.recordTransaction(entry);
+    final newTx = await _db.recordTransaction(entry);
 
     // Update local state after successful DB write
     final double netImpact = amount >= 0 ? amount : -(amount.abs() + fee + tax);
 
     // Re-fetch to keep UI in sync with DB state
-    final updatedTxs = await _db.getAllTransactions();
     final newBalance = state.totalBalance + netImpact;
+
+    // MANDATORY: Update UI state manually for zero-latency
+    if (mounted) {
+      state = state.copyWith(
+        totalBalance: newBalance,
+        transactions: [newTx, ...state.transactions],
+      );
+    }
 
     // Persist new balance
     await _db.setPreference('total_balance', newBalance.toString());
 
-    state = state.copyWith(totalBalance: newBalance, transactions: updatedTxs);
-
-    // Sync to cloud in background
-    _ref.read(syncServiceProvider).performFullSync().catchError((e) {
-      debugPrint('Sync after transaction failed: $e');
-    });
+    // Sync to cloud IMMEDIATELY and AWAIT it for permanence
+    await _ref.read(syncServiceProvider).pushTransactionToCloud(newTx);
 
     // If it was a debit transaction, decrement voucher limit if active (now using Drift)
     if (amount < 0 && isVoucherApplied) {
@@ -163,7 +201,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     } catch (_) {}
   }
 
-  void deductQuickAction({
+  Future<void> deductQuickAction({
     required String title,
     required double amount,
     required IconData icon,
@@ -174,8 +212,8 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     TransactionType? type,
     Map<String, dynamic>? metadata,
     bool isVoucherApplied = false,
-  }) {
-    recordTransaction(
+  }) async {
+    await recordTransaction(
       title: title,
       subtitle: 'Completed Payment',
       amount: -amount,
@@ -190,7 +228,7 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     );
   }
 
-  void deductTravelTicket({
+  Future<void> deductTravelTicket({
     required String mode,
     required double amount,
     required String ref,
@@ -198,8 +236,8 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     required double tax,
     Map<String, dynamic>? metadata,
     bool isVoucherApplied = false,
-  }) {
-    recordTransaction(
+  }) async {
+    await recordTransaction(
       title: '$mode Ticket',
       subtitle: 'Ref: $ref',
       amount: -amount,
@@ -218,13 +256,13 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     );
   }
 
-  void recordQrPayment({
+  Future<void> recordQrPayment({
     required double amount,
     required String merchant,
     required double fee,
     required double tax,
-  }) {
-    recordTransaction(
+  }) async {
+    await recordTransaction(
       title: 'QR: $merchant',
       subtitle: 'Scan & Pay',
       amount: -amount,
@@ -237,8 +275,8 @@ class BalanceNotifier extends StateNotifier<BalanceState> {
     );
   }
 
-  void addFunds(double amount, String source) {
-    recordTransaction(
+  Future<void> addFunds(double amount, String source) async {
+    await recordTransaction(
       title: 'Top Up',
       subtitle: 'Via $source',
       amount: amount,

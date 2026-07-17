@@ -156,15 +156,17 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
     }
   }
 
-  void _completeBooking() {
-    Navigator.pop(context); // Pop PIN screen
+  Future<void> _completeBooking() async {
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context); // Pop PIN screen
+    }
 
     final double amount = double.parse(
       _priceController.text.replaceAll(',', ''),
     );
 
     // Deduct balance here upon successful PIN verification
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductTravelTicket(
           mode: 'Bus',
@@ -179,6 +181,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
           },
         );
 
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,

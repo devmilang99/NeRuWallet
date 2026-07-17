@@ -167,12 +167,14 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
     }
   }
 
-  void _completeBooking() {
-    if (context.mounted) Navigator.pop(context); // Pop PIN screen
+  Future<void> _completeBooking() async {
+    if (context.mounted && Navigator.canPop(context)) {
+      Navigator.pop(context); // Pop PIN screen
+    }
     final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the transaction is now completed successfully)
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: '${widget.provider} Ticket',
@@ -202,6 +204,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
           isVoucherApplied: isVoucherActive,
         );
 
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,

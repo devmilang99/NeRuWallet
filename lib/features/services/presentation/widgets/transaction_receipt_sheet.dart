@@ -68,7 +68,12 @@ class TransactionReceiptSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          12,
+          24,
+          24 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -264,12 +269,7 @@ class TransactionReceiptSheet extends StatelessWidget {
               ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
 
             const SizedBox(height: 12),
-            if (!isSuccess)
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Modify Details"),
-              )
-            else
+            if (isSuccess)
               ElevatedButton(
                 onPressed: () => context.go('/dashboard'),
                 child: const Text("Back to Home"),

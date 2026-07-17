@@ -696,11 +696,14 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
 
   void _executeTransaction(double amount, String target) async {
     // Add funds here upon successful PIN verification
-    ref.read(balanceProvider.notifier).addFunds(amount, target);
+    await ref.read(balanceProvider.notifier).addFunds(amount, target);
 
     // Close the PIN screen first
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Top Up...');
 
     await ref

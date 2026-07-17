@@ -118,17 +118,29 @@ class AppDatabase extends _$AppDatabase {
   // --- CRUD Operations for Transactions ---
 
   /// Records a transaction atomically
-  Future<void> recordTransaction(TransactionsCompanion entry) async {
-    await transaction(() async {
-      await into(transactions).insert(entry);
+  Future<Transaction> recordTransaction(TransactionsCompanion entry) async {
+    return await transaction(() async {
+      return await into(transactions).insertReturning(entry);
     });
   }
 
-  Future<List<Transaction>> getAllTransactions() => select(transactions).get();
+  Future<List<Transaction>> getAllTransactions() =>
+      (select(transactions)..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ]))
+          .get();
 
-  Future<List<Transaction>> getTransactionsByType(String type) => (select(
-    transactions,
-  )..where((t) => t.transactionType.equals(type))).get();
+  Future<List<Transaction>> getTransactionsByType(String type) =>
+      (select(transactions)
+            ..where((t) => t.transactionType.equals(type))
+            ..orderBy([
+              (t) => OrderingTerm(
+                expression: t.createdAt,
+                mode: OrderingMode.desc,
+              ),
+            ]))
+          .get();
 
   Stream<List<Transaction>> watchAllTransactions() =>
       (select(transactions)..orderBy([
@@ -149,6 +161,12 @@ class AppDatabase extends _$AppDatabase {
     final query = select(appPreferences)..where((t) => t.key.equals(key));
     final result = await query.getSingleOrNull();
     return result?.value;
+  }
+
+  Stream<String?> watchPreference(String key) {
+    return (select(appPreferences)..where((t) => t.key.equals(key)))
+        .watchSingleOrNull()
+        .map((row) => row?.value);
   }
 
   // --- CRUD Operations for Notifications ---

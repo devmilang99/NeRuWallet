@@ -29,27 +29,43 @@ class AiService {
     );
   }
 
-  Future<String> getFinancialSummary(List<Transaction> transactions) async {
+  Future<String> getFinancialSummary({
+    required List<Transaction> transactions,
+    required Map<String, double> categoryTotals,
+    required double totalIncome,
+    required double totalExpense,
+    required double monthlyExpense,
+  }) async {
     if (transactions.isEmpty) return "{}";
 
-    // Compact data for token efficiency
-    final txData = transactions
-        .take(10)
-        .map((t) => '${t.title}:${t.amount}')
-        .join('|');
+    // Prepare a concise category breakdown
+    final categorySummary = categoryTotals.entries
+        .map((e) => '${e.key}:${e.value.toStringAsFixed(0)}')
+        .join(', ');
 
-    final budget = await _db.getPreference('ai_monthly_budget');
+    // Latest transactions for context
+    final recentTxs = transactions
+        .take(5)
+        .map((t) => '${t.title}:${t.amount.toStringAsFixed(0)}')
+        .join('|');
 
     final prompt =
         '''
-Advisor. JSON ONLY. Budget:${budget ?? 'Unset'}. Txs:$txData
-Return:
+Analyze these transaction table statistics ONLY. Be concise.
+DATA:
+- Total Income: Rs. $totalIncome
+- Total Expenses: Rs. $totalExpense
+- Current Month: Rs. $monthlyExpense
+- Categories: $categorySummary
+- Recent Transactions: $recentTxs
+
+JSON ONLY:
 {
-  "summary": "1 sentence pattern",
-  "suggestions": ["2 tips"],
-  "unusual": [{"t": "title", "a": 0, "r": "why"}],
-  "potential": "save amt",
-  "steps": ["2 actions"]
+  "summary": "1-2 sentences on patterns.",
+  "suggestions": ["3 saving tips"],
+  "unusual": [{"t": "title", "a": amount, "r": "reason"}],
+  "potential": "Estimated savings",
+  "steps": ["Next 2 actions"]
 }
 ''';
 

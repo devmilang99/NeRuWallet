@@ -34,6 +34,33 @@ class SyncService {
 
   void stopPeriodicSync() => _periodicSync?.cancel();
 
+  /// Pushes a single transaction to the cloud immediately.
+  Future<void> pushTransactionToCloud(Transaction tx) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      await _supabase.from('transactions').upsert({
+        'id': tx.id,
+        'user_id': user.id,
+        'title': tx.title,
+        'subtitle': tx.subtitle,
+        'amount': tx.amount,
+        'fee': tx.fee,
+        'tax': tx.tax,
+        'icon_code': tx.iconCode,
+        'color_value': tx.colorValue,
+        'category': tx.category,
+        'transaction_type': tx.transactionType,
+        'created_at': tx.createdAt.toIso8601String(),
+        'metadata': tx.metadata,
+      }, onConflict: 'id');
+      debugPrint('✅ Individual Transaction Push Successful.');
+    } catch (e) {
+      debugPrint('❌ Individual Transaction Push Failed: $e');
+    }
+  }
+
   /// Manually fetches specific transaction data from Supabase.
   /// Useful for verifying status or getting deep details for a specific "process".
   Future<List<Map<String, dynamic>>> getTransactionsFromCloud({

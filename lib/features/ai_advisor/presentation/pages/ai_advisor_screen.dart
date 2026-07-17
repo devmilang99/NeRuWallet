@@ -111,14 +111,33 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     });
 
     try {
-      final transactions = ref.read(balanceProvider).transactions;
+      final balanceState = ref.read(balanceProvider);
+      final transactions = balanceState.transactions;
+
+      // Calculate aggregated statistics
+      final categoryTotals = <String, double>{};
+      for (var t in transactions) {
+        if (t.amount < 0) {
+          final cat = t.category;
+          categoryTotals[cat] = (categoryTotals[cat] ?? 0.0) + t.amount.abs();
+        }
+      }
+
       final aiService = ref.read(aiServiceProvider);
-      final jsonResponse = await aiService.getFinancialSummary(transactions);
+      final jsonResponse = await aiService.getFinancialSummary(
+        transactions: transactions,
+        categoryTotals: categoryTotals,
+        totalIncome: balanceState.totalIncome,
+        totalExpense: balanceState.totalExpenses,
+        monthlyExpense: balanceState.monthlyExpenses,
+      );
+
       setState(() {
         _structuredSummary = jsonDecode(jsonResponse);
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint("Analysis Error: $e");
       setState(() {
         _isLoading = false;
         _errorMessage = "Failed to analyze data. Please try again.";
@@ -269,6 +288,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             const SizedBox(height: 16),
           ],
           _buildChart(isDark),
+          const SizedBox(height: 16),
+          _buildAnalysisActions(isDark),
           const SizedBox(height: 24),
           if (_isLoading && _structuredSummary == null)
             const Padding(
@@ -280,6 +301,37 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           const SizedBox(height: 100),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnalysisActions(bool isDark) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _isLoading ? null : _getSummary,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
+                  )
+                : const Icon(Icons.auto_awesome_rounded, size: 18),
+            label: const Text("Refresh Analysis"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -769,6 +821,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         const SizedBox(height: 16),
         _buildSuggestionsList(isDark),
         const SizedBox(height: 16),
+        _buildUnusualTransactions(isDark),
+        const SizedBox(height: 16),
         if (_structuredSummary!['potential'] != null &&
             _structuredSummary!['potential'].toString().isNotEmpty)
           _buildInfoCard(
@@ -778,7 +832,147 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             Colors.orange,
             isDark,
           ),
+        const SizedBox(height: 16),
+        _buildNextSteps(isDark),
       ],
+    );
+  }
+
+  Widget _buildUnusualTransactions(bool isDark) {
+    final unusual = (_structuredSummary!['unusual'] as List?) ?? [];
+    if (unusual.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161B22),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+              SizedBox(width: 12),
+              Text(
+                "Unusual Activity",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...unusual.map(
+            (u) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        u['t']?.toString() ?? "Transaction",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        "Rs. ${u['a']?.toString() ?? '0'}",
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    u['r']?.toString() ?? "",
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextSteps(bool isDark) {
+    final steps = (_structuredSummary!['steps'] as List?) ?? [];
+    if (steps.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161B22),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.directions_rounded, color: Colors.blue, size: 20),
+              SizedBox(width: 12),
+              Text(
+                "Recommended Steps",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...steps.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      (entry.key + 1).toString(),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      entry.value.toString(),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

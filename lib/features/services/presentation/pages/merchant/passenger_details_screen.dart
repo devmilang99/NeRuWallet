@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
-import 'package:neruwallet/core/services/transaction_service.dart';
-import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
-import 'flight_ticket_screen.dart';
+import 'package:neruwallet/core/services/transaction_service.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/services/presentation/widgets/booking_verification_sheet.dart';
+import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+
+import 'flight_ticket_screen.dart';
 
 class PassengerDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> searchData;
@@ -150,12 +151,17 @@ class _PassengerDetailsScreenState
     }
   }
 
-  void _completeBooking(List<Map<String, String>> passengers, double amount) {
-    Navigator.pop(context); // Close PIN screen
+  Future<void> _completeBooking(
+    List<Map<String, String>> passengers,
+    double amount,
+  ) async {
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context); // Close PIN screen
+    }
     final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the flight booking transaction is now completed successfully)
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductTravelTicket(
           mode: 'Flight',
@@ -166,7 +172,11 @@ class _PassengerDetailsScreenState
             amount,
             isVoucherActive: isVoucherActive,
           ),
-          tax: TransactionService.getTax(TransactionType.flight, amount, isVoucherActive: isVoucherActive),
+          tax: TransactionService.getTax(
+            TransactionType.flight,
+            amount,
+            isVoucherActive: isVoucherActive,
+          ),
           metadata: {
             'from': widget.searchData['from'],
             'to': widget.searchData['to'],
@@ -176,6 +186,7 @@ class _PassengerDetailsScreenState
           isVoucherApplied: isVoucherActive,
         );
 
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,

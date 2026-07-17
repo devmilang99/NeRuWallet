@@ -35,7 +35,12 @@ class TransactionDetailSheet extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.of(context).padding.bottom,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.backgroundDark : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),

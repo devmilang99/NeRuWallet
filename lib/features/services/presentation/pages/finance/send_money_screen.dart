@@ -233,7 +233,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       );
       final tax = TransactionService.getTax(TransactionType.sendMoney, amount);
 
-      ref
+      await ref
           .read(balanceProvider.notifier)
           .deductQuickAction(
             title: 'Send Money',

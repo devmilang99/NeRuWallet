@@ -466,6 +466,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final List<Transaction> transactions = balanceState.transactions;
 
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    // Proper adaptive padding for the floating navigation bar
+    final floatPadding = bottomInset > 0 ? bottomInset + 8 : 20.0;
 
     return PopScope(
       // Prevent the default pop — we handle it ourselves with a dialog.
@@ -482,57 +484,64 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           onConfirm: () => SystemNavigator.pop(),
         );
       },
-      child: Scaffold(
-        backgroundColor: isDark
-            ? AppTheme.backgroundDark
-            : const Color(0xFFF1F5F9),
-        body: Stack(
-          children: [
-            IndexedStack(
-              index: _selectedTab,
-              children: [
-                HomeTab(
-                  isDark: isDark,
-                  userName: _userName,
-                  balanceVisible: _balanceVisible,
-                  isKycVerified: isKycVerified,
-                  onToggleBalance: () =>
-                      setState(() => _balanceVisible = !_balanceVisible),
-                  onProfileTap: () {
-                    context.push('/profile');
-                  },
-                  transactions: transactions,
-                  totalBalance: balanceState.totalBalance,
-                  totalIncome: balanceState.totalIncome,
-                  totalExpenses: balanceState.totalExpenses,
-                  onViewAll: () => setState(() => _selectedTab = 1),
-                ),
-                _selectedTab == 1
-                    ? HistoryTab(isDark: isDark, transactions: transactions)
-                    : const SizedBox.shrink(), // Lazy load HistoryTab
-              ],
-            ),
-            // Floating Bottom Nav
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: bottomInset > 0 ? bottomInset + 12 : 24,
-                ),
-                child: _buildBottomNav(isDark),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
+          systemNavigationBarDividerColor: Colors.transparent,
+        ),
+        child: Scaffold(
+          backgroundColor: isDark
+              ? AppTheme.backgroundDark
+              : const Color(0xFFF1F5F9),
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: _selectedTab,
+                children: [
+                  HomeTab(
+                    isDark: isDark,
+                    userName: _userName,
+                    balanceVisible: _balanceVisible,
+                    isKycVerified: isKycVerified,
+                    onToggleBalance: () =>
+                        setState(() => _balanceVisible = !_balanceVisible),
+                    onProfileTap: () {
+                      context.push('/profile');
+                    },
+                    transactions: transactions,
+                    totalBalance: balanceState.totalBalance,
+                    totalIncome: balanceState.totalIncome,
+                    totalExpenses: balanceState.totalExpenses,
+                    onViewAll: () => setState(() => _selectedTab = 1),
+                  ),
+                  _selectedTab == 1
+                      ? HistoryTab(isDark: isDark, transactions: transactions)
+                      : const SizedBox.shrink(), // Lazy load HistoryTab
+                ],
               ),
-            ),
-            // Floating Scan Button
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: bottomInset > 0 ? bottomInset + 11 : 23,
+              // Floating Bottom Nav
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: floatPadding),
+                  child: _buildBottomNav(isDark),
                 ),
-                child: _buildScanButton(isDark),
               ),
-            ),
-          ],
+              // Floating Scan Button
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: floatPadding - 1),
+                  child: _buildScanButton(isDark),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

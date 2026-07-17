@@ -143,12 +143,14 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     );
   }
 
-  void _executePayment(double amount, String customerId) {
+  Future<void> _executePayment(double amount, String customerId) async {
     // Close PIN screen
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
     // Deduct balance here (as the utility transaction is now completed successfully)
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: '${widget.billType} Bill',
@@ -171,6 +173,7 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           },
         );
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Bill Payment...');
 
     // Simulate API call

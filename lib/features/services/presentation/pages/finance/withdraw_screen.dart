@@ -96,9 +96,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
     );
   }
 
-  void _executeWithdrawal(double amount, String target) {
+  Future<void> _executeWithdrawal(double amount, String target) async {
     // Deduct balance here upon successful PIN verification
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: 'Withdrawal',
@@ -116,8 +116,11 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
         );
 
     // Close PIN screen
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Withdrawal...');
 
     // Simulate API call

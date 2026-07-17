@@ -274,8 +274,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                           amount: amount,
                           fee: fee,
                           tax: tax,
-                          onConfirm: () {
-                            ref
+                          onConfirm: () async {
+                            await ref
                                 .read(balanceProvider.notifier)
                                 .recordQrPayment(
                                   amount: amount,
@@ -283,7 +283,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                                   fee: fee,
                                   tax: tax,
                                 );
-                            Navigator.pop(context); // Go back to dashboard
+                            if (context.mounted) {
+                              Navigator.pop(context); // Go back to dashboard
+                            }
                           },
                         ),
                       );
