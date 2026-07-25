@@ -1,66 +1,84 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/Material--3-Dynamic--UI-6366F1?style=for-the-badge&logo=google&logoColor=white" />
-<img src="https://img.shields.io/badge/Animations-Fluid--UX-FF5722?style=for-the-badge&logo=codeforces&logoColor=white" />
+<img src="https://img.shields.io/badge/Security-Hardware--Rooted-red?style=for-the-badge&logo=google-cloud&logoColor=white" />
 <img src="https://img.shields.io/badge/Rust-Cryptography-black?style=for-the-badge&logo=rust&logoColor=white" />
-<img src="https://img.shields.io/badge/Security-Hardware--HSM-red?style=for-the-badge&logo=google-cloud&logoColor=white" />
+<img src="https://img.shields.io/badge/AI-Gemini--3.5--Flash-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white" />
+<img src="https://img.shields.io/badge/Material--3-Dynamic--UI-6366F1?style=for-the-badge&logo=google&logoColor=white" />
 <img src="https://img.shields.io/badge/Flutter-3.11%2B-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
 
 <br /><br />
 
 <!-- Replace with your actual logo -->
-# 💎 NeRuWallet
+# 🛡️ NeRuWallet
 
-**A Masterpiece of Modern Flutter UI, Anchored in Hardware Security.**
-Experience a high-end financial dashboard that combines fluid Material 3 design with industrial-grade, hardware-rooted security.
+**A High-Security, AI-Powered Financial Transaction Ecosystem.**
+Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first platform that harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture.
 
-[Visual Experience](#visual-experience) · [Security Foundation](#security-foundation) · [AI Advisor](#ai-advisor) · [Tech Stack](#tech-stack) · [Architecture](#architecture)
+[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Architecture](#architecture) · [Getting Started](#getting-started)
 
 ---
 
 </div>
 
-## <a id="overview"></a> 📖 Overview
+## <a id="overview"></a> 📖 Project Philosophy
 
-**NeRuWallet** is a premium financial companion that proves high-end design and high-level security can coexist. It delivers a "Liquid UI" experience—staggered animations, glassmorphism, and responsive layouts—all while maintaining an uncompromising **Security First** posture.
-
-Under the hood, every beautiful interaction is backed by **Rust-powered cryptography** and **Hardware Security Modules (HSM)**, ensuring that your financial data is as secure as it is accessible.
+**NeRuWallet** is designed to demonstrate that elite security engineering and premium user experience are not mutually exclusive. Most mobile wallets prioritize ease of use at the cost of software-based vulnerabilities; NeRuWallet anchors every transaction in **Physical Hardware (HSM)** and high-performance **Rust code**, while delivering a modern, "Liquid UI" experience.
 
 ---
 
-## <a id="visual-experience"></a> ✨ The Visual Experience
+## <a id="security-pipeline"></a> 🔒 The Secure Signing Pipeline (HSM + Rust)
 
-NeRuWallet is built using the latest **Material 3 (M3)** standards, focusing on depth, motion, and a sophisticated color palette.
+NeRuWallet implements a unique multi-layered signing pipeline. Private keys are never generated in software and never touch the application's memory.
 
-### 🎨 Design Language
-- **Modern Typography**: Uses the **Outfit** typeface for a clean, geometric, and professional aesthetic across all screens.
-- **Glassmorphism & Depth**: Implementation of `GlassDialog` and semi-transparent surfaces to create a sense of hierarchy and modern elegance.
-- **Indigo & Emerald Palette**: A carefully curated color system (`0xFF6366F1` and `0xFF10B981`) that balances trust with technological innovation.
+```mermaid
+sequenceDiagram
+    participant User
+    participant Flutter as Flutter UI (Dart)
+    participant Rust as Rust Core (ring)
+    participant HSM as Hardware HSM (StrongBox/Secure Enclave)
+    
+    User->>Flutter: Initiates Transaction (e.g. Pay Bill)
+    Flutter->>Rust: Send Raw Data (via UniFFI)
+    Note over Rust: Normalization & SHA-256 Hashing
+    Rust->>Flutter: Return Hash
+    Flutter->>User: Request Biometric Auth
+    User-->>HSM: FaceID / Strong Biometrics
+    HSM->>HSM: Internal Validation & Signing
+    HSM-->>Flutter: Return ECDSA Signature (secp256r1)
+    Flutter->>Supabase: Submit Signed Payload
+```
 
-### 🌊 Fluid Motion
-- **Staggered Animations**: Utilizing `flutter_animate` to create natural, non-intrusive entrance sequences for dashboard elements.
-- **Micro-interactions**: Every button press and state change is accompanied by subtle haptic feedback and smooth transitions.
-- **Dynamic Charts**: Interactive, animated spending visualizations powered by **FL Chart** that react to user filtering.
+### 🛡️ Hardware-Rooted Trust
+- **Android StrongBox**: Utilizes a dedicated security-certified chip (where available) to generate non-exportable 256-bit EC keys.
+- **iOS Secure Enclave**: Leverages the hardware-isolated coprocessor for key generation and cryptographic operations.
+- **Biometric Crypto-Gating**: Signatures are physically locked. The hardware only authorizes a signature if a biometric challenge is successfully completed in the same session.
+
+### 🦀 Rust Hashing Layer
+To ensure the integrity of the data being signed, a custom **Rust module** handles normalization. By using the `ring` crate, we eliminate entire classes of memory-safety vulnerabilities like buffer overflows that are common in software-only implementations.
 
 ---
 
-## <a id="security-foundation"></a> 🛡️ The Hardened Foundation
+## <a id="neru-ai"></a> 🤖 Neru AI: The Intelligent Advisor
 
-While the UI is built for beauty, the foundation is built for battle. NeRuWallet moves security from the software layer down to the **Physical Hardware**.
+NeRuWallet integrates **Gemini 3.5 Flash** to provide deep financial forensics. This isn't just a chatbot; it's an autonomous financial agent.
 
-- **HSM Integration**: Utilizes **Android StrongBox** and **iOS Secure Enclave** to generate non-exportable 256-bit EC keys. Private keys never touch the OS memory.
-- **Rust Cryptography**: A high-performance **Rust core** (`rust_signer`) handles all data hashing using the **ring** crate, eliminating memory-safety vulnerabilities.
-- **Hardware-Gated Biometrics**: Transactions aren't just signed; they are *unlocked* by hardware-level biometric challenges (FaceID/Strong Biometrics).
+- **Prompt Engineering & JSON Constraints**: All AI interactions are governed by strict system prompts that enforce JSON-only responses, ensuring deterministic integration with the app's UI.
+- **Autonomous Preference Management**: The AI can suggest and *automatically update* app preferences (e.g., setting a monthly budget) through structured function calling.
+- **Gamified Insights**: To ensure data quality, AI analysis is unlocked only after a user reaches a transaction volume of **Rs. 10,000**, encouraging active financial management.
+- **Data Privacy Barrier**: Only aggregated statistics and masked metadata are sent to the AI, maintaining a strict privacy boundary between your financial details and the LLM.
 
 ---
 
-## <a id="ai-advisor"></a> 🤖 Intelligent AI Advisor
+## <a id="ux-philosophy"></a> ✨ The "Liquid UI" Strategy
 
-NeRuWallet features an integrated **Gemini AI** assistant that provides deep financial forensics through a beautiful chat interface.
+The UI is built on a **Custom Design System** that extends Material 3 with a focus on motion and transparency.
 
-- **Financial Storytelling**: Instead of just lists of numbers, the AI generates narrative summaries of your financial health.
-- **Visual Insights**: The advisor works in tandem with **FL Chart** to highlight spending trends and savings opportunities.
-- **Contextual Safety**: Analysis is performed on data processed through our secure Rust/HSM pipeline.
+- **Design System**: Built around the **Outfit** typeface and a high-contrast palette of **Indigo (Primary)** and **Emerald (Success)**.
+- **Glassmorphism**: Extensive use of `GlassDialog` and backdrop filters to create a layered, modern aesthetic that feels premium and light.
+- **Motion Design**: 
+    - **Staggered Entrances**: Dashboard elements enter using `flutter_animate` with slight delays to create a fluid, organic feel.
+    - **Sliver Architecture**: Native-feeling scrolling experiences using `CustomScrollView` and `SliverAppBar`.
+    - **Haptic Feedback**: Micro-interactions are reinforced with subtle vibrations to create a tactile sense of security.
 
 ---
 
@@ -68,60 +86,49 @@ NeRuWallet features an integrated **Gemini AI** assistant that provides deep fin
 
 | Layer | Technology |
 | :--- | :--- |
-| **UI & UX** | **Material 3**, **Outfit Font**, **Flutter Animate**, **Lottie** |
-| **Visuals** | **FL Chart** (Animated), **Glassmorphism** Widgets |
-| **Security Foundation** | **Rust (ring)**, **Android StrongBox**, **iOS Secure Enclave** |
-| **State Management** | **Riverpod** (Generator based) |
-| **Intelligence** | **Google Gemini AI** (Generative AI SDK) |
-| **Backend & Sync** | **Supabase** (Realtime), **Drift** (Local Reactive DB) |
+| **Mobile Core** | **Flutter (3.11+)**, **Riverpod (Code Generation)** |
+| **Security Hardware** | **Android StrongBox / TEE**, **iOS Secure Enclave** |
+| **Systems Layer** | **Rust**, **ring** (Crypto), **UniFFI** (Bridge) |
+| **Data Engine** | **Supabase** (Realtime/Auth), **Drift** (Reactive SQLite) |
+| **Design & UX** | **Material 3**, **Flutter Animate**, **Lottie**, **FL Chart** |
+| **AI Integration** | **Google Gemini 3.5 Flash**, **Prompt Engineering** |
 
 ---
 
-## <a id="architecture"></a> 🏗️ System Architecture
+## <a id="architecture"></a> 🏗️ Component Architecture
 
-NeRuWallet utilizes a **Tiered Feature-First Architecture**:
+NeRuWallet follows a **Feature-First Architecture**, ensuring that domain logic (AI, Payments, Auth) is isolated and testable.
 
-1.  **Experience Layer**: Fluid, animated UI built with modern M3 components.
-2.  **Processing Layer**: High-performance **Rust** hashing via **UniFFI**.
-3.  **Root of Trust**: **Hardware HSM** for biometric-gated transaction signing.
-
-```
-lib/
-├── core/                    # UI Components (Theme, Glass Widgets, Charts)
-│   └── theme/               # Material 3 Design System (Indigo/Emerald)
-├── features/                # Domain-specific modules (AI, Payments, Auth)
-│   ├── ai_advisor/          # Gemini integration & FL Chart presentation
-│   └── auth/                # Biometric & HSM signing logic
-└── rust_signer/             # The Rust cryptographic core
+```mermaid
+graph TD
+    UI[Flutter UI Layer] --> BL[Business Logic - Riverpod]
+    BL --> SS[SecureSigningService]
+    BL --> AS[AIService - Gemini]
+    SS --> NS[Native Security Provider]
+    NS --> RS[Rust Core - ring]
+    NS --> HSM[Hardware HSM]
+    BL --> DB[Drift Local DB]
+    BL --> SB[Supabase Realtime]
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Roadmap
 
-### Installation
-
-1.  **Clone the Repo**
-    ```bash
-    git clone https://github.com/your-username/NeRuWallet.git
-    ```
-2.  **Setup Environment**
-    Configure your `.env` with Supabase and Gemini keys.
-3.  **Run with Style**
-    ```bash
-    flutter run
-    ```
+- [ ] **Multi-Signature Wallets**: Shared hardware-backed accounts.
+- [ ] **NFC Tap-to-Pay**: Fully integrated contactless transaction pipeline.
+- [ ] **Wear OS Companion**: Real-time alerts and biometric verification from your wrist.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
 <div align="center">
 
-Where high-end design meets absolute security.
+Built for the future of secure finance.
 
 </div>
