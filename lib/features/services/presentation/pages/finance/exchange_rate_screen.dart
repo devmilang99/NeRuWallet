@@ -11,7 +11,7 @@ class ExchangeRateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BaseServicePage(
       title: 'Currency Exchange',
@@ -44,14 +44,14 @@ class ExchangeRateScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Live Exchange Rates",
+              'Live Exchange Rates',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : AppTheme.textBodyColor,
               ),
             ),
-            TextButton(onPressed: () {}, child: const Text("Compare")),
+            TextButton(onPressed: () {}, child: const Text('Compare')),
           ],
         ).animate().fadeIn(delay: 300.ms),
 

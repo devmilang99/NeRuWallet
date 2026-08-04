@@ -1,28 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 
-
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
 
+  Future<void> _handleNext() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (name.isEmpty) {
+      GlassDialog.showError(context, 'Please enter your full name.');
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      GlassDialog.showError(context, 'Please enter a valid email address.');
+      return;
+    }
+
+    // Show loading while validating with Supabase
+    GlassDialog.showLoading(context, message: 'Validating email...');
+
+    try {
+      final isAvailable = await ref
+          .read(authServiceProvider)
+          .isEmailAvailable(email);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+
+      if (!isAvailable) {
+        GlassDialog.showError(
+          context,
+          'This email is already registered. Please login instead.',
+        );
+        return;
+      }
+
+      // Proceed to security setup
+      context.push(
+        '/auth/security-setup',
+        extra: {
+          'isSocial': false,
+          'email': email,
+          'name': name,
+          'isNewUser': true,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      GlassDialog.showError(
+        context,
+        'An error occurred. Please try again later.',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -42,14 +96,14 @@ class _SignupScreenState extends State<SignupScreen> {
               ).animate().fadeIn().slideX(begin: -0.5, end: 0),
               const SizedBox(height: 32),
               Text(
-                "Create Account",
+                'Create Account',
                 style: Theme.of(
                   context,
                 ).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
               ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
               const SizedBox(height: 8),
               Text(
-                "Join NeRuWallet and manage your financial life efficiently.",
+                'Join NeRuWallet and manage your financial life efficiently.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
                 ),
@@ -83,53 +137,29 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         _buildTextField(
                           controller: _nameController,
-                          label: "Full Name",
-                          hint: "Enter your full name",
+                          label: 'Full Name',
+                          hint: 'Enter your full name',
                           icon: Icons.person_outline_rounded,
                         ),
                         const SizedBox(height: 24),
                         _buildTextField(
                           controller: _emailController,
-                          label: "Email address",
-                          hint: "example@domain.com",
+                          label: 'Email address',
+                          hint: 'example@domain.com',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: "Password",
-                          hint: "••••••••",
-                          icon: Icons.lock_outline_rounded,
-                          isPassword: true,
-                          obscureText: _obscurePassword,
-                          togglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 30),
                         ElevatedButton(
-                          onPressed: () {
-                            if (_nameController.text.isEmpty || !_emailController.text.contains('@') || _passwordController.text.length < 6) {
-                              GlassDialog.showError(context, "Please enter a valid name, email, and password (min 6 chars).");
-                              return;
-                            }
-                            // Move to security setup which will handle PINs
-                            context.push('/auth/security-setup', extra: {
-                              'isSocial': false,
-                              'email': _emailController.text,
-                              'name': _nameController.text,
-                              'password': _passwordController.text,
-                              'isNewUser': true,
-                            });
-                          },
+                          onPressed: _handleNext,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 64),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: const Text("Next"),
+                          child: const Text('Next'),
                         ),
-
                       ],
                     ),
                   )
@@ -144,7 +174,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Already have an account?",
+                    'Already have an account?',
                     style: TextStyle(
                       color: isDark
                           ? Colors.white70
@@ -154,7 +184,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     child: const Text(
-                      "Login",
+                      'Login',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
                         fontWeight: FontWeight.bold,

@@ -16,11 +16,11 @@ class BillPaymentScreen extends ConsumerStatefulWidget {
   final String label;
 
   const BillPaymentScreen({
-    super.key,
     required this.billType,
     required this.icon,
     required this.color,
     required this.label,
+    super.key,
   });
 
   @override
@@ -95,16 +95,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(
+    final fee = TransactionService.getServiceCharge(
       TransactionType.utility,
       amount,
     );
-    final double tax = TransactionService.getTax(
-      TransactionType.utility,
-      amount,
-    );
-    final double totalPayable = amount + fee + tax;
-    final double currentBalance = ref.read(balanceProvider).totalBalance;
+    final tax = TransactionService.getTax(TransactionType.utility, amount);
+    final totalPayable = amount + fee + tax;
+    final currentBalance = ref.read(balanceProvider).totalBalance;
 
     if (totalPayable > currentBalance) {
       GlassDialog.showError(
@@ -143,12 +140,14 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
     );
   }
 
-  void _executePayment(double amount, String customerId) {
+  Future<void> _executePayment(double amount, String customerId) async {
     // Close PIN screen
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
     // Deduct balance here (as the utility transaction is now completed successfully)
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: '${widget.billType} Bill',
@@ -160,7 +159,10 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           tax: TransactionService.getTax(TransactionType.utility, amount),
           icon: widget.icon,
           color: widget.color,
-          category: 'Utility',
+          category: widget.billType.contains('Fine') ? 'Fine' : 'Utility',
+          type: widget.billType.contains('Fine')
+              ? TransactionType.fine
+              : TransactionType.utility,
           metadata: {
             'customerId': customerId,
             'type': widget.billType,
@@ -168,6 +170,7 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           },
         );
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Bill Payment...');
 
     // Simulate API call
@@ -295,8 +298,9 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0)
+            if (val.isEmpty || double.tryParse(val) == 0) {
               return const SizedBox.shrink();
+            }
             final amount = double.tryParse(val) ?? 0;
 
             return Column(

@@ -2,10 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:neruwallet/core/providers/balance_provider.dart';
+import 'package:neruwallet/core/providers/spending_limit_provider.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
-class BalanceCard extends StatelessWidget {
+class BalanceCard extends ConsumerWidget {
   final bool isDark;
   final bool isVisible;
   final String userName;
@@ -16,9 +19,9 @@ class BalanceCard extends StatelessWidget {
   final VoidCallback onToggleVisibility;
   final VoidCallback? onIncomeTap;
   final VoidCallback? onExpenseTap;
+  final VoidCallback? onAiAdvisorTap;
 
   const BalanceCard({
-    super.key,
     required this.isDark,
     required this.isVisible,
     required this.userName,
@@ -27,14 +30,17 @@ class BalanceCard extends StatelessWidget {
     required this.totalExpenses,
     required this.showStats,
     required this.onToggleVisibility,
+    super.key,
     this.onIncomeTap,
     this.onExpenseTap,
+    this.onAiAdvisorTap,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
+        _buildLimitWarning(ref),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Stack(
@@ -129,7 +135,39 @@ class BalanceCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            _buildCardChip(),
+                            Row(
+                              children: [
+                                if (onAiAdvisorTap != null)
+                                  IconButton(
+                                        onPressed: onAiAdvisorTap,
+                                        icon: const Icon(
+                                          Icons.auto_awesome_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: Colors.white
+                                              .withValues(alpha: 0.1),
+                                          padding: const EdgeInsets.all(8),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                      )
+                                      .animate(
+                                        onPlay: (controller) =>
+                                            controller.repeat(),
+                                      )
+                                      .shimmer(
+                                        duration: 2000.ms,
+                                        color: AppTheme.primaryColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
+                                const SizedBox(width: 12),
+                                _buildCardChip(),
+                              ],
+                            ),
                           ],
                         ),
                         const Spacer(),
@@ -424,6 +462,65 @@ class BalanceCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLimitWarning(WidgetRef ref) {
+    final limitAsync = ref.watch(spendingLimitProvider);
+
+    return limitAsync.when(
+      data: (limitData) {
+        if (!limitData.enabled || limitData.limit <= 0) {
+          return const SizedBox.shrink();
+        }
+
+        final currentSpending = ref.watch(balanceProvider).monthlyExpenses;
+
+        if (currentSpending > limitData.limit) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.errorColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.errorColor.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppTheme.errorColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Monthly spending limit exceeded!',
+                    style: TextStyle(
+                      color: AppTheme.errorColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Rs. ${currentSpending.toStringAsFixed(0)} / ${limitData.limit.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: AppTheme.errorColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().shake();
+        }
+        return const SizedBox.shrink();
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }

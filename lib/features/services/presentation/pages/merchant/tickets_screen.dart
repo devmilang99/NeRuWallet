@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
-import 'movie_booking_screen.dart';
-import 'flight_booking_screen.dart';
+
 import 'bus_booking_screen.dart';
+import 'flight_booking_screen.dart';
+import 'movie_booking_screen.dart';
 
 class TicketsScreen extends StatelessWidget {
   const TicketsScreen({super.key});
@@ -219,7 +220,6 @@ class TicketsScreen extends StatelessWidget {
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 0,
                     ),
                     minimumSize: const Size(100, 36),
                     shape: RoundedRectangleBorder(

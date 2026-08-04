@@ -21,8 +21,8 @@ class BiometricService {
   static Future<bool> canAuthenticate() async {
     try {
       if (!await isAndroidVersionSupported()) return false;
-      final bool canCheck = await _auth.canCheckBiometrics;
-      final bool isSupported = await _auth.isDeviceSupported();
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
       return canCheck || isSupported;
     } catch (e) {
       return false;
@@ -39,16 +39,16 @@ class BiometricService {
   }
 
   static Future<bool> authenticate({
-    String localizedReason = 'Please authenticate to continue',
     required String title,
-    String? subtitle,
     required String reason,
+    String localizedReason = 'Please authenticate to continue',
+    String? subtitle,
     bool biometricOnly = true,
   }) async {
     try {
       // Ensure we can authenticate before showing the dialog
-      final bool canCheck = await _auth.canCheckBiometrics;
-      final bool isSupported = await _auth.isDeviceSupported();
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
 
       if (!canCheck && !isSupported) return false;
 
@@ -88,8 +88,7 @@ class BiometricService {
 
   static Future<bool> isEnrolled() async {
     try {
-      final List<BiometricType> available = await _auth
-          .getAvailableBiometrics();
+      final available = await _auth.getAvailableBiometrics();
       return available.isNotEmpty;
     } catch (_) {
       return false;

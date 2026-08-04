@@ -9,7 +9,7 @@ class ExchangeRateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : Colors.grey[50],
@@ -30,7 +30,7 @@ class ExchangeRateScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Convert Anywhere",
+                'Convert Anywhere',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : AppTheme.textBodyColor,
@@ -38,7 +38,7 @@ class ExchangeRateScreen extends StatelessWidget {
               ).animate().fadeIn().slideX(begin: -0.1, end: 0),
               const SizedBox(height: 8),
               Text(
-                "Real-time rates with commercial grade precision.",
+                'Real-time rates with commercial grade precision.',
                 style: TextStyle(
                   color: isDark ? Colors.white54 : AppTheme.textSecondaryColor,
                 ),
@@ -57,9 +57,8 @@ class ExchangeRateScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Live Exchange Rates",
-                    style: TextStyle(
+                  Text((
+                    'Live Exchange Rates'style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : AppTheme.textBodyColor,
@@ -67,7 +66,7 @@ class ExchangeRateScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: const Text("See All"),
+                    child: const Text('See All'),
                   ),
                 ],
               ).animate().fadeIn(delay: 400.ms),

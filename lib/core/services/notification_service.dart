@@ -1,7 +1,8 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
-import 'package:flutter/material.dart';
+
+import '../utils/logger.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -12,26 +13,23 @@ class NotificationService {
   /// Initializes notification handling
   Future<void> initialize() async {
     // Request permission (needed specifically for iOS/macOS)
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    final settings = await _fcm.requestPermission();
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      debugPrint('User granted provisional permission');
+      AppLogger.i('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      AppLogger.i('User granted provisional permission');
     } else {
-      debugPrint('User declined or has not accepted permission');
+      AppLogger.i('User declined or has not accepted permission');
     }
 
     // Get FCM Token (optional, for debugging or server integration)
-    String? token = await _fcm.getToken();
-    debugPrint('FCM Token: $token');
+    final token = await _fcm.getToken();
+    AppLogger.i('FCM Token: $token');
 
     // Handle initial message when the app is opened from a terminated state
-    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
+    final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
       _saveNotification(initialMessage);
     }

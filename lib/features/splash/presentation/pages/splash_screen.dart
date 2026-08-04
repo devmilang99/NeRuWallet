@@ -1,16 +1,19 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/core/providers/init_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +23,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  String _statusMessage = "Initializing systems...";
+  String _statusMessage = 'Initializing systems...';
   bool _hasError = false;
 
   @override
@@ -30,44 +33,68 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    setState(() {
-      _hasError = false;
-      _statusMessage = "Checking connectivity...";
-    });
-
-    // Minimum delay for branding
-    final splashFuture = Future.delayed(const Duration(seconds: 3));
+    // Minimum branding delay to show the logo
+    final splashFuture = Future.delayed(const Duration(seconds: 2));
 
     try {
-      // 1. Check Connectivity
-      final connectivityResult = await Connectivity().checkConnectivity();
+      // 1. Core System Initialization (Supabase/Firebase started in main.dart)
+      if (mounted) setState(() => _statusMessage = 'Starting systems...');
+      await ref.read(appInitProvider);
+
+      // 2. Connectivity & User Data (Parallel)
+      if (mounted) setState(() => _statusMessage = 'Syncing data...');
+
+      final results = await Future.wait([
+        Connectivity().checkConnectivity(),
+        ref.read(preferenceServiceProvider).getBool('is_first_time'),
+        splashFuture, // Ensure we stay at least 2 seconds for branding
+      ]);
+
+      final connectivityResult = results[0] as List<ConnectivityResult>;
+      final isFirstTime = (results[1] as bool?) ?? true;
+
+      // 3. Check Connectivity
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        throw Exception("No internet connection detected.");
+        throw Exception('No internet connection detected.');
       }
 
-      setState(() => _statusMessage = "Loading user preferences...");
-      final prefService = ref.read(preferenceServiceProvider);
-      final bool isFirstTime =
-          await prefService.getBool('is_first_time') ?? true;
-
-      // Wait for splash animation if it's faster than the checks
-      await splashFuture;
-
       if (!mounted) return;
+
+      final prefService = ref.read(preferenceServiceProvider);
 
       if (isFirstTime) {
         await _navigateBasedOnPermissions();
       } else {
+        // 4. Validate Session with server if user exists locally
+        final supabaseUser = sb.Supabase.instance.client.auth.currentUser;
+        if (supabaseUser != null) {
+          if (mounted) setState(() => _statusMessage = 'Validating session...');
+          final isValid = await ref.read(authServiceProvider).validateSession();
+
+          if (!isValid) {
+            await prefService.clearAuthPreferences();
+            await ref.read(authServiceProvider).signOut();
+
+            if (mounted) {
+              await _showInvalidSessionDialog();
+              if (mounted) {
+                context.go('/auth/login');
+              }
+              return;
+            }
+          }
+        }
+
         // Check if user is already authenticated and can skip login
         final destination = await _resolveAuthDestination(prefService);
 
         // If the destination is dashboard and the user enabled app-login via biometrics,
         // prompt for biometric authentication before navigating.
         if (destination == '/dashboard') {
-          final bool biometricEnabled =
+          final biometricEnabled =
               await prefService.getBool('biometrics_login_enabled') ?? false;
 
-          final bool canAuth =
+          final canAuth =
               biometricEnabled && await BiometricService.isEnrolled();
 
           if (canAuth) {
@@ -75,7 +102,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               title: 'NeRuWallet',
               subtitle: 'Authenticate to continue',
               reason: 'Please authenticate to access your wallet',
-              biometricOnly: true,
             );
 
             if (mounted) {
@@ -95,7 +121,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statusMessage = e.toString().replaceAll("Exception: ", "");
+          _statusMessage = e.toString().replaceAll('Exception: ', '');
           _hasError = true;
         });
       }
@@ -110,33 +136,43 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   ///   enabled, go to dashboard directly.
   /// - Otherwise, route to the login screen.
   Future<String> _resolveAuthDestination(PreferenceService prefService) async {
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    final bool registrationComplete =
+    final supabaseUser = sb.Supabase.instance.client.auth.currentUser;
+    final registrationComplete =
         await prefService.getBool('registration_complete') ?? false;
 
-    if (firebaseUser != null) {
-      // Check the sign-in providers linked to this account
-      final providers = firebaseUser.providerData
-          .map((p) => p.providerId)
-          .toList();
+    if (supabaseUser != null) {
+      final providers =
+          supabaseUser.appMetadata['providers'] as List<dynamic>? ?? [];
       final isSocialUser =
-          providers.contains('google.com') || providers.contains('apple.com');
+          providers.contains('google') || providers.contains('apple');
 
-      // If registration was never finished (PINs not set), and it's a social user,
-      // the user should be removed according to requirements.
-      if (!registrationComplete && isSocialUser) {
-        final authService = AuthService();
-        await authService.deleteAccount();
-        return '/auth/login';
+      // If local registration is marked as incomplete, we trigger sync in the background
+      // and let the user proceed if they are a social user (who are already authenticated).
+      if (!registrationComplete) {
+        // TRIGGER BACKGROUND SYNC WITHOUT AWAITING
+        unawaited(
+          ref
+              .read(syncServiceProvider)
+              .performFullSync()
+              .then<void>((_) async {
+                final restored =
+                    await prefService.getBool('registration_complete') ?? false;
+                if (!restored && isSocialUser) {
+                  // If sync failed to restore completion state for a social user,
+                  // we might eventually need to handle that, but don't block splash.
+                }
+              })
+              .catchError((Object e) {
+                AppLogger.e('Background sync failed', e);
+              }),
+        );
+
+        if (isSocialUser) return '/dashboard';
       }
 
-      if (isSocialUser) {
-        // Social users: always go straight to dashboard on app reopen IF registration is complete
-        return '/dashboard';
-      }
+      if (isSocialUser) return '/dashboard';
 
-      // Email/password user: only skip login if "Remember Me" was enabled
-      final bool rememberMe = await prefService.getBool('remember_me') ?? false;
+      final rememberMe = await prefService.getBool('remember_me') ?? false;
       if (rememberMe && registrationComplete) {
         return '/dashboard';
       }
@@ -162,12 +198,45 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
   }
 
+  Future<void> _showInvalidSessionDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+              SizedBox(width: 10),
+              Text('Session Expired'),
+            ],
+          ),
+          content: const Text(
+            'Your account session is no longer valid or has been removed. '
+            'To keep your wallet secure, you must register or sign in again.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -200,7 +269,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ],
           ),
           child: Image.asset(
-            "assets/icons/app_icon.png",
+            'assets/icons/app_icon.png',
             height: 80,
             width: 80,
           ),
@@ -219,7 +288,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return Column(
       children: [
         Text(
-          "NeRuWallet",
+          'NeRuWallet',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
             color: AppTheme.primaryColor,
             fontSize: 42,
@@ -231,7 +300,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         const SizedBox(height: 24),
 
         if (_hasError) ...[
-          Icon(
+          const Icon(
             Icons.wifi_off_rounded,
             color: AppTheme.errorColor,
             size: 32,
@@ -249,7 +318,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           TextButton.icon(
             onPressed: _initializeApp,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text("Retry Connection"),
+            label: const Text('Retry Connection'),
             style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
           ),
         ] else ...[

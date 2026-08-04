@@ -15,13 +15,13 @@ class TransactionReceiptSheet extends StatelessWidget {
   final Map<String, dynamic>? metadata;
 
   const TransactionReceiptSheet({
-    super.key,
     required this.title,
     required this.target,
     required this.amount,
+    required this.onConfirm,
+    super.key,
     this.fee = 0.0,
     this.tax = 0.0,
-    required this.onConfirm,
     this.isSuccess = false,
     this.transactionId,
     this.metadata,
@@ -51,7 +51,7 @@ class TransactionReceiptSheet extends StatelessWidget {
         onConfirm: () => Navigator.pop(context),
         isSuccess: true,
         transactionId:
-            "TXN${DateTime.now().millisecondsSinceEpoch % 100000000}",
+            'TXN${DateTime.now().millisecondsSinceEpoch % 100000000}',
         metadata: metadata,
       ),
     );
@@ -62,13 +62,18 @@ class TransactionReceiptSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final total = (fee == 0 && tax == 0) ? amount : amount + fee + tax;
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.backgroundDark : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          12,
+          24,
+          24 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -91,7 +96,7 @@ class TransactionReceiptSheet extends StatelessWidget {
             ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: 16),
             Text(
-              isSuccess ? "Payment Successful" : "Transaction Preview",
+              isSuccess ? 'Payment Successful' : 'Transaction Preview',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -101,8 +106,8 @@ class TransactionReceiptSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               isSuccess
-                  ? "Your transaction has been processed."
-                  : "Please review the details below",
+                  ? 'Your transaction has been processed.'
+                  : 'Please review the details below',
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white54 : Colors.grey[600],
@@ -111,9 +116,9 @@ class TransactionReceiptSheet extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Receipt Details
-            _buildReceiptRow("Service", title, isDark),
+            _buildReceiptRow('Service', title, isDark),
             const SizedBox(height: 12),
-            _buildReceiptRow("To/From", target, isDark),
+            _buildReceiptRow('To/From', target, isDark),
 
             if (metadata != null) ...[
               for (var entry in metadata!.entries) ...[
@@ -124,31 +129,31 @@ class TransactionReceiptSheet extends StatelessWidget {
 
             if (isSuccess && transactionId != null) ...[
               const SizedBox(height: 12),
-              _buildReceiptRow("Transaction ID", transactionId!, isDark),
+              _buildReceiptRow('Transaction ID', transactionId!, isDark),
             ],
 
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 20),
             _buildReceiptRow(
-              "Base Amount",
-              "Rs. ${amount.toStringAsFixed(2)}",
+              'Base Amount',
+              'Rs. ${amount.toStringAsFixed(2)}',
               isDark,
             ),
 
             if (fee != 0.0) ...[
               const SizedBox(height: 12),
               _buildReceiptRow(
-                "Service Fee",
-                "Rs. ${fee.toStringAsFixed(2)}",
+                'Service Fee',
+                'Rs. ${fee.toStringAsFixed(2)}',
                 isDark,
               ),
             ],
             if (tax != 0.0) ...[
               const SizedBox(height: 12),
               _buildReceiptRow(
-                "Service Tax (VAT)",
-                "Rs. ${tax.toStringAsFixed(2)}",
+                'Service Tax (VAT)',
+                'Rs. ${tax.toStringAsFixed(2)}',
                 isDark,
               ),
             ],
@@ -175,14 +180,14 @@ class TransactionReceiptSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isSuccess ? "Amount Paid" : "Total Payable",
+                    isSuccess ? 'Amount Paid' : 'Total Payable',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
-                    "Rs. ${total.toStringAsFixed(2)}",
+                    'Rs. ${total.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 24,
@@ -218,7 +223,7 @@ class TransactionReceiptSheet extends StatelessWidget {
                     Icon(Icons.lock_outline_rounded, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      "Confirm & Authenticate",
+                      'Confirm & Authenticate',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -234,7 +239,7 @@ class TransactionReceiptSheet extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () {},
                       icon: const Icon(Icons.share_rounded, size: 18),
-                      label: const Text("Share"),
+                      label: const Text('Share'),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 56),
                         shape: RoundedRectangleBorder(
@@ -248,7 +253,7 @@ class TransactionReceiptSheet extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: onConfirm,
                       icon: const Icon(Icons.download_rounded, size: 18),
-                      label: const Text("Download"),
+                      label: const Text('Download'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(0, 56),
                         backgroundColor: AppTheme.successColor,
@@ -264,15 +269,10 @@ class TransactionReceiptSheet extends StatelessWidget {
               ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
 
             const SizedBox(height: 12),
-            if (!isSuccess)
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Modify Details"),
-              )
-            else
+            if (isSuccess)
               ElevatedButton(
                 onPressed: () => context.go('/dashboard'),
-                child: const Text("Back to Home"),
+                child: const Text('Back to Home'),
               ),
             const SizedBox(height: 16),
           ],

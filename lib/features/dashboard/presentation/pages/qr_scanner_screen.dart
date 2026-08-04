@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/services/transaction_service.dart';
-import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -99,9 +99,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         MobileScanner(
           controller: _scannerController,
           onDetect: (capture) {
-            final List<Barcode> barcodes = capture.barcodes;
+            final barcodes = capture.barcodes;
             if (barcodes.isNotEmpty) {
-              final String? code = barcodes.first.rawValue;
+              final code = barcodes.first.rawValue;
               if (code != null) {
                 _scannerController.stop();
                 _showScanResult(code);
@@ -178,7 +178,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         decoration: BoxDecoration(
           color: Colors.black26,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white24, width: 1),
+          border: Border.all(color: Colors.white24),
         ),
         child: Icon(icon, color: Colors.white, size: 28),
       ),
@@ -238,18 +238,19 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      final double amount = 1250.00; // Mock base amount
-                      final double fee = TransactionService.getServiceCharge(
+                      const amount = 1250.00; // Mock base amount
+                      final fee = TransactionService.getServiceCharge(
                         TransactionType.qrPayment,
                         amount,
                       );
-                      final double tax = TransactionService.getTax(
+                      final tax = TransactionService.getTax(
                         TransactionType.qrPayment,
                         amount,
                       );
-                      final double totalPayable = amount + fee + tax;
-                      final double currentBalance =
-                          ref.read(balanceProvider).totalBalance;
+                      final totalPayable = amount + fee + tax;
+                      final currentBalance = ref
+                          .read(balanceProvider)
+                          .totalBalance;
 
                       if (totalPayable > currentBalance) {
                         GlassDialog.showError(
@@ -273,14 +274,18 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                           amount: amount,
                           fee: fee,
                           tax: tax,
-                          onConfirm: () {
-                            ref.read(balanceProvider.notifier).recordQrPayment(
+                          onConfirm: () async {
+                            await ref
+                                .read(balanceProvider.notifier)
+                                .recordQrPayment(
                                   amount: amount,
                                   merchant: code,
                                   fee: fee,
                                   tax: tax,
                                 );
-                            Navigator.pop(context); // Go back to dashboard
+                            if (context.mounted) {
+                              Navigator.pop(context); // Go back to dashboard
+                            }
                           },
                         ),
                       );
@@ -305,10 +310,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   }
 
   Widget _buildMyQrView(bool isDark) {
-    final user = FirebaseAuth.instance.currentUser;
-    final String walletId = user != null
-        ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
-        : "NRW-GUEST-USER";
+    final authService = ref.read(authServiceProvider);
+    final user = authService.currentUser;
+    final walletId = user != null
+        ? 'NRW-${user.uid.substring(0, 8).toUpperCase()}'
+        : 'NRW-GUEST-USER';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -332,7 +338,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               children: [
                 QrImageView(
                   data: walletId,
-                  version: QrVersions.auto,
                   size: 220.0,
                   eyeStyle: QrEyeStyle(
                     eyeShape: QrEyeShape.square,

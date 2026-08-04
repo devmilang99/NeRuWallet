@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("androidx.baselineprofile")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
@@ -35,10 +36,18 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
-            // Use a single APK for faster debug builds and installs.
-            multiDexEnabled = false
+            // ...
         }
 
         release {
@@ -51,6 +60,12 @@ android {
             )
         }
     }
+
+    baselineProfile {
+        filter {
+            include("com.example.neruwallet.**")
+        }
+    }
 }
 
 flutter {
@@ -60,4 +75,15 @@ flutter {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.biometric:biometric:1.1.0")
 }
+
+// In a real environment, you would add the Rust Android Gradle plugin:
+// plugins { id("org.mozilla.rust-android-gradle") version "0.9.3" }
+// and configure it:
+// cargo {
+//     module = "../../rust_signer"
+//     libname = "rust_signer"
+//     targets = ["arm64"]
+// }
+

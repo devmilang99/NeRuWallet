@@ -9,9 +9,9 @@ class BaseServicePage extends StatelessWidget {
   final List<Widget>? actions;
 
   const BaseServicePage({
-    super.key,
     required this.title,
     required this.children,
+    super.key,
     this.floatingActionButton,
     this.actions,
   });
@@ -56,9 +56,9 @@ class ServiceInputSection extends StatelessWidget {
   final Widget? trailing;
 
   const ServiceInputSection({
-    super.key,
     required this.label,
     required this.child,
+    super.key,
     this.trailing,
   });
 

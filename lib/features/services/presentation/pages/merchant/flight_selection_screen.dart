@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
+
 import 'passenger_details_screen.dart';
 
 class FlightSelectionScreen extends StatefulWidget {
   final Map<String, dynamic> searchData;
 
-  const FlightSelectionScreen({super.key, required this.searchData});
+  const FlightSelectionScreen({required this.searchData, super.key});
 
   @override
   State<FlightSelectionScreen> createState() => _FlightSelectionScreenState();
@@ -203,7 +204,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = const Color(0xFF10B981);
+    const color = Color(0xFF10B981);
 
     return BaseServicePage(
       title: 'Select Flight',
@@ -221,24 +222,34 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
             borderRadius: AppTheme.radiusLarge,
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${widget.searchData['from']} to ${widget.searchData['to']}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '${widget.searchData['departureDate']} • ${widget.searchData['adults']} Adult, ${widget.searchData['children']} Child',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${widget.searchData['from']} to ${widget.searchData['to']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${widget.searchData['departureDate']} • ${widget.searchData['adults']} Adult, ${widget.searchData['children']} Child',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 widget.searchData['class'],
-                style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -306,32 +317,39 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: color.withValues(alpha: 0.1),
-                                        borderRadius: AppTheme.radiusSmall,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: color.withValues(alpha: 0.1),
+                                          borderRadius: AppTheme.radiusSmall,
+                                        ),
+                                        child: const Icon(
+                                          Icons.flight_rounded,
+                                          color: color,
+                                          size: 16,
+                                        ),
                                       ),
-                                      child: Icon(
-                                        Icons.flight_rounded,
-                                        color: color,
-                                        size: 16,
+                                      const SizedBox(width: 12),
+                                      Flexible(
+                                        child: Text(
+                                          flight['airline'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      flight['airline'],
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 12),
                                 Text(
                                   'Rs. ${flight['price']}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: color,
                                     fontSize: 16,
@@ -417,14 +435,19 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  flight['plane'],
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 11,
+                                Expanded(
+                                  child: Text(
+                                    flight['plane'],
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Text(
+                                const SizedBox(width: 8),
+                                const Text(
                                   'Non-stop',
                                   style: TextStyle(
                                     color: color,

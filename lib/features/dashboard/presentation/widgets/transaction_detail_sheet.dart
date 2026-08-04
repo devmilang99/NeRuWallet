@@ -11,23 +11,22 @@ class TransactionDetailSheet extends StatelessWidget {
   final bool isDark;
 
   const TransactionDetailSheet({
-    super.key,
     required this.transaction,
     required this.isDark,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isExpense = transaction.amount < 0;
-    final double total =
-        transaction.amount.abs() + transaction.fee + transaction.tax;
-    final Color iconColor = Color(transaction.colorValue);
-    final IconData iconData = IconUtils.getIconData(transaction.iconCode);
-    final String formattedDate = DateFormat(
+    final isExpense = transaction.amount < 0;
+    final total = transaction.amount.abs() + transaction.fee + transaction.tax;
+    final iconColor = Color(transaction.colorValue);
+    final iconData = IconUtils.getIconData(transaction.iconCode);
+    final formattedDate = DateFormat(
       'dd MMM, hh:mm a',
     ).format(transaction.createdAt);
 
-    Map<String, dynamic> metadata = {};
+    var metadata = <String, dynamic>{};
     if (transaction.metadata != null) {
       try {
         metadata = jsonDecode(transaction.metadata!);
@@ -35,7 +34,12 @@ class TransactionDetailSheet extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.of(context).padding.bottom,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.backgroundDark : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -106,7 +110,7 @@ class TransactionDetailSheet extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  isExpense ? "Amount Sent" : "Amount Received",
+                  isExpense ? 'Amount Sent' : 'Amount Received',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
@@ -125,14 +129,14 @@ class TransactionDetailSheet extends StatelessWidget {
                     child: Divider(height: 1),
                   ),
                   _buildSummaryRow(
-                    "Service Fee",
-                    "Rs ${transaction.fee.toStringAsFixed(2)}",
+                    'Service Fee',
+                    'Rs ${transaction.fee.toStringAsFixed(2)}',
                     isDark,
                   ),
                   const SizedBox(height: 8),
                   _buildSummaryRow(
-                    "Taxes",
-                    "Rs ${transaction.tax.toStringAsFixed(2)}",
+                    'Taxes',
+                    'Rs ${transaction.tax.toStringAsFixed(2)}',
                     isDark,
                   ),
                   const Padding(
@@ -140,8 +144,8 @@ class TransactionDetailSheet extends StatelessWidget {
                     child: Divider(height: 1),
                   ),
                   _buildSummaryRow(
-                    "Total Impact",
-                    "Rs ${total.toStringAsFixed(2)}",
+                    'Total Impact',
+                    'Rs ${total.toStringAsFixed(2)}',
                     isDark,
                     isBold: true,
                   ),
@@ -157,8 +161,8 @@ class TransactionDetailSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildInfoCard(
-                  "Status",
-                  "Completed",
+                  'Status',
+                  'Completed',
                   Icons.check_circle_rounded,
                   AppTheme.successColor,
                   isDark,
@@ -167,7 +171,7 @@ class TransactionDetailSheet extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildInfoCard(
-                  "Category",
+                  'Category',
                   transaction.category,
                   iconData,
                   AppTheme.primaryColor,
@@ -191,7 +195,7 @@ class TransactionDetailSheet extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.download_rounded),
-                  label: const Text("Receipt"),
+                  label: const Text('Receipt'),
                 ),
               ),
               const SizedBox(width: 16),
@@ -199,7 +203,7 @@ class TransactionDetailSheet extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.share_rounded),
-                  label: const Text("Share"),
+                  label: const Text('Share'),
                 ),
               ),
             ],
@@ -289,7 +293,7 @@ class TransactionDetailSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Transaction Details",
+            'Transaction Details',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -303,7 +307,7 @@ class TransactionDetailSheet extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    "${e.key}: ",
+                    '${e.key}: ',
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   Text(

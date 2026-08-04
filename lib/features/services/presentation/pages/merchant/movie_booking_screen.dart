@@ -15,7 +15,7 @@ import 'movie_ticket_screen.dart';
 class MovieBookingScreen extends ConsumerStatefulWidget {
   final String provider; // 'QFX' or 'FCube'
 
-  const MovieBookingScreen({super.key, required this.provider});
+  const MovieBookingScreen({required this.provider, super.key});
 
   @override
   ConsumerState<MovieBookingScreen> createState() => _MovieBookingScreenState();
@@ -89,8 +89,8 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
   }
 
   double get _totalPrice {
-    int seats = int.tryParse(_seatsController.text) ?? 1;
-    double price = double.tryParse(_pricePerSeatController.text) ?? 450;
+    final seats = int.tryParse(_seatsController.text) ?? 1;
+    final price = double.tryParse(_pricePerSeatController.text) ?? 450;
     return seats * price;
   }
 
@@ -107,19 +107,19 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
           ? const Color(0xFF6366F1)
           : const Color(0xFF0EA5E9);
 
-      final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
-      final double fee = TransactionService.getServiceCharge(
+      final isVoucherActive = ref.read(balanceProvider).isVoucherActive;
+      final fee = TransactionService.getServiceCharge(
         TransactionType.movie,
         _totalPrice,
         isVoucherActive: isVoucherActive,
       );
-      final double tax = TransactionService.getTax(
+      final tax = TransactionService.getTax(
         TransactionType.movie,
         _totalPrice,
         isVoucherActive: isVoucherActive,
       );
-      final double totalPayable = _totalPrice + fee + tax;
-      final double currentBalance = ref.read(balanceProvider).totalBalance;
+      final totalPayable = _totalPrice + fee + tax;
+      final currentBalance = ref.read(balanceProvider).totalBalance;
 
       if (totalPayable > currentBalance) {
         GlassDialog.showError(
@@ -167,12 +167,14 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
     }
   }
 
-  void _completeBooking() {
-    if (context.mounted) Navigator.pop(context); // Pop PIN screen
-    final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
+  Future<void> _completeBooking() async {
+    if (context.mounted && Navigator.canPop(context)) {
+      Navigator.pop(context); // Pop PIN screen
+    }
+    final isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the transaction is now completed successfully)
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: '${widget.provider} Ticket',
@@ -192,6 +194,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
               ? const Color(0xFF6366F1)
               : const Color(0xFF0EA5E9),
           category: 'Movie',
+          type: TransactionType.movie,
           metadata: {
             'movie': _movies[_selectedMovieIndex],
             'cinema': _cinemas[_selectedCinemaIndex],
@@ -201,6 +204,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
           isVoucherApplied: isVoucherActive,
         );
 
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -241,7 +245,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
 
-      Map<String, dynamic> ticketData = {
+      final ticketData = <String, dynamic>{
         'bookingRef': 'MOV${DateTime.now().millisecondsSinceEpoch % 1000000}',
         'movieName': _movies[_selectedMovieIndex],
         'cinema': _cinemas[_selectedCinemaIndex],
@@ -588,7 +592,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
               const SizedBox(height: 32),
 
               // Seats & Receipt Summary
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   color: isDark ? AppTheme.surfaceDark : Colors.white,
                   borderRadius: AppTheme.radiusLarge,
@@ -638,12 +642,15 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                             child: Row(
                               children: [
                                 _miniCountButton(Icons.remove, () {
-                                  int seats = int.parse(_seatsController.text);
-                                  if (seats > 1)
+                                  final seats = int.parse(
+                                    _seatsController.text,
+                                  );
+                                  if (seats > 1) {
                                     setState(
                                       () => _seatsController.text = (seats - 1)
                                           .toString(),
                                     );
+                                  }
                                 }, providerColor),
                                 Container(
                                   constraints: const BoxConstraints(
@@ -659,12 +666,15 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                                   ),
                                 ),
                                 _miniCountButton(Icons.add, () {
-                                  int seats = int.parse(_seatsController.text);
-                                  if (seats < 10)
+                                  final seats = int.parse(
+                                    _seatsController.text,
+                                  );
+                                  if (seats < 10) {
                                     setState(
                                       () => _seatsController.text = (seats + 1)
                                           .toString(),
                                     );
+                                  }
                                 }, providerColor),
                               ],
                             ),
@@ -819,7 +829,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

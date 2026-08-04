@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/secure_signing_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class BiometricSettingsScreen extends ConsumerStatefulWidget {
@@ -44,9 +45,17 @@ class _BiometricSettingsScreenState
   }
 
   Future<void> _updateSetting(String key, bool value) async {
-    // Removed biometric authentication requirement before changing security settings
-
     final prefService = ref.read(preferenceServiceProvider);
+
+    // If enabling transaction verification, ensure hardware key is generated
+    if (key == 'biometrics_transaction_enabled' && value == true) {
+      final signingService = ref.read(secureSigningServiceProvider);
+      final isGenerated = await signingService.isKeyGenerated();
+      if (!isGenerated) {
+        await signingService.generateSecureKey();
+      }
+    }
+
     await prefService.setBool(key, value);
     if (key == 'biometrics_login_enabled') {
       await prefService.setBool('biometrics_enabled', value);
@@ -70,7 +79,7 @@ class _BiometricSettingsScreenState
       ),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Biometric Security"),
+          title: const Text('Biometric Security'),
           centerTitle: true,
         ),
         body: ListView(
@@ -78,14 +87,14 @@ class _BiometricSettingsScreenState
           children: [
             _buildStatusHeader(isDark),
             const SizedBox(height: 32),
-            _buildSectionTitle("PREFERENCES"),
+            _buildSectionTitle('PREFERENCES'),
             const SizedBox(height: 16),
             Card(
               child: Column(
                 children: [
                   _buildToggleTile(
-                    "App Login",
-                    "Use biometrics to unlock the wallet",
+                    'App Login',
+                    'Use biometrics to unlock the wallet',
                     Icons.fingerprint_rounded,
                     _loginEnabled,
                     _isSupported
@@ -94,8 +103,8 @@ class _BiometricSettingsScreenState
                   ),
                   const Divider(height: 1),
                   _buildToggleTile(
-                    "Transaction Verification",
-                    "Verify payments using biometrics",
+                    'Transaction Verification',
+                    'Verify payments using biometrics',
                     Icons.lock_outline_rounded,
                     _transactionEnabled,
                     _isSupported
@@ -134,7 +143,7 @@ class _BiometricSettingsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isSupported ? "Hardware Ready" : "Hardware Not Detected",
+                  _isSupported ? 'Hardware Ready' : 'Hardware Not Detected',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -142,8 +151,8 @@ class _BiometricSettingsScreenState
                 ),
                 Text(
                   _isSupported
-                      ? "Your device supports biometric authentication."
-                      : "Biometrics are not available on this device.",
+                      ? 'Your device supports biometric authentication.'
+                      : 'Biometrics are not available on this device.',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white70 : Colors.black54,

@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
+import 'package:neruwallet/core/services/encryption_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/secure_signing_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 enum PinMode { set, change, verify, reset }
 
@@ -17,8 +24,8 @@ class TransactionPinScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? signupData;
 
   const TransactionPinScreen({
-    super.key,
     required this.mode,
+    super.key,
     this.onSuccess,
     this.signupData,
   });
@@ -33,7 +40,6 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   final _confirmPinController = TextEditingController();
   final _passwordController = TextEditingController();
   final _oldPinController = TextEditingController();
-  final AuthService _authService = AuthService();
 
   int _step =
       1; // 0: Verification (Old PIN/Password), 1: PIN entry, 2: Confirmation
@@ -107,13 +113,43 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
   }
 
   Future<void> _checkBiometricForVerification() async {
-    final bool authenticated = await BiometricService.authenticate(
-      title: 'Authorize Transaction',
-      subtitle: 'Confirm your identity to proceed',
-      reason:
-          'Please scan your fingerprint or face to authorize this transaction.',
-      biometricOnly: true, // Standard layout with fallback
-    );
+    var authenticated = false;
+
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        final signingService = ref.read(secureSigningServiceProvider);
+        final isGenerated = await signingService.isKeyGenerated();
+
+        if (isGenerated) {
+          // Use Hardware-backed signing (StrongBox/TEE/SecureEnclave)
+          // This will trigger FaceID/TouchID/Fingerprint with Device PIN fallback
+          final dataToSign = Uint8List.fromList(
+            'verify_transaction_${DateTime.now().millisecondsSinceEpoch}'
+                .codeUnits,
+          );
+          final signature = await signingService.signData(dataToSign);
+          authenticated = signature != null;
+        }
+      }
+    } catch (e) {
+      AppLogger.e('Hardware signing error', e);
+    }
+
+    // Fallback to standard biometric auth if native hardware signing failed/unavailable
+    if (!authenticated) {
+      try {
+        authenticated = await BiometricService.authenticate(
+          title: 'Authorize Transaction',
+          subtitle: 'Confirm your identity to proceed',
+          reason:
+              'Please scan your fingerprint or face to authorize this transaction.',
+          biometricOnly:
+              false, // Allow device credential fallback if supported by plugin
+        );
+      } catch (e) {
+        AppLogger.e('Standard biometric error', e);
+      }
+    }
 
     if (authenticated && mounted) {
       if (widget.onSuccess != null) {
@@ -121,6 +157,9 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       } else {
         context.go('/dashboard');
       }
+    } else if (mounted) {
+      // If all biometric/device auth fails or is canceled, ensure App PIN field is focused
+      _pinFocusNode.requestFocus();
     }
   }
 
@@ -134,7 +173,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
           encrypted: true,
         );
         if (_passwordController.text != savedPassword) {
-          if (mounted) GlassDialog.showError(context, "Incorrect password.");
+          if (mounted) GlassDialog.showError(context, 'Incorrect password.');
           return;
         }
       } else if (widget.mode == PinMode.change) {
@@ -143,7 +182,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
           encrypted: true,
         );
         if (_oldPinController.text != savedPin) {
-          if (mounted) GlassDialog.showError(context, "Old PIN is incorrect.");
+          if (mounted) GlassDialog.showError(context, 'Old PIN is incorrect.');
           _oldPinController.clear();
           _oldPinFocusNode.requestFocus();
           return;
@@ -159,7 +198,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     if (_step == 1) {
       if (_pinController.text.length != 4) {
-        if (mounted) GlassDialog.showError(context, "PIN must be 4 digits.");
+        if (mounted) GlassDialog.showError(context, 'PIN must be 4 digits.');
         return;
       }
 
@@ -205,25 +244,30 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
     GlassDialog.showLoading(context, message: 'Completing setup...');
     try {
-      // 1. Save Transaction PIN
-      await prefService.setString(
-        'transaction_pin',
-        _pinController.text,
-        encrypted: true,
-      );
+      final pin = _pinController.text;
+
+      // 1. Prepare all data to be saved locally
+      await prefService.setString('transaction_pin', pin, encrypted: true);
+
+      final initialPrefs = <String, String>{
+        'transaction_pin': ref.read(encryptionServiceProvider).encrypt(pin),
+      };
 
       if (widget.signupData != null) {
         final data = widget.signupData!;
         final bool isSocial = data['isSocial'] ?? false;
 
-        // 2. Save Security Information
         if (data.containsKey('password')) {
           await prefService.setString(
             'app_password',
             data['password'],
             encrypted: true,
           );
+          initialPrefs['app_password'] = ref
+              .read(encryptionServiceProvider)
+              .encrypt(data['password']);
         }
+
         if (data.containsKey('security_question')) {
           await prefService.setString(
             'security_question',
@@ -234,32 +278,59 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
             data['security_answer'],
             encrypted: true,
           );
+          initialPrefs['security_question'] = data['security_question'];
+          initialPrefs['security_answer'] = ref
+              .read(encryptionServiceProvider)
+              .encrypt(data['security_answer']);
         }
 
-        // 3. Register user in Firebase if not social login
+        // 2. Register or Sync based on auth type
         if (!isSocial) {
-          await _authService.signUpWithEmailPassword(
-            data['email'],
-            data['password'],
-            data['name'],
-          );
+          // New Email/Password User
+          await ref
+              .read(authServiceProvider)
+              .signUpWithEmailPassword(
+                data['email'],
+                data['password'],
+                data['name'],
+                initialPreferences: initialPrefs,
+              );
+        } else {
+          // Social User - Already logged in, just sync preferences
+          final user = sb.Supabase.instance.client.auth.currentUser;
+          if (user != null) {
+            final List<Map<String, dynamic>> prefsToSync = initialPrefs.entries
+                .map(
+                  (e) => {'user_id': user.id, 'key': e.key, 'value': e.value},
+                )
+                .toList();
+
+            await sb.Supabase.instance.client
+                .from('app_preferences')
+                .upsert(prefsToSync, onConflict: 'user_id,key');
+          }
         }
 
         await prefService.setBool('registration_complete', true);
       }
 
+      // 3. Final Sync to ensure everything is matched
+      ref.read(syncServiceProvider).performFullSync().catchError((e) {
+        AppLogger.e('Final sync failed', e);
+      });
+
       if (mounted) {
         Navigator.pop(context); // Close loading
         GlassDialog.showSuccess(
           context,
-          "Account & Security setup successful!",
+          'Account & Security setup successful!',
           onConfirm: () => context.go('/dashboard'),
         );
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, "Setup failed: ${e.toString()}");
+        GlassDialog.showError(context, 'Setup failed: ${e.toString()}');
       }
     }
   }
@@ -276,18 +347,23 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
         encrypted: true,
       );
 
+      // Sync the new PIN to the cloud in background
+      ref.read(syncServiceProvider).performFullSync().catchError((e) {
+        AppLogger.e('Cloud sync failed', e);
+      });
+
       if (mounted) {
         Navigator.pop(context);
         GlassDialog.showSuccess(
           context,
-          "Transaction PIN updated successfully!",
+          'Transaction PIN updated successfully!',
           onConfirm: () => context.go('/dashboard'),
         );
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        GlassDialog.showError(context, "Update failed: ${e.toString()}");
+        GlassDialog.showError(context, 'Update failed: ${e.toString()}');
       }
     }
   }
@@ -308,7 +384,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
       }
     } else {
       if (mounted) {
-        GlassDialog.showError(context, "Incorrect PIN. Please try again.");
+        GlassDialog.showError(context, 'Incorrect PIN. Please try again.');
       }
       _pinController.clear();
       _pinFocusNode.requestFocus();
@@ -348,19 +424,19 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    String title = widget.mode == PinMode.verify
-        ? "Enter PIN"
-        : (widget.mode == PinMode.reset ? "Reset PIN" : "Transaction PIN");
+    final title = widget.mode == PinMode.verify
+        ? 'Enter PIN'
+        : (widget.mode == PinMode.reset ? 'Reset PIN' : 'Transaction PIN');
 
     String subtitle;
     if (widget.mode == PinMode.verify) {
-      subtitle = "Authorize this transaction";
+      subtitle = 'Authorize this transaction';
     } else if (_step == 0) {
       subtitle = widget.mode == PinMode.reset
-          ? "Verify your password to set a new PIN"
-          : "Enter your old PIN to continue";
+          ? 'Verify your password to set a new PIN'
+          : 'Enter your old PIN to continue';
     } else {
-      subtitle = "Choose a 4-digit PIN for your transactions";
+      subtitle = 'Choose a 4-digit PIN for your transactions';
     }
 
     return PopScope(
@@ -425,7 +501,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                             focusNode: _passwordFocusNode,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              labelText: "Login Password",
+                              labelText: 'Login Password',
                               prefixIcon: const Icon(
                                 Icons.lock_outline_rounded,
                               ),
@@ -452,7 +528,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                                 borderRadius: AppTheme.radiusMedium,
                               ),
                             ),
-                            child: const Text("Verify Password"),
+                            child: const Text('Verify Password'),
                           ),
                         ],
                       )
@@ -460,7 +536,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                       _buildOtpSection(
                         controller: _oldPinController,
                         focusNode: _oldPinFocusNode,
-                        label: "Old PIN",
+                        label: 'Old PIN',
                         isDark: isDark,
                         onComplete: _handleComplete,
                       ),
@@ -469,8 +545,8 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                       controller: _pinController,
                       focusNode: _pinFocusNode,
                       label: widget.mode == PinMode.verify
-                          ? "Enter PIN"
-                          : "New PIN",
+                          ? 'Enter PIN'
+                          : 'New PIN',
                       isDark: isDark,
                       onComplete: () {
                         if (widget.mode == PinMode.verify) {
@@ -495,7 +571,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                       _buildOtpSection(
                         controller: _confirmPinController,
                         focusNode: _confirmPinFocusNode,
-                        label: "Confirm PIN",
+                        label: 'Confirm PIN',
                         isDark: isDark,
                         onComplete: _handleComplete,
                         isConfirm: true,
@@ -504,7 +580,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
                           child: const Text(
-                            "PINs do not match. Please try again.",
+                            'PINs do not match. Please try again.',
                             style: TextStyle(
                               color: AppTheme.errorColor,
                               fontSize: 13,
@@ -523,7 +599,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
                             '/auth/pin-setup',
                             extra: {'mode': PinMode.reset},
                           ),
-                          child: const Text("Forgot PIN?"),
+                          child: const Text('Forgot PIN?'),
                         ),
                         if (_biometricsAvailable) ...[
                           const SizedBox(height: 16),
@@ -625,10 +701,10 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
     bool isDark,
     bool enabled,
   ) {
-    String char = "";
+    var char = '';
     if (controller.text.length > index) char = controller.text[index];
-    bool isFocused = enabled && controller.text.length == index;
-    bool isWrong = _showMismatchError && controller == _confirmPinController;
+    final isFocused = enabled && controller.text.length == index;
+    final isWrong = _showMismatchError && controller == _confirmPinController;
 
     return Container(
       width: 60,

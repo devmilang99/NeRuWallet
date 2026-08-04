@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../data/services/mock_exchange_service.dart';
 
@@ -9,10 +10,10 @@ class RateListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final rates = MockExchangeService.getPopularRates(baseCurrencyCode);
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusLarge,
@@ -37,9 +38,12 @@ class RateListCard extends StatelessWidget {
         itemBuilder: (context, index) {
           final rate = rates[index];
           final bool isPositive = rate['change'] >= 0;
-          
+
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
             title: Text(
               rate['code'],
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -57,13 +61,18 @@ class RateListCard extends StatelessWidget {
               children: [
                 Text(
                   rate['rate'].toStringAsFixed(2),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      isPositive
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
                       size: 14,
                       color: isPositive ? Colors.green : Colors.red,
                     ),

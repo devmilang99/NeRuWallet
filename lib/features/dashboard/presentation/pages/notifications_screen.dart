@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:neruwallet/core/providers/database_provider.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
-import 'package:intl/intl.dart';
 
 /// VIEW MODEL: NotificationViewModel
 /// Manages the state of the notifications screen.

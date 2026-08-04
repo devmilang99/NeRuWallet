@@ -40,6 +40,8 @@ class Transactions extends Table {
 
   TextColumn get category => text().withDefault(const Constant('Other'))();
 
+  TextColumn get transactionType => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   TextColumn get metadata =>
@@ -72,12 +74,25 @@ class DbNotifications extends Table {
   BoolColumn get isRead => boolean().withDefault(const Constant(false))();
 }
 
-@DriftDatabase(tables: [Transactions, AppPreferences, DbNotifications])
+/// AI Memory and Chat history
+class AiMemories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  TextColumn get role => text()(); // 'user' or 'model'
+  TextColumn get content => text()(); // Message or JSON string
+  TextColumn get type =>
+      text().withDefault(const Constant('text'))(); // 'text' or 'json'
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(
+  tables: [Transactions, AppPreferences, DbNotifications, AiMemories],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -85,9 +100,13 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // Logic for migration between versions will go here
       if (from < 2) {
-        // Example: await m.addColumn(notifications, notifications.isRead);
+        await m.createTable(aiMemories);
+      }
+      if (from < 3) {
+        await m.issueCustomQuery(
+          'ALTER TABLE transactions ADD COLUMN transaction_type TEXT',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -99,13 +118,29 @@ class AppDatabase extends _$AppDatabase {
   // --- CRUD Operations for Transactions ---
 
   /// Records a transaction atomically
-  Future<void> recordTransaction(TransactionsCompanion entry) async {
-    await transaction(() async {
-      await into(transactions).insert(entry);
+  Future<Transaction> recordTransaction(TransactionsCompanion entry) async {
+    return transaction(() async {
+      return into(transactions).insertReturning(entry);
     });
   }
 
-  Future<List<Transaction>> getAllTransactions() => select(transactions).get();
+  Future<List<Transaction>> getAllTransactions() =>
+      (select(transactions)..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ]))
+          .get();
+
+  Future<List<Transaction>> getTransactionsByType(String type) =>
+      (select(transactions)
+            ..where((t) => t.transactionType.equals(type))
+            ..orderBy([
+              (t) => OrderingTerm(
+                expression: t.createdAt,
+                mode: OrderingMode.desc,
+              ),
+            ]))
+          .get();
 
   Stream<List<Transaction>> watchAllTransactions() =>
       (select(transactions)..orderBy([
@@ -128,6 +163,12 @@ class AppDatabase extends _$AppDatabase {
     return result?.value;
   }
 
+  Stream<String?> watchPreference(String key) {
+    return (select(appPreferences)..where((t) => t.key.equals(key)))
+        .watchSingleOrNull()
+        .map((row) => row?.value);
+  }
+
   // --- CRUD Operations for Notifications ---
 
   Future<void> insertNotification(DbNotificationsCompanion entry) =>
@@ -145,6 +186,24 @@ class AppDatabase extends _$AppDatabase {
       const DbNotificationsCompanion(isRead: Value(true)),
     );
   }
+
+  // --- CRUD Operations for AI Memories ---
+
+  Future<int> saveAiMemory(AiMemoriesCompanion entry) =>
+      into(aiMemories).insert(entry);
+
+  Future<List<AiMemory>> getAiMemories({int limit = 50}) =>
+      (select(aiMemories)
+            ..orderBy([
+              (t) => OrderingTerm(
+                expression: t.createdAt,
+                mode: OrderingMode.desc,
+              ),
+            ])
+            ..limit(limit))
+          .get();
+
+  Future<void> clearAiMemories() => delete(aiMemories).go();
 }
 
 LazyDatabase _openConnection() {

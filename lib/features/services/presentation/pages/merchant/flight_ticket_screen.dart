@@ -10,7 +10,7 @@ Future<void> _downloadTicket(
   BuildContext context, {
   Map<String, dynamic>? data,
 }) async {
-  final bool hasPermission = await PermissionUtils.requestStoragePermission();
+  final hasPermission = await PermissionUtils.requestStoragePermission();
 
   if (!hasPermission) {
     if (context.mounted) {
@@ -31,18 +31,18 @@ Future<void> _downloadTicket(
     builder: (context) => AlertDialog(
       backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-      content: Column(
+      content: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
-          const CircularProgressIndicator(color: Color(0xFF10B981)),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 16),
+          CircularProgressIndicator(color: Color(0xFF10B981)),
+          SizedBox(height: 24),
+          Text(
             'Generating PDF...',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Creating your digital ticket',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
@@ -69,9 +69,9 @@ Future<void> _downloadTicket(
 }
 
 void _shareTicket(BuildContext context, {Map<String, dynamic>? data}) {
-  final String text = data != null
+  final text = data != null
       ? "My Flight Ticket:\nAirline: ${data['airline']}\nFlight: ${data['flightNumber']}\nFrom: ${data['departureCity']}\nTo: ${data['arrivalCity']}\nDate: ${data['departureDate']}\nPNR: ${data['pnr']}\nShared via NeRuWallet"
-      : "My Flight Ticket details are attached. Shared via NeRuWallet";
+      : 'My Flight Ticket details are attached. Shared via NeRuWallet';
 
   Share.share(text);
 }
@@ -130,7 +130,7 @@ class _FlightTicketScreenState extends State<FlightTicketScreen> {
 class FlightTicketScreenWithData extends StatelessWidget {
   final Map<String, dynamic> ticketData;
 
-  const FlightTicketScreenWithData({super.key, required this.ticketData});
+  const FlightTicketScreenWithData({required this.ticketData, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -158,9 +158,9 @@ Widget _buildBoardingPass(
   bool isDark,
   Map<String, dynamic> data,
 ) {
-  final color = const Color(0xFF10B981);
+  const color = Color(0xFF10B981);
 
-  return Container(
+  return DecoratedBox(
     decoration: BoxDecoration(
       color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
       borderRadius: BorderRadius.circular(32),
@@ -241,7 +241,7 @@ Widget _buildBoardingPass(
                     const SizedBox(width: 8),
                     Column(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.flight_takeoff_rounded,
                           color: color,
                           size: 28,
@@ -331,7 +331,6 @@ Widget _buildBoardingPass(
                   child: Column(
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
                         children: List.generate(42, (index) {
                           return Container(
                             width: (index % 3 == 0) ? 4 : 2,

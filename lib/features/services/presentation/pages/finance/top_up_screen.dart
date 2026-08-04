@@ -73,7 +73,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -168,7 +168,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(left: 24, right: 24, bottom: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
                 child: Row(
                   children: [
                     Expanded(
@@ -263,7 +263,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -375,7 +375,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(left: 24, right: 24, bottom: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
                 child: Row(
                   children: [
                     Expanded(
@@ -479,7 +479,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -559,7 +559,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(left: 24, right: 24, bottom: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
                 child: Row(
                   children: [
                     Expanded(
@@ -696,11 +696,14 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
 
   void _executeTransaction(double amount, String target) async {
     // Add funds here upon successful PIN verification
-    ref.read(balanceProvider.notifier).addFunds(amount, target);
+    await ref.read(balanceProvider.notifier).addFunds(amount, target);
 
     // Close the PIN screen first
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Top Up...');
 
     await ref

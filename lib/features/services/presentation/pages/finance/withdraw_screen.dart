@@ -46,16 +46,13 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(
+    final fee = TransactionService.getServiceCharge(
       TransactionType.withdraw,
       amount,
     );
-    final double tax = TransactionService.getTax(
-      TransactionType.withdraw,
-      amount,
-    );
-    final double totalPayable = amount + fee + tax;
-    final double currentBalance = ref.read(balanceProvider).totalBalance;
+    final tax = TransactionService.getTax(TransactionType.withdraw, amount);
+    final totalPayable = amount + fee + tax;
+    final currentBalance = ref.read(balanceProvider).totalBalance;
 
     if (totalPayable > currentBalance) {
       GlassDialog.showError(
@@ -96,9 +93,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
     );
   }
 
-  void _executeWithdrawal(double amount, String target) {
+  Future<void> _executeWithdrawal(double amount, String target) async {
     // Deduct balance here upon successful PIN verification
-    ref
+    await ref
         .read(balanceProvider.notifier)
         .deductQuickAction(
           title: 'Withdrawal',
@@ -111,12 +108,16 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
           icon: Icons.account_balance_wallet_rounded,
           color: Colors.redAccent,
           category: 'Withdraw',
+          type: TransactionType.withdraw,
           metadata: {'method': target},
         );
 
     // Close PIN screen
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
+    if (!mounted) return;
     GlassDialog.showLoading(context, message: 'Processing Withdrawal...');
 
     // Simulate API call
@@ -299,8 +300,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
           listenable: _amountController,
           builder: (context, _) {
             final val = _amountController.text.trim();
-            if (val.isEmpty || double.tryParse(val) == 0)
+            if (val.isEmpty || double.tryParse(val) == 0) {
               return const SizedBox.shrink();
+            }
             final amount = double.tryParse(val) ?? 0;
 
             return Column(

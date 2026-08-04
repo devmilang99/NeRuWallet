@@ -15,7 +15,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -35,7 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ).animate().fadeIn().slideX(begin: -0.5, end: 0),
               const SizedBox(height: 32),
               Text(
-                "Recover Password",
+                'Recover Password',
                 style: Theme.of(
                   context,
                 ).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -63,7 +63,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.05,
+                          ),
                           blurRadius: 30,
                           offset: const Offset(0, 15),
                         ),
@@ -73,7 +75,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Email address",
+                          'Email address',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -84,7 +86,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
-                            hintText: "example@domain.com",
+                            hintText: 'example@domain.com',
                             prefixIcon: Icon(Icons.email_outlined),
                           ),
                         ),
@@ -99,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: const Text("Send Reset Link"),
+                          child: const Text('Send Reset Link'),
                         ),
                       ],
                     ),

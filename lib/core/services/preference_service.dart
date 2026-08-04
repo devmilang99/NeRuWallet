@@ -7,19 +7,25 @@ part 'preference_service.g.dart';
 
 @Riverpod(keepAlive: true)
 PreferenceService preferenceService(Ref ref) {
-  return PreferenceService(ref.watch(appDatabaseProvider));
+  return PreferenceService(
+    ref.watch(appDatabaseProvider),
+    ref.watch(encryptionServiceProvider),
+  );
 }
 
-// I need to define appDatabaseProvider if it doesn't exist. 
-// Let's check if it exists in app_database.dart or elsewhere.
 class PreferenceService {
   final AppDatabase _db;
+  final EncryptionService _encryption;
 
-  PreferenceService(this._db);
+  PreferenceService(this._db, this._encryption);
 
   /// Saves a string preference. Set [encrypted] to true to use AES encryption.
-  Future<void> setString(String key, String value, {bool encrypted = false}) async {
-    final storageValue = encrypted ? EncryptionService.encrypt(value) : value;
+  Future<void> setString(
+    String key,
+    String value, {
+    bool encrypted = false,
+  }) async {
+    final storageValue = encrypted ? _encryption.encrypt(value) : value;
     await _db.setPreference(key, storageValue);
   }
 
@@ -27,7 +33,7 @@ class PreferenceService {
   Future<String?> getString(String key, {bool encrypted = false}) async {
     final value = await _db.getPreference(key);
     if (value == null) return null;
-    return encrypted ? EncryptionService.decrypt(value) : value;
+    return encrypted ? _encryption.decrypt(value) : value;
   }
 
   /// Saves a boolean preference.
@@ -69,5 +75,16 @@ class PreferenceService {
   /// Removes a preference.
   Future<void> remove(String key) async {
     await _db.setPreference(key, null);
+  }
+
+  /// Clears all authentication-related preferences.
+  Future<void> clearAuthPreferences() async {
+    await remove('registration_complete');
+    await remove('remember_me');
+    await remove('is_kyc_verified');
+    await remove('biometrics_login_enabled');
+    await remove('biometrics_transaction_enabled');
+    await remove('biometrics_enabled');
+    await remove('biometrics_setup_prompt_shown');
   }
 }

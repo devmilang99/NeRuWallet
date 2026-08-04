@@ -16,16 +16,16 @@ class BookingVerificationSheet extends StatelessWidget {
   final VoidCallback? onCancel;
 
   const BookingVerificationSheet({
-    super.key,
     required this.title,
     required this.provider,
     required this.details,
-    this.passengers,
     required this.amount,
-    this.fee = 0.0,
-    this.tax = 0.0,
     required this.color,
     required this.onConfirm,
+    super.key,
+    this.passengers,
+    this.fee = 0.0,
+    this.tax = 0.0,
     this.onCancel,
   });
 
@@ -81,7 +81,7 @@ class BookingVerificationSheet extends StatelessWidget {
                 ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
                 const SizedBox(height: 16),
                 Text(
-                  "Verify Booking",
+                  'Verify Booking',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -90,7 +90,7 @@ class BookingVerificationSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Please review your $title details",
+                  'Please review your $title details',
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? Colors.white54 : Colors.grey[600],
@@ -112,7 +112,7 @@ class BookingVerificationSheet extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildRow("Provider", provider, isDark, isHeader: true),
+                      _buildRow('Provider', provider, isDark, isHeader: true),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(height: 1),
@@ -129,8 +129,8 @@ class BookingVerificationSheet extends StatelessWidget {
                           child: Divider(height: 1),
                         ),
                         _buildRow(
-                          "Review Passengers",
-                          "",
+                          'Review Passengers',
+                          '',
                           isDark,
                           isHeader: true,
                         ),
@@ -178,23 +178,23 @@ class BookingVerificationSheet extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildRow(
-                        "Ticket Fare",
-                        "Rs. ${amount.toStringAsFixed(2)}",
+                        'Ticket Fare',
+                        'Rs. ${amount.toStringAsFixed(2)}',
                         isDark,
                       ),
                       const SizedBox(height: 8),
                       if (fee > 0) ...[
                         _buildRow(
-                          "Service Charge",
-                          "Rs. ${fee.toStringAsFixed(2)}",
+                          'Service Charge',
+                          'Rs. ${fee.toStringAsFixed(2)}',
                           isDark,
                         ),
                         const SizedBox(height: 8),
                       ],
                       if (tax > 0) ...[
                         _buildRow(
-                          "Service Tax (VAT)",
-                          "Rs. ${tax.toStringAsFixed(2)}",
+                          'Service Tax (VAT)',
+                          'Rs. ${tax.toStringAsFixed(2)}',
                           isDark,
                         ),
                         const SizedBox(height: 8),
@@ -207,14 +207,14 @@ class BookingVerificationSheet extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            "Total Payable",
+                            'Total Payable',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           Text(
-                            "Rs. ${total.toStringAsFixed(2)}",
+                            'Rs. ${total.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 22,
@@ -249,7 +249,7 @@ class BookingVerificationSheet extends StatelessWidget {
                             ),
                           ),
                           child: const Text(
-                            "Cancel",
+                            'Cancel',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -278,7 +278,7 @@ class BookingVerificationSheet extends StatelessWidget {
                             Icon(Icons.lock_outline_rounded, size: 18),
                             SizedBox(width: 8),
                             Text(
-                              "Confirm & Pay",
+                              'Confirm & Pay',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,

@@ -57,7 +57,7 @@ class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
     NotificationItem(
       id: '3',
       title: 'Security Alert',
-      message: 'A new login was detected from a new device. If this wasn\'t you, please change your PIN.',
+      message: "A new login was detected from a new device. If this wasn't you, please change your PIN.",
       time: 'Yesterday',
       icon: Icons.security_rounded,
       color: AppTheme.warningColor,

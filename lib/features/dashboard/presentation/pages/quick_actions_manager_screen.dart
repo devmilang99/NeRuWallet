@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
-import 'package:neruwallet/core/providers/quick_actions_provider.dart';
-import '../../data/models/quick_action_model.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neruwallet/core/providers/quick_actions_provider.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+
+import '../../data/models/quick_action_model.dart';
 
 class QuickActionsManagerScreen extends ConsumerStatefulWidget {
   final bool isDark;
 
   const QuickActionsManagerScreen({
-    super.key,
-    required this.isDark,
+    required this.isDark, super.key,
   });
 
   @override
@@ -30,7 +30,7 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
   @override
   Widget build(BuildContext context) {
     final selectedActions = ref.watch(quickActionsProvider);
-    final allActions = QuickActionsNotifier.allAvailableActions;
+    const allActions = QuickActionsNotifier.allAvailableActions;
     final isDark = widget.isDark;
 
     // Filter and group actions efficiently (only rebuild on search change)

@@ -52,11 +52,11 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   }
 
   void _updatePrice() {
-    int basePrice = _seatController.text == 'Premium Economy'
+    var basePrice = _seatController.text == 'Premium Economy'
         ? 11500
         : (_seatController.text == 'Business' ? 18000 : 8500);
     if (_isRoundTrip) basePrice = (basePrice * 1.8).round();
-    int total = basePrice * (_adults + _children);
+    final total = basePrice * (_adults + _children);
     _priceController.text = total.toString();
   }
 
@@ -75,7 +75,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     TextEditingController controller, {
     DateTime? firstDate,
   }) async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: firstDate ?? DateTime.now(),
       firstDate: firstDate ?? DateTime.now(),
@@ -163,7 +163,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               Stack(
                 alignment: Alignment.centerRight,
                 children: [
-                  Container(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.surfaceDark : Colors.white,
                       borderRadius: AppTheme.radiusLarge,
@@ -307,7 +307,8 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 10,
+                spacing: 12,
+                runSpacing: 12,
                 children: _seatClasses.map((sClass) {
                   final isSelected = _seatController.text == sClass;
                   return GestureDetector(
@@ -511,7 +512,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
             title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
-          Text(subtitle, style: TextStyle(color: Colors.grey, fontSize: 10)),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.grey, fontSize: 10),
+          ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -575,7 +579,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

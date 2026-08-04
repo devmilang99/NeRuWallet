@@ -101,6 +101,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant('Other'),
   );
+  static const VerificationMeta _transactionTypeMeta = const VerificationMeta(
+    'transactionType',
+  );
+  @override
+  late final GeneratedColumn<String> transactionType = GeneratedColumn<String>(
+    'transaction_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -135,6 +146,7 @@ class $TransactionsTable extends Transactions
     iconCode,
     colorValue,
     category,
+    transactionType,
     createdAt,
     metadata,
   ];
@@ -213,6 +225,15 @@ class $TransactionsTable extends Transactions
         category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
       );
     }
+    if (data.containsKey('transaction_type')) {
+      context.handle(
+        _transactionTypeMeta,
+        transactionType.isAcceptableOrUnknown(
+          data['transaction_type']!,
+          _transactionTypeMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -270,6 +291,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       )!,
+      transactionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_type'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -297,6 +322,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int iconCode;
   final int colorValue;
   final String category;
+  final String? transactionType;
   final DateTime createdAt;
   final String? metadata;
   const Transaction({
@@ -309,6 +335,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.iconCode,
     required this.colorValue,
     required this.category,
+    this.transactionType,
     required this.createdAt,
     this.metadata,
   });
@@ -324,6 +351,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['icon_code'] = Variable<int>(iconCode);
     map['color_value'] = Variable<int>(colorValue);
     map['category'] = Variable<String>(category);
+    if (!nullToAbsent || transactionType != null) {
+      map['transaction_type'] = Variable<String>(transactionType);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || metadata != null) {
       map['metadata'] = Variable<String>(metadata);
@@ -342,6 +372,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       iconCode: Value(iconCode),
       colorValue: Value(colorValue),
       category: Value(category),
+      transactionType: transactionType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionType),
       createdAt: Value(createdAt),
       metadata: metadata == null && nullToAbsent
           ? const Value.absent()
@@ -364,6 +397,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       iconCode: serializer.fromJson<int>(json['iconCode']),
       colorValue: serializer.fromJson<int>(json['colorValue']),
       category: serializer.fromJson<String>(json['category']),
+      transactionType: serializer.fromJson<String?>(json['transactionType']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       metadata: serializer.fromJson<String?>(json['metadata']),
     );
@@ -381,6 +415,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'iconCode': serializer.toJson<int>(iconCode),
       'colorValue': serializer.toJson<int>(colorValue),
       'category': serializer.toJson<String>(category),
+      'transactionType': serializer.toJson<String?>(transactionType),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'metadata': serializer.toJson<String?>(metadata),
     };
@@ -396,6 +431,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? iconCode,
     int? colorValue,
     String? category,
+    Value<String?> transactionType = const Value.absent(),
     DateTime? createdAt,
     Value<String?> metadata = const Value.absent(),
   }) => Transaction(
@@ -408,6 +444,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     iconCode: iconCode ?? this.iconCode,
     colorValue: colorValue ?? this.colorValue,
     category: category ?? this.category,
+    transactionType: transactionType.present
+        ? transactionType.value
+        : this.transactionType,
     createdAt: createdAt ?? this.createdAt,
     metadata: metadata.present ? metadata.value : this.metadata,
   );
@@ -424,6 +463,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? data.colorValue.value
           : this.colorValue,
       category: data.category.present ? data.category.value : this.category,
+      transactionType: data.transactionType.present
+          ? data.transactionType.value
+          : this.transactionType,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       metadata: data.metadata.present ? data.metadata.value : this.metadata,
     );
@@ -441,6 +483,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('iconCode: $iconCode, ')
           ..write('colorValue: $colorValue, ')
           ..write('category: $category, ')
+          ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
           ..write('metadata: $metadata')
           ..write(')'))
@@ -458,6 +501,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     iconCode,
     colorValue,
     category,
+    transactionType,
     createdAt,
     metadata,
   );
@@ -474,6 +518,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.iconCode == this.iconCode &&
           other.colorValue == this.colorValue &&
           other.category == this.category &&
+          other.transactionType == this.transactionType &&
           other.createdAt == this.createdAt &&
           other.metadata == this.metadata);
 }
@@ -488,6 +533,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> iconCode;
   final Value<int> colorValue;
   final Value<String> category;
+  final Value<String?> transactionType;
   final Value<DateTime> createdAt;
   final Value<String?> metadata;
   final Value<int> rowid;
@@ -501,6 +547,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.iconCode = const Value.absent(),
     this.colorValue = const Value.absent(),
     this.category = const Value.absent(),
+    this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -515,6 +562,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int iconCode,
     required int colorValue,
     this.category = const Value.absent(),
+    this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -534,6 +582,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? iconCode,
     Expression<int>? colorValue,
     Expression<String>? category,
+    Expression<String>? transactionType,
     Expression<DateTime>? createdAt,
     Expression<String>? metadata,
     Expression<int>? rowid,
@@ -548,6 +597,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (iconCode != null) 'icon_code': iconCode,
       if (colorValue != null) 'color_value': colorValue,
       if (category != null) 'category': category,
+      if (transactionType != null) 'transaction_type': transactionType,
       if (createdAt != null) 'created_at': createdAt,
       if (metadata != null) 'metadata': metadata,
       if (rowid != null) 'rowid': rowid,
@@ -564,6 +614,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? iconCode,
     Value<int>? colorValue,
     Value<String>? category,
+    Value<String?>? transactionType,
     Value<DateTime>? createdAt,
     Value<String?>? metadata,
     Value<int>? rowid,
@@ -578,6 +629,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       iconCode: iconCode ?? this.iconCode,
       colorValue: colorValue ?? this.colorValue,
       category: category ?? this.category,
+      transactionType: transactionType ?? this.transactionType,
       createdAt: createdAt ?? this.createdAt,
       metadata: metadata ?? this.metadata,
       rowid: rowid ?? this.rowid,
@@ -614,6 +666,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (category.present) {
       map['category'] = Variable<String>(category.value);
     }
+    if (transactionType.present) {
+      map['transaction_type'] = Variable<String>(transactionType.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -638,6 +693,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('iconCode: $iconCode, ')
           ..write('colorValue: $colorValue, ')
           ..write('category: $category, ')
+          ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
           ..write('metadata: $metadata, ')
           ..write('rowid: $rowid')
@@ -1204,6 +1260,344 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
   }
 }
 
+class $AiMemoriesTable extends AiMemories
+    with TableInfo<$AiMemoriesTable, AiMemory> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiMemoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('text'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, role, content, type, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_memories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiMemory> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roleMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AiMemory map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiMemory(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AiMemoriesTable createAlias(String alias) {
+    return $AiMemoriesTable(attachedDatabase, alias);
+  }
+}
+
+class AiMemory extends DataClass implements Insertable<AiMemory> {
+  final int id;
+  final String role;
+  final String content;
+  final String type;
+  final DateTime createdAt;
+  const AiMemory({
+    required this.id,
+    required this.role,
+    required this.content,
+    required this.type,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['role'] = Variable<String>(role);
+    map['content'] = Variable<String>(content);
+    map['type'] = Variable<String>(type);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AiMemoriesCompanion toCompanion(bool nullToAbsent) {
+    return AiMemoriesCompanion(
+      id: Value(id),
+      role: Value(role),
+      content: Value(content),
+      type: Value(type),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AiMemory.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiMemory(
+      id: serializer.fromJson<int>(json['id']),
+      role: serializer.fromJson<String>(json['role']),
+      content: serializer.fromJson<String>(json['content']),
+      type: serializer.fromJson<String>(json['type']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'role': serializer.toJson<String>(role),
+      'content': serializer.toJson<String>(content),
+      'type': serializer.toJson<String>(type),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AiMemory copyWith({
+    int? id,
+    String? role,
+    String? content,
+    String? type,
+    DateTime? createdAt,
+  }) => AiMemory(
+    id: id ?? this.id,
+    role: role ?? this.role,
+    content: content ?? this.content,
+    type: type ?? this.type,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AiMemory copyWithCompanion(AiMemoriesCompanion data) {
+    return AiMemory(
+      id: data.id.present ? data.id.value : this.id,
+      role: data.role.present ? data.role.value : this.role,
+      content: data.content.present ? data.content.value : this.content,
+      type: data.type.present ? data.type.value : this.type,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiMemory(')
+          ..write('id: $id, ')
+          ..write('role: $role, ')
+          ..write('content: $content, ')
+          ..write('type: $type, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, role, content, type, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiMemory &&
+          other.id == this.id &&
+          other.role == this.role &&
+          other.content == this.content &&
+          other.type == this.type &&
+          other.createdAt == this.createdAt);
+}
+
+class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
+  final Value<int> id;
+  final Value<String> role;
+  final Value<String> content;
+  final Value<String> type;
+  final Value<DateTime> createdAt;
+  const AiMemoriesCompanion({
+    this.id = const Value.absent(),
+    this.role = const Value.absent(),
+    this.content = const Value.absent(),
+    this.type = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  AiMemoriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String role,
+    required String content,
+    this.type = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : role = Value(role),
+       content = Value(content);
+  static Insertable<AiMemory> custom({
+    Expression<int>? id,
+    Expression<String>? role,
+    Expression<String>? content,
+    Expression<String>? type,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (role != null) 'role': role,
+      if (content != null) 'content': content,
+      if (type != null) 'type': type,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  AiMemoriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? role,
+    Value<String>? content,
+    Value<String>? type,
+    Value<DateTime>? createdAt,
+  }) {
+    return AiMemoriesCompanion(
+      id: id ?? this.id,
+      role: role ?? this.role,
+      content: content ?? this.content,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiMemoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('role: $role, ')
+          ..write('content: $content, ')
+          ..write('type: $type, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1212,6 +1606,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DbNotificationsTable dbNotifications = $DbNotificationsTable(
     this,
   );
+  late final $AiMemoriesTable aiMemories = $AiMemoriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1220,6 +1615,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     transactions,
     appPreferences,
     dbNotifications,
+    aiMemories,
   ];
 }
 
@@ -1234,6 +1630,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int iconCode,
       required int colorValue,
       Value<String> category,
+      Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
       Value<int> rowid,
@@ -1249,6 +1646,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> iconCode,
       Value<int> colorValue,
       Value<String> category,
+      Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
       Value<int> rowid,
@@ -1305,6 +1703,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1373,6 +1776,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1422,6 +1830,11 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
+  GeneratedColumn<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -1469,6 +1882,7 @@ class $$TransactionsTableTableManager
                 Value<int> iconCode = const Value.absent(),
                 Value<int> colorValue = const Value.absent(),
                 Value<String> category = const Value.absent(),
+                Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1482,6 +1896,7 @@ class $$TransactionsTableTableManager
                 iconCode: iconCode,
                 colorValue: colorValue,
                 category: category,
+                transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
                 rowid: rowid,
@@ -1497,6 +1912,7 @@ class $$TransactionsTableTableManager
                 required int iconCode,
                 required int colorValue,
                 Value<String> category = const Value.absent(),
+                Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1510,6 +1926,7 @@ class $$TransactionsTableTableManager
                 iconCode: iconCode,
                 colorValue: colorValue,
                 category: category,
+                transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
                 rowid: rowid,
@@ -1883,6 +2300,194 @@ typedef $$DbNotificationsTableProcessedTableManager =
       DbNotification,
       PrefetchHooks Function()
     >;
+typedef $$AiMemoriesTableCreateCompanionBuilder =
+    AiMemoriesCompanion Function({
+      Value<int> id,
+      required String role,
+      required String content,
+      Value<String> type,
+      Value<DateTime> createdAt,
+    });
+typedef $$AiMemoriesTableUpdateCompanionBuilder =
+    AiMemoriesCompanion Function({
+      Value<int> id,
+      Value<String> role,
+      Value<String> content,
+      Value<String> type,
+      Value<DateTime> createdAt,
+    });
+
+class $$AiMemoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $AiMemoriesTable> {
+  $$AiMemoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AiMemoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiMemoriesTable> {
+  $$AiMemoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AiMemoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiMemoriesTable> {
+  $$AiMemoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$AiMemoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiMemoriesTable,
+          AiMemory,
+          $$AiMemoriesTableFilterComposer,
+          $$AiMemoriesTableOrderingComposer,
+          $$AiMemoriesTableAnnotationComposer,
+          $$AiMemoriesTableCreateCompanionBuilder,
+          $$AiMemoriesTableUpdateCompanionBuilder,
+          (AiMemory, BaseReferences<_$AppDatabase, $AiMemoriesTable, AiMemory>),
+          AiMemory,
+          PrefetchHooks Function()
+        > {
+  $$AiMemoriesTableTableManager(_$AppDatabase db, $AiMemoriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiMemoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiMemoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiMemoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AiMemoriesCompanion(
+                id: id,
+                role: role,
+                content: content,
+                type: type,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String role,
+                required String content,
+                Value<String> type = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AiMemoriesCompanion.insert(
+                id: id,
+                role: role,
+                content: content,
+                type: type,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AiMemoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiMemoriesTable,
+      AiMemory,
+      $$AiMemoriesTableFilterComposer,
+      $$AiMemoriesTableOrderingComposer,
+      $$AiMemoriesTableAnnotationComposer,
+      $$AiMemoriesTableCreateCompanionBuilder,
+      $$AiMemoriesTableUpdateCompanionBuilder,
+      (AiMemory, BaseReferences<_$AppDatabase, $AiMemoriesTable, AiMemory>),
+      AiMemory,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1893,17 +2498,19 @@ class $AppDatabaseManager {
       $$AppPreferencesTableTableManager(_db, _db.appPreferences);
   $$DbNotificationsTableTableManager get dbNotifications =>
       $$DbNotificationsTableTableManager(_db, _db.dbNotifications);
+  $$AiMemoriesTableTableManager get aiMemories =>
+      $$AiMemoriesTableTableManager(_db, _db.aiMemories);
 }
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appDatabaseHash() => r'18ce5c8c4d8ddbfe5a7d819d8fb7d5aca76bf416';
+String _$appDatabaseHash() => r'617f2de64c84825b761f6451ce5df331a811c324';
 
 /// See also [appDatabase].
 @ProviderFor(appDatabase)
-final appDatabaseProvider = AutoDisposeProvider<AppDatabase>.internal(
+final appDatabaseProvider = Provider<AppDatabase>.internal(
   appDatabase,
   name: r'appDatabaseProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -1915,6 +2522,6 @@ final appDatabaseProvider = AutoDisposeProvider<AppDatabase>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AppDatabaseRef = AutoDisposeProviderRef<AppDatabase>;
+typedef AppDatabaseRef = ProviderRef<AppDatabase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

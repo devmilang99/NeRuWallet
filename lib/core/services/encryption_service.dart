@@ -1,27 +1,51 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../utils/logger.dart';
+import 'secure_storage_service.dart';
+
+final encryptionServiceProvider = Provider<EncryptionService>((ref) {
+  return EncryptionService(ref.watch(secureStorageServiceProvider));
+});
 
 class EncryptionService {
-  static final _key = Key.fromUtf8(
-    'my32lengthsupersecretnooneknows1',
-  ); // 32 chars for AES-256
-  static final _iv = IV.fromUtf8('8822991100334455'); // 16 chars consistent IV
-  static final _encrypter = Encrypter(AES(_key));
+  final SecureStorageService _secureStorage;
+  Key? _key;
+  final _iv = IV.fromUtf8(
+    '8822991100334455',
+  ); // Constant IV for consistent decryption
 
-  static String encrypt(String text) {
-    if (text.isEmpty) return text;
-    final encrypted = _encrypter.encrypt(text, iv: _iv);
-    return encrypted.base64;
+  EncryptionService(this._secureStorage);
+
+  Future<void> init() async {
+    final keyString = await _secureStorage.getOrGenerateKey('aes_key_seed');
+    _key = Key.fromUtf8(keyString);
   }
 
-  static String decrypt(String encryptedText) {
-    if (encryptedText.isEmpty) return encryptedText;
+  String encrypt(String text) {
+    if (text.isEmpty || _key == null) return text;
     try {
-      final decrypted = _encrypter.decrypt64(encryptedText, iv: _iv);
+      final encrypter = Encrypter(AES(_key!));
+      final encrypted = encrypter.encrypt(text, iv: _iv);
+      return encrypted.base64;
+    } catch (e) {
+      AppLogger.e('Encryption Error', e);
+      return text;
+    }
+  }
+
+  String decrypt(String encryptedText) {
+    if (encryptedText.isEmpty || _key == null) return encryptedText;
+    try {
+      final encrypter = Encrypter(AES(_key!));
+      final decrypted = encrypter.decrypt64(encryptedText, iv: _iv);
       return decrypted;
     } catch (e) {
+      AppLogger.e('Decryption Error', e);
       return '';
     }
   }
@@ -30,6 +54,6 @@ class EncryptionService {
   static Key generateKey(String seed) {
     final bytes = utf8.encode(seed);
     final digest = sha256.convert(bytes);
-    return Key(digest.bytes as dynamic);
+    return Key(Uint8List.fromList(digest.bytes));
   }
 }

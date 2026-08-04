@@ -10,7 +10,7 @@ Future<void> _downloadTicket(
   BuildContext context, {
   Map<String, dynamic>? data,
 }) async {
-  final bool hasPermission = await PermissionUtils.requestStoragePermission();
+  final hasPermission = await PermissionUtils.requestStoragePermission();
 
   if (!hasPermission) {
     if (context.mounted) {
@@ -31,18 +31,18 @@ Future<void> _downloadTicket(
     builder: (context) => AlertDialog(
       backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-      content: Column(
+      content: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
-          const CircularProgressIndicator(color: Color(0xFFEC4899)),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 16),
+          CircularProgressIndicator(color: Color(0xFFEC4899)),
+          SizedBox(height: 24),
+          Text(
             'Generating PDF...',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Creating your digital ticket',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
@@ -69,9 +69,9 @@ Future<void> _downloadTicket(
 }
 
 void _shareTicket(BuildContext context, {Map<String, dynamic>? data}) {
-  final String text = data != null
+  final text = data != null
       ? "My Bus Ticket:\nService: ${data['busCompany']}\nBus #: ${data['busNumber']}\nFrom: ${data['fromCity']}\nTo: ${data['toCity']}\nDate: ${data['departureDate']}\nTicket #: ${data['ticketNumber']}\nShared via NeRuWallet"
-      : "My Bus Ticket details are attached. Shared via NeRuWallet";
+      : 'My Bus Ticket details are attached. Shared via NeRuWallet';
 
   Share.share(text);
 }
@@ -127,7 +127,7 @@ class _BusTicketScreenState extends State<BusTicketScreen> {
 class BusTicketScreenWithData extends StatelessWidget {
   final Map<String, dynamic> ticketData;
 
-  const BusTicketScreenWithData({super.key, required this.ticketData});
+  const BusTicketScreenWithData({required this.ticketData, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +157,7 @@ Widget _buildTicketCard(
 ) {
   const color = Color(0xFFEC4899);
 
-  return Container(
+  return DecoratedBox(
     decoration: BoxDecoration(
       color: isDark ? const Color(0xFF131517) : Colors.white,
       borderRadius: BorderRadius.circular(28),
@@ -249,7 +249,7 @@ Widget _buildTicketCard(
                         color: color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.directions_bus_rounded,
                         color: color,
                         size: 24,

@@ -45,7 +45,7 @@ class FoodDeliveryScreen extends StatelessWidget {
         const SizedBox(height: 8),
 
         // Browse Categories Button
-        Container(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [

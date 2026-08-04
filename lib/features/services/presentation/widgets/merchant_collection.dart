@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/theme/app_theme.dart';
 
 class MerchantCollection extends StatelessWidget {
@@ -7,9 +8,9 @@ class MerchantCollection extends StatelessWidget {
   final List<Map<String, dynamic>> merchants;
 
   const MerchantCollection({
-    super.key,
     required this.title,
     required this.merchants,
+    super.key,
   });
 
   @override
@@ -68,13 +69,18 @@ class MerchantCollection extends StatelessWidget {
                     Text(
                       m['name'],
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       m['category'] ?? 'Partner',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondaryColor,
                         fontSize: 12,
                       ),
                     ),

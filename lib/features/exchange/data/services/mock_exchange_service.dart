@@ -29,7 +29,7 @@ class MockExchangeService {
 
   static List<Map<String, dynamic>> getPopularRates(String baseCode) {
     final baseRate = _baseRates[baseCode] ?? 1.0;
-    final List<Map<String, dynamic>> rates = [];
+    final rates = <Map<String, dynamic>>[];
 
     _baseRates.forEach((code, rate) {
       if (code != baseCode) {

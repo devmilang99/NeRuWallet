@@ -17,7 +17,7 @@ class ThemeSelectionScreen extends ConsumerStatefulWidget {
 class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedThemeMode = ref.watch(themeProvider);
 
     return Scaffold(
@@ -29,14 +29,14 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
             children: [
               const SizedBox(height: 60),
               Text(
-                "Choose Your Style",
+                'Choose Your Style',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
               ).animate().fadeIn().slideX(begin: -0.2, end: 0),
               const SizedBox(height: 12),
               Text(
-                "Select a theme that suits you best. You can always change this in settings.",
+                'Select a theme that suits you best. You can always change this in settings.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: isDark
                       ? AppTheme.textSecondaryDark
@@ -49,7 +49,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
                   Expanded(
                     child: _buildThemeCard(
                       context,
-                      title: "Light",
+                      title: 'Light',
                       icon: Icons.light_mode_rounded,
                       mode: ThemeMode.light,
                       isSelected: selectedThemeMode == ThemeMode.light,
@@ -59,7 +59,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
                   Expanded(
                     child: _buildThemeCard(
                       context,
-                      title: "Dark",
+                      title: 'Dark',
                       icon: Icons.dark_mode_rounded,
                       mode: ThemeMode.dark,
                       isSelected: selectedThemeMode == ThemeMode.dark,
@@ -70,7 +70,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
               const SizedBox(height: 20),
               _buildThemeCard(
                 context,
-                title: "System Preference",
+                title: 'System Preference',
                 icon: Icons.settings_brightness_rounded,
                 mode: ThemeMode.system,
                 isSelected: selectedThemeMode == ThemeMode.system,
@@ -81,7 +81,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
                 onPressed: () {
                   context.go('/onboarding');
                 },
-                child: const Text("Continue"),
+                child: const Text('Continue'),
               ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2, end: 0),
               const SizedBox(height: 20),
             ],
@@ -99,7 +99,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
     required bool isSelected,
     bool isWide = false,
   }) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {

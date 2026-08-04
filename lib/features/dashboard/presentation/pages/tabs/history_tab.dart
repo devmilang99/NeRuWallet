@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
@@ -9,9 +10,9 @@ class HistoryTab extends StatefulWidget {
   final List<Transaction> transactions;
 
   const HistoryTab({
-    super.key,
     required this.isDark,
     required this.transactions,
+    super.key,
   });
 
   @override
@@ -77,6 +78,24 @@ class _HistoryTabState extends State<HistoryTab> {
     return widget.transactions;
   }
 
+  List<dynamic> get _itemsWithHeaders {
+    final transactions = _filteredTransactions;
+    if (transactions.isEmpty) return [];
+
+    final items = <dynamic>[];
+    String? lastDate;
+
+    for (final t in transactions) {
+      final dateStr = DateFormat('yyyy/MM/dd').format(t.createdAt);
+      if (dateStr != lastDate) {
+        items.add(dateStr);
+        lastDate = dateStr;
+      }
+      items.add(t);
+    }
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -84,7 +103,6 @@ class _HistoryTabState extends State<HistoryTab> {
       slivers: [
         SliverAppBar(
           expandedHeight: 120,
-          floating: false,
           pinned: true,
           stretch: true,
           backgroundColor: widget.isDark
@@ -172,7 +190,9 @@ class _HistoryTabState extends State<HistoryTab> {
         //   ).animate().fadeIn(),
         // ),
         SliverPadding(
-          padding: const EdgeInsets.only(bottom: 100),
+          padding: EdgeInsets.only(
+            bottom: 110 + MediaQuery.of(context).padding.bottom,
+          ),
           sliver: _filteredTransactions.isEmpty
               ? SliverFillRemaining(
                   hasScrollBody: false,
@@ -204,14 +224,17 @@ class _HistoryTabState extends State<HistoryTab> {
                   ),
                 )
               : SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (ctx, i) => TransactionTile(
-                      transaction: _filteredTransactions[i],
+                  delegate: SliverChildBuilderDelegate((ctx, i) {
+                    final item = _itemsWithHeaders[i];
+                    if (item is String) {
+                      return _DateHeader(date: item, isDark: widget.isDark);
+                    }
+                    return TransactionTile(
+                      transaction: item as Transaction,
                       isDark: widget.isDark,
                       index: i,
-                    ),
-                    childCount: _filteredTransactions.length,
-                  ),
+                    );
+                  }, childCount: _itemsWithHeaders.length),
                 ),
         ),
       ],
@@ -273,6 +296,66 @@ class _HistoryTabState extends State<HistoryTab> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DateHeader extends StatelessWidget {
+  final String date;
+  final bool isDark;
+
+  const _DateHeader({required this.date, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    (isDark ? Colors.white : Colors.black).withValues(
+                      alpha: 0.1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              date,
+              style: TextStyle(
+                color: isDark ? Colors.white38 : Colors.black38,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    (isDark ? Colors.white : Colors.black).withValues(
+                      alpha: 0.1,
+                    ),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -12,7 +12,7 @@ import 'package:neruwallet/main.dart';
 
 void main() {
   testWidgets('app boots with provider scope', (WidgetTester tester) async {
-    await tester.pumpWidget(ProviderScope(child: const NeRuWalletApp()));
+    await tester.pumpWidget(const ProviderScope(child: NeRuWalletApp()));
 
     expect(find.byType(MaterialApp), findsOneWidget);
   });
