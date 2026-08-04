@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 
@@ -13,10 +14,10 @@ class CameraView extends StatefulWidget {
   final Widget? overlay;
 
   const CameraView({
-    super.key,
     required this.title,
     required this.instruction,
     required this.onImageCaptured,
+    super.key,
     this.onImageStream,
     this.initialDirection = CameraLensDirection.back,
     this.overlay,
@@ -108,19 +109,52 @@ class _CameraViewState extends State<CameraView> {
     if (format == null ||
         (Platform.isAndroid && format != InputImageFormat.nv21) ||
         (Platform.isIOS && format != InputImageFormat.bgra8888)) {
-      return null;
+      if (Platform.isAndroid && image.format.raw != 35) {
+        // 35 is YUV_420_888
+        return null;
+      }
     }
 
-    if (image.planes.length != 1) return null;
-    final plane = image.planes.first;
+    if (image.planes.isEmpty) return null;
+
+    final allBytes = <int>[];
+    for (final plane in image.planes) {
+      // For each plane, we need to extract the bytes and ignore the padding (stride)
+      // This is crucial to avoid IllegalArgumentException in ML Kit native side
+      final bytes = plane.bytes;
+      final bytesPerRow = plane.bytesPerRow;
+      final width = plane.width;
+      final height = plane.height;
+
+      if (width == null || height == null) {
+        allBytes.addAll(bytes);
+        continue;
+      }
+
+      // If bytesPerRow matches width exactly, we can add all bytes (no padding)
+      if (bytesPerRow == width) {
+        allBytes.addAll(bytes);
+      } else {
+        // We must copy row by row to skip the padding bytes at the end of each row
+        for (var y = 0; y < height; y++) {
+          allBytes.addAll(
+            bytes.getRange(y * bytesPerRow, y * bytesPerRow + width),
+          );
+        }
+      }
+    }
 
     return InputImage.fromBytes(
-      bytes: plane.bytes,
+      bytes: Uint8List.fromList(allBytes),
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation,
-        format: format,
-        bytesPerRow: plane.bytesPerRow,
+        format:
+            format ??
+            (Platform.isAndroid
+                ? InputImageFormat.nv21
+                : InputImageFormat.bgra8888),
+        bytesPerRow: image.planes[0].bytesPerRow,
       ),
     );
   }
@@ -140,7 +174,7 @@ class _CameraViewState extends State<CameraView> {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
     try {
-      final XFile file = await _controller!.takePicture();
+      final file = await _controller!.takePicture();
       widget.onImageCaptured(file.path);
     } catch (e) {
       debugPrint('Error taking picture: $e');

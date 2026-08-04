@@ -16,9 +16,9 @@ class PassengerDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> flightData;
 
   const PassengerDetailsScreen({
-    super.key,
     required this.searchData,
     required this.flightData,
+    super.key,
   });
 
   @override
@@ -58,7 +58,7 @@ class _PassengerDetailsScreenState
 
   void _proceedToConfirmation() {
     if (_formKey.currentState!.validate()) {
-      final List<Map<String, String>> allPassengers = [];
+      final allPassengers = <Map<String, String>>[];
       for (var c in _adultControllers) {
         allPassengers.add({
           'title': c.title,
@@ -74,22 +74,21 @@ class _PassengerDetailsScreenState
         });
       }
 
-      final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
-      final double totalAmount =
-          (widget.flightData['price'] as int) *
-          (allPassengers.length).toDouble();
-      final double fee = TransactionService.getServiceCharge(
+      final isVoucherActive = ref.read(balanceProvider).isVoucherActive;
+      final totalAmount =
+          (widget.flightData['price'] as int) * allPassengers.length.toDouble();
+      final fee = TransactionService.getServiceCharge(
         TransactionType.flight,
         totalAmount,
         isVoucherActive: isVoucherActive,
       );
-      final double tax = TransactionService.getTax(
+      final tax = TransactionService.getTax(
         TransactionType.flight,
         totalAmount,
         isVoucherActive: isVoucherActive,
       );
-      final double totalPayable = totalAmount + fee + tax;
-      final double currentBalance = ref.read(balanceProvider).totalBalance;
+      final totalPayable = totalAmount + fee + tax;
+      final currentBalance = ref.read(balanceProvider).totalBalance;
 
       if (totalPayable > currentBalance) {
         GlassDialog.showError(
@@ -158,7 +157,7 @@ class _PassengerDetailsScreenState
     if (mounted && Navigator.canPop(context)) {
       Navigator.pop(context); // Close PIN screen
     }
-    final bool isVoucherActive = ref.read(balanceProvider).isVoucherActive;
+    final isVoucherActive = ref.read(balanceProvider).isVoucherActive;
 
     // Deduct balance here (as the flight booking transaction is now completed successfully)
     await ref
@@ -193,16 +192,13 @@ class _PassengerDetailsScreenState
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(
-              strokeWidth: 3,
-              color: Color(0xFF10B981),
-            ),
-            const SizedBox(height: 32),
-            const Text(
+            SizedBox(height: 20),
+            CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF10B981)),
+            SizedBox(height: 32),
+            Text(
               'Issuing your flight ticket...',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
@@ -215,7 +211,7 @@ class _PassengerDetailsScreenState
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
 
-      Map<String, dynamic> ticketData = {
+      final ticketData = <String, dynamic>{
         'pnr': 'PNR${DateTime.now().millisecondsSinceEpoch % 1000000}',
         'airline': widget.flightData['airline'],
         'flightNumber': widget.flightData['flightNumber'],
@@ -234,7 +230,7 @@ class _PassengerDetailsScreenState
         'passengerName':
             '${passengers[0]['title']} ${passengers[0]['name']}${passengers.length > 1 ? ' + ${passengers.length - 1} more' : ''}',
         'passengerAge': widget.searchData['adults'] > 0 ? 'Adult' : 'Child',
-        'seatNumber': 'A-${(10 + DateTime.now().millisecond % 50)}',
+        'seatNumber': 'A-${10 + DateTime.now().millisecond % 50}',
         'seatClass': widget.searchData['class'],
         'aircraft': widget.flightData['plane'],
         'baggage': '20 kg',
@@ -255,7 +251,7 @@ class _PassengerDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = const Color(0xFF10B981);
+    const color = Color(0xFF10B981);
 
     return BaseServicePage(
       title: 'Passenger Details',
@@ -268,12 +264,12 @@ class _PassengerDetailsScreenState
                 color: color.withValues(alpha: 0.1),
                 borderRadius: AppTheme.radiusSmall,
               ),
-              child: Icon(Icons.group_rounded, color: color, size: 20),
+              child: const Icon(Icons.group_rounded, color: color, size: 20),
             ),
             const SizedBox(width: 12),
-            Text(
+            const Text(
               'Passenger Information',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -328,7 +324,7 @@ class _PassengerDetailsScreenState
           ),
           Text(
             '${controllers.length} Passenger(s)',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),

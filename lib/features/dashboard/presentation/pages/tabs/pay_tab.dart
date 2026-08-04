@@ -5,7 +5,7 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 class PayTab extends StatelessWidget {
   final bool isDark;
 
-  const PayTab({super.key, required this.isDark});
+  const PayTab({required this.isDark, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,6 @@ class PayTab extends StatelessWidget {
       slivers: [
         SliverAppBar(
           expandedHeight: 120,
-          floating: false,
           pinned: true,
           stretch: true,
           backgroundColor: isDark
@@ -182,7 +181,6 @@ class PayTab extends StatelessWidget {
                       ? Border.all(
                           color: AppTheme.textHintColor.withValues(alpha: 0.4),
                           width: 1.5,
-                          style: BorderStyle.solid,
                         )
                       : null,
                   borderRadius: BorderRadius.circular(18),

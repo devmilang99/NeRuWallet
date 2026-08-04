@@ -99,9 +99,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         MobileScanner(
           controller: _scannerController,
           onDetect: (capture) {
-            final List<Barcode> barcodes = capture.barcodes;
+            final barcodes = capture.barcodes;
             if (barcodes.isNotEmpty) {
-              final String? code = barcodes.first.rawValue;
+              final code = barcodes.first.rawValue;
               if (code != null) {
                 _scannerController.stop();
                 _showScanResult(code);
@@ -178,7 +178,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         decoration: BoxDecoration(
           color: Colors.black26,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white24, width: 1),
+          border: Border.all(color: Colors.white24),
         ),
         child: Icon(icon, color: Colors.white, size: 28),
       ),
@@ -238,17 +238,17 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      final double amount = 1250.00; // Mock base amount
-                      final double fee = TransactionService.getServiceCharge(
+                      const amount = 1250.00; // Mock base amount
+                      final fee = TransactionService.getServiceCharge(
                         TransactionType.qrPayment,
                         amount,
                       );
-                      final double tax = TransactionService.getTax(
+                      final tax = TransactionService.getTax(
                         TransactionType.qrPayment,
                         amount,
                       );
-                      final double totalPayable = amount + fee + tax;
-                      final double currentBalance = ref
+                      final totalPayable = amount + fee + tax;
+                      final currentBalance = ref
                           .read(balanceProvider)
                           .totalBalance;
 
@@ -310,11 +310,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   }
 
   Widget _buildMyQrView(bool isDark) {
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final user = authService.currentUser;
-    final String walletId = user != null
-        ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
-        : "NRW-GUEST-USER";
+    final walletId = user != null
+        ? 'NRW-${user.uid.substring(0, 8).toUpperCase()}'
+        : 'NRW-GUEST-USER';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -338,7 +338,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               children: [
                 QrImageView(
                   data: walletId,
-                  version: QrVersions.auto,
                   size: 220.0,
                   eyeStyle: QrEyeStyle(
                     eyeShape: QrEyeShape.square,

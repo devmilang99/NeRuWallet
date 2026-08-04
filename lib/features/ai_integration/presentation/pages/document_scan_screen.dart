@@ -7,7 +7,7 @@ import '../widgets/camera_view.dart';
 class DocumentScanScreen extends StatefulWidget {
   final Function(String) onDocumentCaptured;
 
-  const DocumentScanScreen({super.key, required this.onDocumentCaptured});
+  const DocumentScanScreen({required this.onDocumentCaptured, super.key});
 
   @override
   State<DocumentScanScreen> createState() => _DocumentScanScreenState();
@@ -17,6 +17,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
   final MLKitService _mlKitService = MLKitService();
   bool _isProcessing = false;
   bool _isBusy = false;
+  bool _isDocumentValid = false;
+  int _consecutiveValidFrames = 0;
+  static const int _requiredValidFrames = 2; // Reduced for demo speed
 
   Future<void> _handleImage(String path) async {
     if (_isProcessing) return;
@@ -49,15 +52,30 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     if (_isBusy || _isProcessing) return;
     _isBusy = true;
 
-    final text = await _mlKitService.processDocumentImage(inputImage);
+    try {
+      final text = await _mlKitService.processDocumentImage(inputImage);
+      final isValid = text != null;
 
-    if (text != null && text.length > 50) {
-      // Threshold for "valid" document text
-      _isProcessing = true; // Stop stream processing
-      widget.onDocumentCaptured(text);
+      if (mounted) {
+        setState(() {
+          _isDocumentValid = isValid;
+        });
+      }
+
+      if (isValid) {
+        _consecutiveValidFrames++;
+        if (_consecutiveValidFrames >= _requiredValidFrames) {
+          _isProcessing = true; // Stop stream processing
+          widget.onDocumentCaptured(text);
+        }
+      } else {
+        _consecutiveValidFrames = 0;
+      }
+    } catch (e) {
+      debugPrint('Error processing stream: $e');
+    } finally {
+      _isBusy = false;
     }
-
-    _isBusy = false;
   }
 
   @override
@@ -136,7 +154,10 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                 width: rectWidth,
                 height: rectHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: _isDocumentValid ? Colors.green : Colors.white,
+                    width: 3,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),

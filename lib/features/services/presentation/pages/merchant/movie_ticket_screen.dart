@@ -11,7 +11,7 @@ Future<void> _downloadTicket(
   required String provider,
   Map<String, dynamic>? data,
 }) async {
-  final bool hasPermission = await PermissionUtils.requestStoragePermission();
+  final hasPermission = await PermissionUtils.requestStoragePermission();
 
   if (!hasPermission) {
     if (context.mounted) {
@@ -73,9 +73,9 @@ void _shareTicket(
   required String provider,
   Map<String, dynamic>? data,
 }) {
-  final String text = data != null
+  final text = data != null
       ? "My Movie Ticket ($provider):\nMovie: ${data['movieName']}\nCinema: ${data['cinema']}\nShow: ${data['date']} at ${data['time']}\nSeats: ${(data['seatsBooked'] as List).join(', ')}\nRef: ${data['bookingRef']}\nShared via NeRuWallet"
-      : "My Movie Ticket details are attached. Shared via NeRuWallet";
+      : 'My Movie Ticket details are attached. Shared via NeRuWallet';
 
   Share.share(text);
 }
@@ -83,7 +83,7 @@ void _shareTicket(
 class MovieTicketScreen extends StatefulWidget {
   final String provider; // 'QFX' or 'FCube'
 
-  const MovieTicketScreen({super.key, required this.provider});
+  const MovieTicketScreen({required this.provider, super.key});
 
   @override
   State<MovieTicketScreen> createState() => _MovieTicketScreenState();
@@ -137,9 +137,9 @@ class MovieTicketScreenWithData extends StatelessWidget {
   final Map<String, dynamic> ticketData;
 
   const MovieTicketScreenWithData({
-    super.key,
     required this.provider,
     required this.ticketData,
+    super.key,
   });
 
   @override
@@ -171,7 +171,7 @@ Widget _buildTicketCard(
 ) {
   return Stack(
     children: [
-      Container(
+      DecoratedBox(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
           borderRadius: BorderRadius.circular(32),

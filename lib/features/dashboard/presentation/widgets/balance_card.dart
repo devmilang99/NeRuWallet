@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
-import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/providers/spending_limit_provider.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 
 class BalanceCard extends ConsumerWidget {
@@ -22,7 +22,6 @@ class BalanceCard extends ConsumerWidget {
   final VoidCallback? onAiAdvisorTap;
 
   const BalanceCard({
-    super.key,
     required this.isDark,
     required this.isVisible,
     required this.userName,
@@ -31,6 +30,7 @@ class BalanceCard extends ConsumerWidget {
     required this.totalExpenses,
     required this.showStats,
     required this.onToggleVisibility,
+    super.key,
     this.onIncomeTap,
     this.onExpenseTap,
     this.onAiAdvisorTap,
@@ -466,26 +466,17 @@ class BalanceCard extends ConsumerWidget {
   }
 
   Widget _buildLimitWarning(WidgetRef ref) {
-    final prefService = ref.watch(preferenceServiceProvider);
+    final limitAsync = ref.watch(spendingLimitProvider);
 
-    return FutureBuilder(
-      future: Future.wait([
-        prefService.getBool('monthly_limit_enabled'),
-        prefService.getString('monthly_spending_limit'),
-      ]),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox.shrink();
-
-        final enabled = snapshot.data![0] as bool? ?? false;
-        if (!enabled) return const SizedBox.shrink();
-
-        final limitStr = snapshot.data![1] as String? ?? '0.0';
-        final limit = double.tryParse(limitStr) ?? 0.0;
-        if (limit <= 0) return const SizedBox.shrink();
+    return limitAsync.when(
+      data: (limitData) {
+        if (!limitData.enabled || limitData.limit <= 0) {
+          return const SizedBox.shrink();
+        }
 
         final currentSpending = ref.watch(balanceProvider).monthlyExpenses;
 
-        if (currentSpending > limit) {
+        if (currentSpending > limitData.limit) {
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -506,7 +497,7 @@ class BalanceCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
-                    "Monthly spending limit exceeded!",
+                    'Monthly spending limit exceeded!',
                     style: TextStyle(
                       color: AppTheme.errorColor,
                       fontSize: 12,
@@ -515,7 +506,7 @@ class BalanceCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  "Rs. ${currentSpending.toStringAsFixed(0)} / ${limit.toStringAsFixed(0)}",
+                  'Rs. ${currentSpending.toStringAsFixed(0)} / ${limitData.limit.toStringAsFixed(0)}',
                   style: const TextStyle(
                     color: AppTheme.errorColor,
                     fontSize: 12,
@@ -528,6 +519,8 @@ class BalanceCard extends ConsumerWidget {
         }
         return const SizedBox.shrink();
       },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }

@@ -36,7 +36,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   Future<void> _pickContact() async {
     try {
       // Request permission first
-      bool? granted = await FlutterContacts.requestPermission();
+      final granted = await FlutterContacts.requestPermission();
 
       if (granted == true) {
         try {
@@ -68,7 +68,7 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   }
 
   void _setPhone(String number) {
-    String num = number.replaceAll(RegExp(r'[^0-9]'), '');
+    var num = number.replaceAll(RegExp(r'[^0-9]'), '');
     if (num.startsWith('977')) num = num.substring(3);
     if (num.length > 10) num = num.substring(num.length - 10);
     setState(() => _phoneController.text = num);
@@ -161,8 +161,8 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
       return;
     }
 
-    final double totalPayable = amount;
-    final double currentBalance = ref.read(balanceProvider).totalBalance;
+    final totalPayable = amount;
+    final currentBalance = ref.read(balanceProvider).totalBalance;
 
     if (totalPayable > currentBalance) {
       GlassDialog.showError(
@@ -347,7 +347,6 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
           label: 'Optional Message',
           child: TextField(
             controller: _messageController,
-            maxLines: 1,
             decoration: InputDecoration(
               hintText: 'What is this for?',
               fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
@@ -377,15 +376,15 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
         borderRadius: AppTheme.radiusMedium,
         border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             color: AppTheme.primaryColor,
             size: 20,
           ),
-          const SizedBox(width: 12),
-          const Expanded(
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Transfers between NeRuWallet users are free and instant.',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),

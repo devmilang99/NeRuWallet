@@ -50,10 +50,10 @@ class AppTheme {
   static ThemeData darkTheme = _buildTheme(Brightness.dark);
 
   static ThemeData _buildTheme(Brightness brightness) {
-    final bool isDark = brightness == Brightness.dark;
-    final Color bgColor = isDark ? backgroundDark : backgroundColor;
-    final Color surfColor = isDark ? surfaceDark : surfaceColor;
-    final Color textColor = isDark ? textBodyDark : textBodyColor;
+    final isDark = brightness == Brightness.dark;
+    final bgColor = isDark ? backgroundDark : backgroundColor;
+    final surfColor = isDark ? surfaceDark : surfaceColor;
+    final textColor = isDark ? textBodyDark : textBodyColor;
 
     return ThemeData(
       useMaterial3: true,
@@ -141,7 +141,6 @@ class AppTheme {
           borderRadius: radiusMedium,
           borderSide: BorderSide(
             color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
-            width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -162,7 +161,6 @@ class AppTheme {
             color: isDark
                 ? Colors.white.withValues(alpha: 0.05)
                 : Colors.black.withValues(alpha: 0.05),
-            width: 1,
           ),
         ),
       ),

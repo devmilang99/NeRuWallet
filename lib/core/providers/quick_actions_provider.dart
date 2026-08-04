@@ -105,11 +105,11 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
   ];
 
   Future<void> _loadSelectedActions() async {
-    final List<String>? actionLabels = await _prefService.getStringList(
+    final actionLabels = await _prefService.getStringList(
       'selected_quick_actions',
     );
     if (actionLabels != null && actionLabels.isNotEmpty) {
-      final List<QuickActionModel> loaded = [];
+      final loaded = <QuickActionModel>[];
       for (final label in actionLabels) {
         final action = allAvailableActions.firstWhere(
           (a) => a.label == label,
@@ -131,8 +131,8 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
-    final List<QuickActionModel> updatedList = [...state];
-    final QuickActionModel item = updatedList.removeAt(oldIndex);
+    final updatedList = <QuickActionModel>[...state];
+    final item = updatedList.removeAt(oldIndex);
     updatedList.insert(newIndex, item);
     state = updatedList;
     _saveSelectedActions();

@@ -8,7 +8,7 @@ import 'package:neruwallet/core/widgets/glass_dialog.dart';
 class PromoCard extends ConsumerStatefulWidget {
   final bool isDark;
 
-  const PromoCard({super.key, required this.isDark});
+  const PromoCard({required this.isDark, super.key});
 
   @override
   ConsumerState<PromoCard> createState() => _PromoCardState();

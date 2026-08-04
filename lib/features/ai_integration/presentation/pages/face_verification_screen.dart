@@ -5,10 +5,12 @@ import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import '../../services/ml_kit_service.dart';
 import '../widgets/camera_view.dart';
 
+enum LivenessStep { centerFace, blink, smile, turnLeft, turnRight, complete }
+
 class FaceVerificationScreen extends StatefulWidget {
   final Function(bool) onFaceVerified;
 
-  const FaceVerificationScreen({super.key, required this.onFaceVerified});
+  const FaceVerificationScreen({required this.onFaceVerified, super.key});
 
   @override
   State<FaceVerificationScreen> createState() => _FaceVerificationScreenState();
@@ -19,33 +21,111 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   bool _isProcessing = false;
   bool _isBusy = false;
 
-  Future<void> _handleImage(String path) async {
-    if (_isProcessing) return;
-    setState(() {
-      _isProcessing = true;
-    });
+  LivenessStep _currentStep = LivenessStep.centerFace;
+  double _stepProgress = 0.0;
+  String _instruction = 'Center your face in the frame';
 
-    final success = await _mlKitService.verifyFace(path);
-
-    setState(() {
-      _isProcessing = false;
-    });
-
-    widget.onFaceVerified(success);
-  }
+  // Detection state
+  bool _hasBlinked = false;
+  bool _isFaceAligned = false;
 
   Future<void> _processImageStream(InputImage inputImage) async {
     if (_isBusy || _isProcessing) return;
     _isBusy = true;
 
-    final success = await _mlKitService.verifyFaceImage(inputImage);
+    try {
+      final faceState = await _mlKitService.detectFaceState(inputImage);
 
-    if (success) {
-      _isProcessing = true; // Stop stream processing
-      widget.onFaceVerified(true);
+      if (!faceState.isPresent) {
+        _updateInstruction('No face detected. Please center your face.');
+        if (mounted && _isFaceAligned) setState(() => _isFaceAligned = false);
+        _isBusy = false;
+        return;
+      }
+
+      // Check basic alignment for green border - Relaxed for demo
+      final rotY = faceState.headEulerAngleY ?? 0;
+      final rotX = faceState.headEulerAngleX ?? 0;
+      final aligned = rotY.abs() < 25 && rotX.abs() < 25;
+      if (mounted && _isFaceAligned != aligned) {
+        setState(() => _isFaceAligned = aligned);
+      }
+
+      switch (_currentStep) {
+        case LivenessStep.centerFace:
+          if (rotY.abs() < 15) {
+            _nextStep(LivenessStep.blink, 'Now, please blink your eyes');
+          } else {
+            _updateInstruction('Look straight at the camera');
+          }
+          break;
+
+        case LivenessStep.blink:
+          final leftEye = faceState.leftEyeOpenProb ?? 1.0;
+          final rightEye = faceState.rightEyeOpenProb ?? 1.0;
+          if (leftEye < 0.4 && rightEye < 0.4) {
+            _hasBlinked = true;
+          }
+          if (_hasBlinked && leftEye > 0.5 && rightEye > 0.5) {
+            _nextStep(LivenessStep.smile, 'Great! Now, give us a smile');
+          }
+          break;
+
+        case LivenessStep.smile:
+          final smile = faceState.smileProb ?? 0.0;
+          if (smile > 0.4) {
+            _nextStep(
+              LivenessStep.turnLeft,
+              'Almost there! Turn your head slowly to the left',
+            );
+          }
+          break;
+
+        case LivenessStep.turnLeft:
+          if (rotY > 15) {
+            _nextStep(
+              LivenessStep.turnRight,
+              'Now turn your head slowly to the right',
+            );
+          }
+          break;
+
+        case LivenessStep.turnRight:
+          if (rotY < -15) {
+            _nextStep(LivenessStep.complete, 'Verification complete!');
+          }
+          break;
+
+        case LivenessStep.complete:
+          if (!_isProcessing) {
+            _isProcessing = true;
+            widget.onFaceVerified(true);
+          }
+          break;
+      }
+    } catch (e) {
+      debugPrint('Liveness error: $e');
+    } finally {
+      _isBusy = false;
     }
+  }
 
-    _isBusy = false;
+  void _nextStep(LivenessStep step, String instruction) {
+    if (mounted) {
+      setState(() {
+        _currentStep = step;
+        _instruction = instruction;
+        _stepProgress = (step.index) / (LivenessStep.values.length - 1);
+      });
+    }
+  }
+
+  void _updateInstruction(String instruction) {
+    if (mounted && _instruction != instruction) {
+      setState(() {
+        _instruction = instruction;
+      });
+    }
   }
 
   @override
@@ -59,13 +139,36 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
     return Stack(
       children: [
         CameraView(
-          title: 'Face Verification',
-          instruction:
-              'Look straight into the camera. It will capture automatically.',
-          onImageCaptured: _handleImage,
+          title: 'Liveness Test',
+          instruction: _instruction,
+          onImageCaptured: (_) {},
           onImageStream: _processImageStream,
           initialDirection: CameraLensDirection.front,
           overlay: _buildOverlay(),
+        ),
+        Positioned(
+          top: 100,
+          left: 40,
+          right: 40,
+          child: Column(
+            children: [
+              LinearProgressIndicator(
+                value: _stepProgress,
+                backgroundColor: Colors.white24,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                borderRadius: BorderRadius.circular(10),
+                minHeight: 10,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Step ${(_currentStep.index + 1).clamp(1, 5)} of 5',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
         if (_isProcessing)
           Container(
@@ -76,10 +179,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text(
-                    'Verifying Face...',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  Text('Finalizing...', style: TextStyle(color: Colors.white)),
                 ],
               ),
             ),
@@ -127,7 +227,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 width: rectWidth,
                 height: rectHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: _isFaceAligned ? Colors.green : Colors.white,
+                    width: 3,
+                  ),
                   borderRadius: BorderRadius.all(
                     Radius.elliptical(rectWidth, rectHeight),
                   ),

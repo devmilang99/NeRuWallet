@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-class ReceiveMoneyScreen extends StatelessWidget {
+class ReceiveMoneyScreen extends ConsumerWidget {
   const ReceiveMoneyScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final user = authService.currentUser;
-    final String walletId = user != null
-        ? "NRW-${user.uid.substring(0, 8).toUpperCase()}"
-        : "NRW-GUEST-USER";
+    final walletId = user != null
+        ? 'NRW-${user.uid.substring(0, 8).toUpperCase()}'
+        : 'NRW-GUEST-USER';
 
     return BaseServicePage(
       title: 'Receive Money',
@@ -42,7 +43,6 @@ class ReceiveMoneyScreen extends StatelessWidget {
                       children: [
                         QrImageView(
                           data: walletId,
-                          version: QrVersions.auto,
                           size: 200.0,
                           eyeStyle: QrEyeStyle(
                             eyeShape: QrEyeShape.square,

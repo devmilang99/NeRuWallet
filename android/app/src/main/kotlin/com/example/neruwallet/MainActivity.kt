@@ -1,5 +1,114 @@
 package com.example.neruwallet
 
+import android.os.Bundle
+import androidx.annotation.NonNull
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.Executor
 
-class MainActivity : FlutterFragmentActivity()
+class MainActivity : FlutterFragmentActivity() {
+    private val CHANNEL = "com.example.neruwallet/security"
+    private lateinit var securityProvider: SecurityProvider
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        securityProvider = SecurityProvider(this)
+    }
+
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "generateKey" -> {
+                    if (securityProvider.generateHardwareBackedKey()) {
+                        result.success(true)
+                    } else {
+                        result.error(
+                            "KEY_GEN_FAILED",
+                            "Failed to generate hardware-backed key",
+                            null
+                        )
+                    }
+                }
+
+                "signData" -> {
+                    val dataToSign = call.argument<ByteArray>("data")
+                    if (dataToSign == null) {
+                        result.error("INVALID_ARGUMENT", "Data to sign is null", null)
+                        return@setMethodCallHandler
+                    }
+                    authenticateAndSign(dataToSign, result)
+                }
+
+                "isKeyGenerated" -> {
+                    result.success(securityProvider.isKeyGenerated())
+                }
+
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+    }
+
+    private fun authenticateAndSign(data: ByteArray, result: MethodChannel.Result) {
+        val executor: Executor = ContextCompat.getMainExecutor(this)
+        val signature = securityProvider.getSignatureObject()
+
+        if (signature == null) {
+            result.error("KEY_NOT_FOUND", "Signing key not found. Generate it first.", null)
+            return
+        }
+
+        val biometricPrompt = BiometricPrompt(
+            this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    result.error("AUTH_ERROR", errString.toString(), null)
+                }
+
+                override fun onAuthenticationSucceeded(authResult: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(authResult)
+                    try {
+                        val cryptoSignature = authResult.cryptoObject?.signature
+                        cryptoSignature?.update(data)
+                        val signedData = cryptoSignature?.sign()
+                        result.success(signedData)
+                    } catch (e: Exception) {
+                        result.error("SIGNING_FAILED", e.message, null)
+                    }
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    // Authentication failed, but user can try again (e.g. wrong finger)
+                }
+            })
+
+        val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Authorize Transaction")
+            .setSubtitle("Sign transaction using hardware-backed key")
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            promptInfoBuilder.setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+        } else {
+            promptInfoBuilder.setNegativeButtonText("Cancel")
+        }
+
+        biometricPrompt.authenticate(
+            promptInfoBuilder.build(),
+            BiometricPrompt.CryptoObject(signature)
+        )
+    }
+}
+

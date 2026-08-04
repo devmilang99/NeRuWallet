@@ -119,8 +119,8 @@ class AppDatabase extends _$AppDatabase {
 
   /// Records a transaction atomically
   Future<Transaction> recordTransaction(TransactionsCompanion entry) async {
-    return await transaction(() async {
-      return await into(transactions).insertReturning(entry);
+    return transaction(() async {
+      return into(transactions).insertReturning(entry);
     });
   }
 

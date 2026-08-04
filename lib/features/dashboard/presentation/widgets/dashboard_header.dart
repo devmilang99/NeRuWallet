@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/providers/theme_provider.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+
 import '../providers/notification_provider.dart';
 
 class DashboardHeader extends ConsumerWidget {
@@ -13,11 +14,7 @@ class DashboardHeader extends ConsumerWidget {
   final VoidCallback onNotificationTap;
 
   const DashboardHeader({
-    super.key,
-    required this.isDark,
-    required this.userName,
-    required this.onProfileTap,
-    required this.onNotificationTap,
+    required this.isDark, required this.userName, required this.onProfileTap, required this.onNotificationTap, super.key,
   });
 
   @override
@@ -108,7 +105,7 @@ class DashboardHeader extends ConsumerWidget {
                     alpha: 0.1,
                   ),
                   child: Text(
-                    userName.split(' ').map((e) => e[0]).take(2).join(''),
+                    userName.split(' ').map((e) => e[0]).take(2).join(),
                     style: const TextStyle(
                       color: AppTheme.primaryColor,
                       fontWeight: FontWeight.bold,

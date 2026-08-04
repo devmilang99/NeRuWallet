@@ -32,7 +32,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     required double amount,
     required String target,
   }) async {
-    state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+    state = state.copyWith(isLoading: true, isSuccess: false);
 
     // Get current limit settings
     final prefService = _ref.read(preferenceServiceProvider);

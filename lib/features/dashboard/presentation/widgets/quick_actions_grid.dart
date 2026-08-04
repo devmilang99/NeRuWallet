@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/providers/quick_actions_provider.dart';
+import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
+
 import '../../data/models/quick_action_model.dart';
 import '../pages/quick_actions_manager_screen.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class QuickActionsGrid extends ConsumerStatefulWidget {
   final bool isDark;
 
-  const QuickActionsGrid({super.key, required this.isDark});
+  const QuickActionsGrid({required this.isDark, super.key});
 
   @override
   ConsumerState<QuickActionsGrid> createState() => _QuickActionsGridState();

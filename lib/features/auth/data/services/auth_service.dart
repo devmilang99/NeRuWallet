@@ -1,11 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/features/auth/domain/models/user_model.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
+final authServiceProvider = Provider<AuthService>((ref) => AuthService(ref));
+
 class AuthService {
+  final Ref _ref;
   final sb.SupabaseClient _supabase = sb.Supabase.instance.client;
   late final GoogleSignIn _googleSignIn;
 
@@ -20,7 +25,7 @@ class AuthService {
     );
   }
 
-  AuthService() {
+  AuthService(this._ref) {
     _googleSignIn = GoogleSignIn(
       serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
     );
@@ -44,7 +49,7 @@ class AuthService {
       final userId = response.user!.id;
 
       // Batch upsert initial preferences (PIN, Question, etc.)
-      final List<Map<String, dynamic>> prefsToSync = [
+      final prefsToSync = <Map<String, dynamic>>[
         {
           'user_id': userId,
           'key': 'registration_data',
@@ -61,8 +66,8 @@ class AuthService {
       await _supabase
           .from('app_preferences')
           .upsert(prefsToSync, onConflict: 'user_id,key')
-          .then((_) => debugPrint('Initial security data synced'))
-          .catchError((e) => debugPrint('Initial sync failed: $e'));
+          .then((_) => AppLogger.i('Initial security data synced'))
+          .catchError((e) => AppLogger.e('Initial sync failed', e));
 
       return UserModel(
         uid: userId,
@@ -71,7 +76,7 @@ class AuthService {
         isNewUser: true,
       );
     } catch (e) {
-      debugPrint('Supabase SignUp Error: $e');
+      AppLogger.e('Supabase SignUp Error', e);
       rethrow;
     }
   }
@@ -92,13 +97,8 @@ class AuthService {
         params: {'email_input': email},
       );
       return !(res as bool);
-
-      // For now, we'll assume it's available or the check is handled by the signup itself.
-      // To provide a better UX, we'll simulate a small delay.
-      await Future.delayed(const Duration(milliseconds: 500));
-      return true;
     } catch (e) {
-      debugPrint('Email Check Error: $e');
+      AppLogger.e('Email Check Error', e);
       return true; // Fallback to true to not block signup if check fails
     }
   }
@@ -119,10 +119,9 @@ class AuthService {
         uid: response.user!.id,
         email: response.user!.email ?? '',
         name: response.user!.userMetadata?['full_name'] ?? 'User',
-        isNewUser: false,
       );
     } catch (e) {
-      debugPrint('Supabase SignIn Error: $e');
+      AppLogger.e('Supabase SignIn Error', e);
       rethrow;
     }
   }
@@ -130,11 +129,10 @@ class AuthService {
   Future<UserModel?> signInWithGoogle() async {
     try {
       // 1. Trigger Google Sign In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
       final idToken = googleAuth.idToken;
 
@@ -160,25 +158,24 @@ class AuthService {
       final session = response.session;
 
       // Determine if new user based on timestamps
-      final bool isNewUser =
+      final isNewUser =
           session != null &&
-          user.createdAt != null &&
           user.lastSignInAt != null &&
           DateTime.parse(
-                user.createdAt!,
+                user.createdAt,
               ).difference(DateTime.parse(user.lastSignInAt!)).inSeconds.abs() <
               5;
 
       // Move upsert to a background task so it doesn't block or fail the login if DB schema/RLS has issues
-      _supabase
+      await _supabase
           .from('app_preferences')
           .upsert({
             'user_id': user.id,
             'key': 'registration_data',
             'value': 'Google Login: ${user.email}, Name: $name',
           })
-          .then((_) => debugPrint('Registration data synced'))
-          .catchError((e) => debugPrint('Registration sync failed: $e'));
+          .then((_) => AppLogger.i('Registration data synced'))
+          .catchError((e) => AppLogger.e('Registration sync failed', e));
 
       return UserModel(
         uid: user.id,
@@ -188,7 +185,7 @@ class AuthService {
         isNewUser: isNewUser,
       );
     } catch (e) {
-      debugPrint('Google Sign In Error: $e');
+      AppLogger.e('Google Sign In Error', e);
       rethrow;
     }
   }
@@ -225,7 +222,7 @@ class AuthService {
             response.session?.user.lastSignInAt,
       );
     } catch (e) {
-      debugPrint('Apple Sign In Error: $e');
+      AppLogger.e('Apple Sign In Error', e);
       rethrow;
     }
   }
@@ -234,7 +231,7 @@ class AuthService {
     try {
       await _supabase.auth.updateUser(sb.UserAttributes(password: newPassword));
     } catch (e) {
-      debugPrint('Password Change Error: $e');
+      AppLogger.e('Password Change Error', e);
       rethrow;
     }
   }
@@ -243,8 +240,25 @@ class AuthService {
     try {
       await _googleSignIn.signOut();
       await _supabase.auth.signOut();
+      await _ref.read(preferenceServiceProvider).clearAuthPreferences();
     } catch (e) {
-      debugPrint("Error during signOut: $e");
+      AppLogger.e('Error during signOut', e);
+    }
+  }
+
+  /// Validates the current session with the Supabase server.
+  /// Returns true if the session is still valid.
+  Future<bool> validateSession() async {
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) return false;
+
+      // Attempt to get the user from the server to verify session validity
+      final response = await _supabase.auth.getUser();
+      return response.user != null;
+    } catch (e) {
+      AppLogger.e('Session validation failed', e);
+      return false;
     }
   }
 
@@ -257,7 +271,7 @@ class AuthService {
       await _supabase.auth.signOut();
       await _googleSignIn.signOut();
     } catch (e) {
-      debugPrint("Error deleting account: $e");
+      AppLogger.e('Error deleting account', e);
       await signOut();
     }
   }

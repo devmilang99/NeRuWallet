@@ -5,7 +5,7 @@ class IconUtils {
   /// This is used to avoid non-constant IconData invocations which break icon tree shaking.
   static IconData getIconData(int codePoint) {
     // Map of all icons used in transactions and quick actions
-    final Map<int, IconData> iconMap = {
+    final iconMap = <int, IconData>{
       Icons.account_balance_wallet_rounded.codePoint:
           Icons.account_balance_wallet_rounded,
       Icons.file_download_outlined.codePoint: Icons.file_download_outlined,

@@ -16,11 +16,11 @@ class BillPaymentScreen extends ConsumerStatefulWidget {
   final String label;
 
   const BillPaymentScreen({
-    super.key,
     required this.billType,
     required this.icon,
     required this.color,
     required this.label,
+    super.key,
   });
 
   @override
@@ -95,16 +95,13 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(
+    final fee = TransactionService.getServiceCharge(
       TransactionType.utility,
       amount,
     );
-    final double tax = TransactionService.getTax(
-      TransactionType.utility,
-      amount,
-    );
-    final double totalPayable = amount + fee + tax;
-    final double currentBalance = ref.read(balanceProvider).totalBalance;
+    final tax = TransactionService.getTax(TransactionType.utility, amount);
+    final totalPayable = amount + fee + tax;
+    final currentBalance = ref.read(balanceProvider).totalBalance;
 
     if (totalPayable > currentBalance) {
       GlassDialog.showError(

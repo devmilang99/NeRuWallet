@@ -10,9 +10,9 @@ class HistoryTab extends StatefulWidget {
   final List<Transaction> transactions;
 
   const HistoryTab({
-    super.key,
     required this.isDark,
     required this.transactions,
+    super.key,
   });
 
   @override
@@ -103,7 +103,6 @@ class _HistoryTabState extends State<HistoryTab> {
       slivers: [
         SliverAppBar(
           expandedHeight: 120,
-          floating: false,
           pinned: true,
           stretch: true,
           backgroundColor: widget.isDark

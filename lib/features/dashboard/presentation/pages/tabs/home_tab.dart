@@ -24,7 +24,6 @@ class HomeTab extends StatelessWidget {
   final VoidCallback? onViewAll;
 
   const HomeTab({
-    super.key,
     required this.isDark,
     required this.userName,
     required this.balanceVisible,
@@ -35,6 +34,7 @@ class HomeTab extends StatelessWidget {
     required this.totalBalance,
     required this.totalIncome,
     required this.totalExpenses,
+    super.key,
     this.onViewAll,
   });
 
@@ -46,7 +46,6 @@ class HomeTab extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 110,
           floating: true,
-          pinned: false,
           elevation: 0,
           backgroundColor: Colors.transparent,
           flexibleSpace: FlexibleSpaceBar(
@@ -98,7 +97,7 @@ class HomeTab extends StatelessWidget {
             ),
           ),
         ),
-        SliverToBoxAdapter(child: const SizedBox(height: 12)),
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
         SliverToBoxAdapter(child: QuickActionsGrid(isDark: isDark)),
         SliverToBoxAdapter(child: PromoCard(isDark: isDark)),
         SliverToBoxAdapter(

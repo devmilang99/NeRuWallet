@@ -8,7 +8,7 @@ import 'passenger_details_screen.dart';
 class FlightSelectionScreen extends StatefulWidget {
   final Map<String, dynamic> searchData;
 
-  const FlightSelectionScreen({super.key, required this.searchData});
+  const FlightSelectionScreen({required this.searchData, super.key});
 
   @override
   State<FlightSelectionScreen> createState() => _FlightSelectionScreenState();
@@ -204,7 +204,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = const Color(0xFF10B981);
+    const color = Color(0xFF10B981);
 
     return BaseServicePage(
       title: 'Select Flight',
@@ -246,7 +246,10 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
               Text(
                 widget.searchData['class'],
                 textAlign: TextAlign.end,
-                style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -323,7 +326,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                           color: color.withValues(alpha: 0.1),
                                           borderRadius: AppTheme.radiusSmall,
                                         ),
-                                        child: Icon(
+                                        child: const Icon(
                                           Icons.flight_rounded,
                                           color: color,
                                           size: 16,
@@ -346,7 +349,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                 const SizedBox(width: 12),
                                 Text(
                                   'Rs. ${flight['price']}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: color,
                                     fontSize: 16,
@@ -435,7 +438,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                 Expanded(
                                   child: Text(
                                     flight['plane'],
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Colors.grey,
                                       fontSize: 11,
                                     ),
@@ -444,7 +447,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
+                                const Text(
                                   'Non-stop',
                                   style: TextStyle(
                                     color: color,

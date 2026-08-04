@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/providers/kyc_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
-import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
@@ -121,14 +120,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
                 const SizedBox(height: 24),
                 Text(
-                  "Biometric Authentication",
+                  'Biometric Authentication',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Would you like to enable biometric authentication for a more secure and convenient experience?",
+                  'Would you like to enable biometric authentication for a more secure and convenient experience?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isDark ? Colors.white70 : Colors.black54,
@@ -157,7 +156,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     ),
                   ),
                   child: const Text(
-                    "Enable Biometrics",
+                    'Enable Biometrics',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -174,7 +173,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: const Text(
-                            "You can also manage these settings later in your Profile.",
+                            'You can also manage these settings later in your Profile.',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                           behavior: SnackBarBehavior.floating,
@@ -182,7 +181,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           backgroundColor: AppTheme.primaryColor,
-                          duration: const Duration(seconds: 4),
                         ),
                       );
                     }
@@ -195,7 +193,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       Navigator.pop(context);
                     },
                     child: Text(
-                      "Skip for now",
+                      'Skip for now',
                       style: TextStyle(
                         color: isDark ? Colors.white60 : Colors.grey[600],
                         fontWeight: FontWeight.w600,
@@ -213,8 +211,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   void _showBiometricSetupDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    bool enableLogin = false;
-    bool enableTrans = false;
+    var enableLogin = false;
+    var enableTrans = false;
 
     showModalBottomSheet(
       context: context,
@@ -259,14 +257,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ).animate().scale(),
                   const SizedBox(height: 16),
                   Text(
-                    "Secure your wallet",
+                    'Secure your wallet',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Enable biometrics for a faster and more secure experience.",
+                    'Enable biometrics for a faster and more secure experience.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isDark ? Colors.white70 : Colors.black54,
@@ -274,21 +272,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
                   const SizedBox(height: 32),
                   _buildSetupToggle(
-                    "App Login",
-                    "Unlock wallet with biometrics",
+                    'App Login',
+                    'Unlock wallet with biometrics',
                     enableLogin,
                     (v) => setDialogState(() => enableLogin = v),
                   ),
                   const SizedBox(height: 12),
                   _buildSetupToggle(
-                    "Transactions",
-                    "Authorize payments securely",
+                    'Transactions',
+                    'Authorize payments securely',
                     enableTrans,
                     (v) => setDialogState(() => enableTrans = v),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "You can also manage these settings later in your Profile.",
+                    'You can also manage these settings later in your Profile.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -312,7 +310,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             );
                             if (context.mounted) Navigator.pop(context);
                           },
-                          child: const Text("Cancel"),
+                          child: const Text('Cancel'),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -356,7 +354,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               Navigator.pop(context);
                               GlassDialog.showSuccess(
                                 context,
-                                "Biometrics setup successfully!",
+                                'Biometrics setup successfully!',
                               );
                             }
                           },
@@ -366,7 +364,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               borderRadius: AppTheme.radiusMedium,
                             ),
                           ),
-                          child: const Text("Enable"),
+                          child: const Text('Enable'),
                         ),
                       ),
                     ],
@@ -427,8 +425,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   void _loadUserName() {
-    final authService = AuthService();
-    final user = authService.currentUser;
+    final user = ref.read(authServiceProvider).currentUser;
     if (user != null && mounted) {
       setState(() {
         _userName = user.name;
@@ -463,7 +460,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isKycVerified = kycState.valueOrNull ?? false;
 
     final balanceState = ref.watch(balanceProvider);
-    final List<Transaction> transactions = balanceState.transactions;
+    final transactions = balanceState.transactions;
 
     final bottomInset = MediaQuery.of(context).padding.bottom;
     // Proper adaptive padding for the floating navigation bar
@@ -579,7 +576,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 color: (isDark ? Colors.white : Colors.black).withValues(
                   alpha: 0.1,
                 ),
-                width: 1,
               ),
             ),
             child: Row(

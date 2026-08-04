@@ -68,7 +68,7 @@ class _ChangePinProfileScreenState
 
       if (_oldPinController.text != savedPin) {
         if (mounted) {
-          GlassDialog.showError(context, "Old PIN is incorrect.");
+          GlassDialog.showError(context, 'Old PIN is incorrect.');
         }
         _oldPinController.clear();
         _oldPinFocusNode.requestFocus();
@@ -84,7 +84,7 @@ class _ChangePinProfileScreenState
     if (_step == 1) {
       if (_pinController.text.length != 4) {
         if (mounted) {
-          GlassDialog.showError(context, "PIN must be 4 digits.");
+          GlassDialog.showError(context, 'PIN must be 4 digits.');
         }
         return;
       }
@@ -118,14 +118,14 @@ class _ChangePinProfileScreenState
           Navigator.pop(context); // Close loading
           GlassDialog.showSuccess(
             context,
-            "Transaction PIN updated successfully!",
+            'Transaction PIN updated successfully!',
             onConfirm: () => context.go('/dashboard'),
           );
         }
       } catch (e) {
         if (mounted) {
           Navigator.pop(context); // Close loading
-          GlassDialog.showError(context, "Update failed: ${e.toString()}");
+          GlassDialog.showError(context, 'Update failed: ${e.toString()}');
         }
       }
     }
@@ -147,7 +147,7 @@ class _ChangePinProfileScreenState
       ),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Change PIN"),
+          title: const Text('Change PIN'),
           centerTitle: true,
           elevation: 0,
           backgroundColor: Colors.transparent,
@@ -168,8 +168,8 @@ class _ChangePinProfileScreenState
                 const SizedBox(height: 32),
                 Text(
                   _step == 0
-                      ? "Verify your current identity to update your PIN"
-                      : "Choose a new 4-digit PIN for your transactions",
+                      ? 'Verify your current identity to update your PIN'
+                      : 'Choose a new 4-digit PIN for your transactions',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: isDark
@@ -183,7 +183,7 @@ class _ChangePinProfileScreenState
                   _buildOtpSection(
                     controller: _oldPinController,
                     focusNode: _oldPinFocusNode,
-                    label: "Old PIN",
+                    label: 'Old PIN',
                     isDark: isDark,
                     onComplete: _handleComplete,
                   )
@@ -191,7 +191,7 @@ class _ChangePinProfileScreenState
                   _buildOtpSection(
                     controller: _pinController,
                     focusNode: _pinFocusNode,
-                    label: "New PIN",
+                    label: 'New PIN',
                     isDark: isDark,
                     onComplete: () {
                       setState(() => _step = 2);
@@ -214,7 +214,7 @@ class _ChangePinProfileScreenState
                     _buildOtpSection(
                       controller: _confirmPinController,
                       focusNode: _confirmPinFocusNode,
-                      label: "Confirm New PIN",
+                      label: 'Confirm New PIN',
                       isDark: isDark,
                       onComplete: _handleComplete,
                       isConfirm: true,
@@ -223,7 +223,7 @@ class _ChangePinProfileScreenState
                       Padding(
                         padding: const EdgeInsets.only(top: 12.0),
                         child: const Text(
-                          "PINs do not match. Please try again.",
+                          'PINs do not match. Please try again.',
                           style: TextStyle(
                             color: AppTheme.errorColor,
                             fontSize: 13,
@@ -241,7 +241,7 @@ class _ChangePinProfileScreenState
                       '/auth/pin-setup',
                       extra: {'mode': PinMode.reset},
                     ),
-                    child: const Text("Forgot PIN?"),
+                    child: const Text('Forgot PIN?'),
                   ),
               ],
             ),
@@ -305,7 +305,6 @@ class _ChangePinProfileScreenState
               child: TextField(
                 controller: controller,
                 focusNode: focusNode,
-                autofocus: false,
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 onChanged: (val) {
@@ -332,13 +331,13 @@ class _ChangePinProfileScreenState
     bool isDark,
     bool enabled,
   ) {
-    String char = "";
+    var char = '';
     if (controller.text.length > index) {
       char = controller.text[index];
     }
 
-    bool isFocused = enabled && controller.text.length == index;
-    bool isWrong = false;
+    final isFocused = enabled && controller.text.length == index;
+    var isWrong = false;
     if (_showMismatchError && controller == _confirmPinController) {
       if (index < controller.text.length &&
           index < _pinController.text.length) {

@@ -22,21 +22,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<OnboardingItem> _items = [
     OnboardingItem(
-      title: "Secure & Scalable",
+      title: 'Secure & Scalable',
       description:
-          "Experience professional digital payments with high-level security protocols and enterprise scalability.",
+          'Experience professional digital payments with high-level security protocols and enterprise scalability.',
       icon: Icons.security_rounded,
     ),
     OnboardingItem(
-      title: "Real-time Transactions",
+      title: 'Real-time Transactions',
       description:
-          "Send and receive money instantly with zero latency. Secure, fast, and simple.",
+          'Send and receive money instantly with zero latency. Secure, fast, and simple.',
       icon: Icons.bolt_rounded,
     ),
     OnboardingItem(
-      title: "Merchant Ecosystem",
+      title: 'Merchant Ecosystem',
       description:
-          "Integrate with local and international merchants with simple APIs and effortless bill payments.",
+          'Integrate with local and international merchants with simple APIs and effortless bill payments.',
       icon: Icons.account_balance_rounded,
     ),
   ];
@@ -80,7 +80,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
@@ -94,7 +94,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: TextButton(
                   onPressed: _onDone,
                   child: Text(
-                    "Skip",
+                    'Skip',
                     style: TextStyle(
                       color: isDark
                           ? Colors.white70
@@ -130,8 +130,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     effect: ExpandingDotsEffect(
                       dotHeight: 8,
                       dotWidth: 8,
-                      spacing: 8,
-                      expansionFactor: 3,
                       dotColor: isDark ? Colors.white24 : Colors.black12,
                       activeDotColor: AppTheme.primaryColor,
                     ),
@@ -160,8 +158,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       child: Text(
                         _currentPageIndex == _items.length - 1
-                            ? "Get Started"
-                            : "Next",
+                            ? 'Get Started'
+                            : 'Next',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -180,7 +178,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildPage(OnboardingItem item) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

@@ -74,7 +74,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
     TextEditingController controller, {
     DateTime? firstDate,
   }) async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: firstDate ?? DateTime.now(),
       firstDate: firstDate ?? DateTime.now(),
@@ -97,16 +97,14 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
 
   void _initiateVerification() {
     if (_formKey.currentState!.validate()) {
-      final double amount = double.parse(
-        _priceController.text.replaceAll(',', ''),
-      );
-      final double fee = TransactionService.getServiceCharge(
+      final amount = double.parse(_priceController.text.replaceAll(',', ''));
+      final fee = TransactionService.getServiceCharge(
         TransactionType.bus,
         amount,
       );
-      final double tax = TransactionService.getTax(TransactionType.bus, amount);
-      final double totalPayable = amount + fee + tax;
-      final double currentBalance = ref.read(balanceProvider).totalBalance;
+      final tax = TransactionService.getTax(TransactionType.bus, amount);
+      final totalPayable = amount + fee + tax;
+      final currentBalance = ref.read(balanceProvider).totalBalance;
 
       if (totalPayable > currentBalance) {
         GlassDialog.showError(
@@ -161,9 +159,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
       Navigator.pop(context); // Pop PIN screen
     }
 
-    final double amount = double.parse(
-      _priceController.text.replaceAll(',', ''),
-    );
+    final amount = double.parse(_priceController.text.replaceAll(',', ''));
 
     // Deduct balance here upon successful PIN verification
     await ref
@@ -189,26 +185,23 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
         backgroundColor: Theme.of(context).cardColor,
         elevation: 20,
         shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(
-              strokeWidth: 3,
-              color: Color(0xFFEC4899),
-            ),
-            const SizedBox(height: 32),
-            const Text(
+            SizedBox(height: 20),
+            CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFEC4899)),
+            SizedBox(height: 32),
+            Text(
               'Confirming Bus Route...',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Payment successful. Booking your seat.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
           ],
         ),
       ),
@@ -218,7 +211,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
 
-      Map<String, dynamic> ticketData = {
+      final ticketData = <String, dynamic>{
         'ticketNumber': 'BUS${DateTime.now().millisecondsSinceEpoch % 1000000}',
         'busCompany': 'Nepal Bus Service',
         'busLine': '${_departureController.text} - ${_arrivalController.text}',
@@ -298,7 +291,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
               Stack(
                 alignment: Alignment.centerRight,
                 children: [
-                  Container(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.surfaceDark : Colors.white,
                       borderRadius: AppTheme.radiusLarge,
@@ -481,7 +474,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
                     onTap: () {
                       setState(() {
                         _seatController.text = sType;
-                        int price = sType == 'First Seat'
+                        var price = sType == 'First Seat'
                             ? 800
                             : (sType == 'Sleeper'
                                   ? 1000
@@ -581,7 +574,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
         onTap: () {
           setState(() {
             _isRoundTrip = label == 'Round Trip';
-            int price = _seatController.text == 'First Seat'
+            var price = _seatController.text == 'First Seat'
                 ? 800
                 : (_seatController.text == 'Sleeper'
                       ? 1000
@@ -789,7 +782,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

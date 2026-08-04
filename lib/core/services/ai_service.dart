@@ -36,7 +36,7 @@ class AiService {
     required double totalExpense,
     required double monthlyExpense,
   }) async {
-    if (transactions.isEmpty) return "{}";
+    if (transactions.isEmpty) return '{}';
 
     // Prepare a concise category breakdown
     final categorySummary = categoryTotals.entries
@@ -70,7 +70,7 @@ JSON ONLY:
 ''';
 
     final response = await _model.generateContent([Content.text(prompt)]);
-    final jsonResponse = response.text ?? "{}";
+    final jsonResponse = response.text ?? '{}';
 
     await _db.saveAiMemory(
       AiMemoriesCompanion.insert(
@@ -111,10 +111,10 @@ Output:{"text":"...", "update":null}
 
     final response = await _model.generateContent([
       Content.text(systemPrompt),
-      Content.text("User: $message"),
+      Content.text('User: $message'),
     ]);
 
-    String jsonStr = response.text ?? '{"text": "Error processing"}';
+    final jsonStr = response.text ?? '{"text": "Error processing"}';
 
     try {
       final data = jsonDecode(jsonStr);

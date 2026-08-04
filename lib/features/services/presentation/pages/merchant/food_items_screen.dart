@@ -107,7 +107,7 @@ class FoodItemsScreen extends StatelessWidget {
         );
       },
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

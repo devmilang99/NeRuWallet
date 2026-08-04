@@ -132,7 +132,7 @@ class _EKYCFlowScreenState extends ConsumerState<EKYCFlowScreen> {
               _nextStep();
             } else {
               _errorMessage =
-                  "Face verification failed. Please ensure your face is clearly visible and try again.";
+                  'Face verification failed. Please ensure your face is clearly visible and try again.';
               _showResultDialog(false);
             }
           },

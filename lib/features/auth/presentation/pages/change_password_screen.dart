@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authService = AuthService();
 
   bool _obscureOld = true;
   bool _obscureNew = true;
@@ -38,14 +38,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
 
     if (newPassword.length < 8) {
-      GlassDialog.showError(context, 'Password must be at least 8 characters long.');
+      GlassDialog.showError(
+        context,
+        'Password must be at least 8 characters long.',
+      );
       return;
     }
 
     GlassDialog.showLoading(context, message: 'Updating password...');
 
     try {
-      await _authService.changePassword(oldPassword, newPassword);
+      await ref
+          .read(authServiceProvider)
+          .changePassword(oldPassword, newPassword);
       if (mounted) {
         Navigator.pop(context); // Close loading
         GlassDialog.showSuccess(
@@ -57,7 +62,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading
-        GlassDialog.showError(context, 'Failed to update password: ${e.toString().replaceAll("Exception: ", "")}');
+        GlassDialog.showError(
+          context,
+          'Failed to update password: ${e.toString().replaceAll("Exception: ", "")}',
+        );
       }
     }
   }
@@ -67,7 +75,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('Change Password'),
         backgroundColor: Colors.transparent,
@@ -86,7 +96,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             Text(
               "Ensure your account stays secure by using a strong password that you haven't used before.",
               style: TextStyle(
-                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                color: isDark
+                    ? AppTheme.textSecondaryDark
+                    : AppTheme.textSecondaryColor,
                 fontSize: 16,
                 height: 1.5,
               ),
@@ -112,7 +124,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               controller: _confirmPasswordController,
               label: 'Confirm New Password',
               obscureText: _obscureConfirm,
-              toggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              toggleObscure: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
               isDark: isDark,
             ),
             const SizedBox(height: 48),
@@ -120,7 +133,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               onPressed: _handleChangePassword,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 64),
-                shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppTheme.radiusLarge,
+                ),
               ),
               child: const Text('Update Password'),
             ),
@@ -157,13 +172,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
             suffixIcon: IconButton(
               icon: Icon(
-                obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                obscureText
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 size: 20,
               ),
               onPressed: toggleObscure,
             ),
             filled: true,
-            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white,
           ),
         ),
       ],

@@ -8,6 +8,7 @@ import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:neruwallet/features/auth/presentation/pages/change_pin_profile_screen.dart';
@@ -20,7 +21,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final AuthService _authService = AuthService();
   bool _biometricsAvailable = false;
   String _userName = 'User';
   String _userEmail = '';
@@ -56,7 +56,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _loadUserInfo() {
-    final user = _authService.currentUser;
+    final user = ref.read(authServiceProvider).currentUser;
     if (user != null) {
       setState(() {
         _userName = user.name;
@@ -73,15 +73,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       confirmText: 'Sign Out',
       isDestructive: true,
       onConfirm: () async {
-        final prefService = ref.read(preferenceServiceProvider);
-
-        // Clear biometric preferences on sign out
-        await prefService.remove('biometrics_login_enabled');
-        await prefService.remove('biometrics_transaction_enabled');
-        await prefService.remove('biometrics_enabled');
-        await prefService.remove('biometrics_setup_prompt_shown');
-
-        await _authService.signOut();
+        await ref.read(authServiceProvider).signOut();
         if (mounted) context.go('/auth/login');
       },
     );
@@ -111,7 +103,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           slivers: [
             SliverAppBar(
               title: const Text(
-                "Profile Settings",
+                'Profile Settings',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               centerTitle: true,
@@ -186,14 +178,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Monthly Spending Limit",
+                        'Monthly Spending Limit',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
                       Text(
-                        "Track and limit monthly expenses",
+                        'Track and limit monthly expenses',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
@@ -223,7 +215,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Current: Rs. ${currentSpending.toStringAsFixed(2)}",
+                    'Current: Rs. ${currentSpending.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -233,7 +225,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   GestureDetector(
                     onTap: _showLimitDialog,
                     child: Text(
-                      "Limit: Rs. ${_monthlyLimit.toStringAsFixed(0)}",
+                      'Limit: Rs. ${_monthlyLimit.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -259,19 +251,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               if (isExceeded)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.warning_amber_rounded,
                         color: AppTheme.errorColor,
                         size: 14,
                       ),
-                      const SizedBox(width: 4),
-                      const Expanded(
+                      SizedBox(width: 4),
+                      Expanded(
                         child: Text(
-                          "Monthly limit exceeded!",
+                          'Monthly limit exceeded!',
                           style: TextStyle(
                             color: AppTheme.errorColor,
                             fontSize: 11,
@@ -296,20 +288,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Set Monthly Limit"),
+        title: const Text('Set Monthly Limit'),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
-            labelText: "Amount (Rs.)",
-            prefixText: "Rs. ",
+            labelText: 'Amount (Rs.)',
+            prefixText: 'Rs. ',
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -320,13 +312,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   .setString('monthly_spending_limit', newLimit.toString());
               // Sync to cloud in background
               ref.read(syncServiceProvider).performFullSync().catchError((e) {
-                debugPrint('Background sync failed: $e');
+                AppLogger.e('Background sync failed', e);
               });
               if (context.mounted) {
                 Navigator.pop(context);
               }
             },
-            child: const Text("Save"),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -393,23 +385,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           if (_biometricsAvailable) ...[
             _buildSettingTile(
               Icons.fingerprint_rounded,
-              "Biometric Security",
-              "Manage logins & payments",
+              'Biometric Security',
+              'Manage logins & payments',
               () => context.push('/profile/biometric-settings'),
             ),
             _buildDivider(isDark),
           ],
           _buildSettingTile(
             Icons.lock_outline_rounded,
-            "Change Password",
-            "Update credentials",
+            'Change Password',
+            'Update credentials',
             () => context.push('/profile/change-password'),
           ),
           _buildDivider(isDark),
           _buildSettingTile(
             Icons.pin_rounded,
-            "Transaction PIN",
-            "Manage security PIN",
+            'Transaction PIN',
+            'Manage security PIN',
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ChangePinProfileScreen()),
@@ -426,15 +418,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           _buildSettingTile(
             Icons.help_outline_rounded,
-            "Help & Support",
-            "FAQs and direct contact",
+            'Help & Support',
+            'FAQs and direct contact',
             () => context.push('/profile/help-support'),
           ),
           _buildDivider(isDark),
           _buildSettingTile(
             Icons.privacy_tip_outlined,
-            "Privacy Policy",
-            "How we protect your data",
+            'Privacy Policy',
+            'How we protect your data',
             () => context.push('/profile/privacy-policy'),
           ),
         ],
@@ -480,7 +472,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return OutlinedButton.icon(
       onPressed: _handleLogout,
       icon: const Icon(Icons.logout_rounded),
-      label: const Text("Sign Out"),
+      label: const Text('Sign Out'),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.errorColor,
         side: const BorderSide(color: AppTheme.errorColor),

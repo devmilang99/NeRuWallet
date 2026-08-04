@@ -11,7 +11,7 @@ import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 class RegistrationPinScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> signupData;
 
-  const RegistrationPinScreen({super.key, required this.signupData});
+  const RegistrationPinScreen({required this.signupData, super.key});
 
   @override
   ConsumerState<RegistrationPinScreen> createState() =>
@@ -25,7 +25,6 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
   int _step = 1; // 1: New PIN, 2: Confirm PIN
   bool _showMismatchError = false;
   bool _isLoading = false;
-  final AuthService _authService = AuthService();
 
   final _pinFocusNode = FocusNode();
   final _confirmPinFocusNode = FocusNode();
@@ -43,7 +42,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
     if (_step == 1) {
       if (_pinController.text.length != 4) {
         if (mounted) {
-          GlassDialog.showError(context, "PIN must be 4 digits.");
+          GlassDialog.showError(context, 'PIN must be 4 digits.');
         }
         return;
       }
@@ -83,11 +82,13 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
         final bool isSocial = data['isSocial'] ?? false;
 
         if (!isSocial) {
-          await _authService.signUpWithEmailPassword(
-            data['email'],
-            data['password'],
-            data['name'],
-          );
+          await ref
+              .read(authServiceProvider)
+              .signUpWithEmailPassword(
+                data['email'],
+                data['password'],
+                data['name'],
+              );
         }
 
         // Also save security data
@@ -116,8 +117,8 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
           GlassDialog.showSuccess(
             context,
             isSocial
-                ? "Account setup completed successfully!"
-                : "Registration successful! Please login to your account.",
+                ? 'Account setup completed successfully!'
+                : 'Registration successful! Please login to your account.',
             onConfirm: () =>
                 isSocial ? context.go('/dashboard') : context.go('/auth/login'),
           );
@@ -127,13 +128,13 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
           setState(() => _isLoading = false);
           Navigator.pop(context); // Close loading
 
-          String errorMessage = "Registration failed. Please try again.";
+          var errorMessage = 'Registration failed. Please try again.';
 
-          if (e.toString().contains("over_email_send_rate_limit")) {
+          if (e.toString().contains('over_email_send_rate_limit')) {
             errorMessage =
-                "Too many attempts. Please wait a few minutes before trying again or use a different email.";
-          } else if (e.toString().contains("User already registered")) {
-            errorMessage = "This email is already registered. Please login.";
+                'Too many attempts. Please wait a few minutes before trying again or use a different email.';
+          } else if (e.toString().contains('User already registered')) {
+            errorMessage = 'This email is already registered. Please login.';
           }
 
           GlassDialog.showError(
@@ -161,7 +162,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
           (widget.signupData['isSocial'] ?? false) &&
           (widget.signupData['isNewUser'] ?? false);
       if (isNewSocial) {
-        await _authService.deleteAccount();
+        await ref.read(authServiceProvider).deleteAccount();
       }
       if (mounted) context.pop();
     }
@@ -177,7 +178,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
         if (didPop) return;
         await _handleBackActions();
       },
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: isDark
               ? AppTheme.darkGradient
@@ -191,7 +192,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
           backgroundColor: Colors.transparent,
           appBar: AppBar(
             title: Text(
-              "Security Setup",
+              'Security Setup',
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
             ),
             centerTitle: true,
@@ -230,8 +231,8 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                   const SizedBox(height: 32),
                   Text(
                         _step == 1
-                            ? "Create Transaction PIN"
-                            : "Confirm Your PIN",
+                            ? 'Create Transaction PIN'
+                            : 'Confirm Your PIN',
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               fontWeight: FontWeight.w900,
@@ -244,8 +245,8 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _step == 1
-                        ? "Set a 4-digit PIN for secure wallet transactions."
-                        : "Please re-enter your PIN to confirm.",
+                        ? 'Set a 4-digit PIN for secure wallet transactions.'
+                        : 'Please re-enter your PIN to confirm.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: isDark
@@ -260,19 +261,18 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                     _buildOtpSection(
                       controller: _pinController,
                       focusNode: _pinFocusNode,
-                      label: "Enter 4-digit PIN",
+                      label: 'Enter 4-digit PIN',
                       isDark: isDark,
                       onComplete: () {
                         setState(() => _step = 2);
                         _confirmPinFocusNode.requestFocus();
                       },
-                      enabled: true,
                     ).animate().fadeIn().slideX(begin: -0.1, end: 0)
                   else
                     _buildOtpSection(
                       controller: _confirmPinController,
                       focusNode: _confirmPinFocusNode,
-                      label: "Re-enter PIN",
+                      label: 'Re-enter PIN',
                       isDark: isDark,
                       onComplete: _handleComplete,
                     ).animate().fadeIn().slideX(begin: 0.1, end: 0),
@@ -289,17 +289,17 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                           color: AppTheme.errorColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.error_outline_rounded,
                               color: AppTheme.errorColor,
                               size: 16,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              "PINs do not match. Try again.",
+                            SizedBox(width: 8),
+                            Text(
+                              'PINs do not match. Try again.',
                               style: TextStyle(
                                 color: AppTheme.errorColor,
                                 fontSize: 13,
@@ -323,7 +323,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                       shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
                     ),
                     child: Text(
-                      _step == 2 ? "Finish Setup" : "Continue",
+                      _step == 2 ? 'Finish Setup' : 'Continue',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -405,13 +405,13 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
     bool isDark,
     bool enabled,
   ) {
-    String char = "";
+    var char = '';
     if (controller.text.length > index) {
       char = controller.text[index];
     }
 
-    bool isFocused = enabled && controller.text.length == index;
-    bool isWrong = false;
+    final isFocused = enabled && controller.text.length == index;
+    var isWrong = false;
     if (_showMismatchError && controller == _confirmPinController) {
       if (index < controller.text.length &&
           index < _pinController.text.length) {
@@ -452,7 +452,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
       ),
       child: Center(
         child: Text(
-          char.isNotEmpty ? "•" : "", // Use dots for PIN security
+          char.isNotEmpty ? '•' : '', // Use dots for PIN security
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,

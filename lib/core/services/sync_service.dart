@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 final syncServiceProvider = Provider<SyncService>((ref) {
@@ -55,9 +55,9 @@ class SyncService {
         'created_at': tx.createdAt.toIso8601String(),
         'metadata': tx.metadata,
       }, onConflict: 'id');
-      debugPrint('✅ Individual Transaction Push Successful.');
+      AppLogger.i('✅ Individual Transaction Push Successful.');
     } catch (e) {
-      debugPrint('❌ Individual Transaction Push Failed: $e');
+      AppLogger.e('❌ Individual Transaction Push Failed', e);
     }
   }
 
@@ -85,7 +85,7 @@ class SyncService {
           .limit(limit);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      debugPrint('Cloud Get Failed: $e');
+      AppLogger.e('Cloud Get Failed', e);
       return [];
     }
   }
@@ -97,31 +97,31 @@ class SyncService {
 
     final user = _supabase.auth.currentUser;
     if (user == null) {
-      debugPrint('⚠️ Sync skipped: No authenticated Supabase user.');
+      AppLogger.i('⚠️ Sync skipped: No authenticated Supabase user.');
       _isSyncing = false;
       return;
     }
 
-    debugPrint('🔄 Starting Atomic Sync for user: ${user.id}...');
+    AppLogger.i('🔄 Starting Atomic Sync for user: ${user.id}...');
     try {
       // Sync tasks shouldn't block the main flow, so we catch errors individually
       await Future.wait([
         _syncTransactions(
           user.id,
-        ).catchError((e) => debugPrint('Tx Sync Failed: $e')),
+        ).catchError((e) => AppLogger.e('Tx Sync Failed', e)),
         _syncPreferences(
           user.id,
-        ).catchError((e) => debugPrint('Pref Sync Failed: $e')),
+        ).catchError((e) => AppLogger.e('Pref Sync Failed', e)),
         _syncAiMemories(
           user.id,
-        ).catchError((e) => debugPrint('AI Sync Failed: $e')),
+        ).catchError((e) => AppLogger.e('AI Sync Failed', e)),
         _syncNotifications(
           user.id,
-        ).catchError((e) => debugPrint('Notif Sync Failed: $e')),
+        ).catchError((e) => AppLogger.e('Notif Sync Failed', e)),
       ]);
-      debugPrint('✅ Sync Complete.');
+      AppLogger.i('✅ Sync Complete.');
     } catch (e) {
-      debugPrint('❌ Sync Orchestration Failed: $e');
+      AppLogger.e('❌ Sync Orchestration Failed', e);
     } finally {
       _isSyncing = false;
     }
@@ -174,7 +174,7 @@ class SyncService {
           .toList();
 
       if (localOnly.isNotEmpty) {
-        debugPrint(
+        AppLogger.i(
           '📤 Pushing ${localOnly.length} local transactions to cloud...',
         );
         final List<Map<String, dynamic>> toUpsert = localOnly.map((tx) {
@@ -196,17 +196,13 @@ class SyncService {
         }).toList();
 
         await _supabase.from('transactions').upsert(toUpsert, onConflict: 'id');
-        debugPrint('✅ Cloud sync for transactions successful.');
+        AppLogger.i('✅ Cloud sync for transactions successful.');
       }
     } catch (e) {
       if (e is sb.PostgrestException) {
-        debugPrint('❌ Supabase Transaction Sync Error:');
-        debugPrint('Message: ${e.message}');
-        debugPrint('Details: ${e.details}');
-        debugPrint('Hint: ${e.hint}');
-        debugPrint('Code: ${e.code}');
+        AppLogger.e('❌ Supabase Transaction Sync Error', e);
       } else {
-        debugPrint('Transaction Sync Error: $e');
+        AppLogger.e('Transaction Sync Error', e);
       }
     }
   }
@@ -224,13 +220,14 @@ class SyncService {
         'monthly_limit_enabled',
         'registration_complete',
         'registration_data',
+        'is_kyc_verified',
         'total_balance',
         'voucher_active',
         'voucher_limit',
       ];
 
       // 1. Collect local changes
-      final List<Map<String, dynamic>> prefsToPush = [];
+      final prefsToPush = <Map<String, dynamic>>[];
       for (var key in syncKeys) {
         final val = await prefService.getString(key);
         if (val != null && val.isNotEmpty) {
@@ -257,7 +254,7 @@ class SyncService {
         }
       });
     } catch (e) {
-      debugPrint('Preferences Sync Error: $e');
+      AppLogger.e('Preferences Sync Error', e);
     }
   }
 
@@ -290,7 +287,7 @@ class SyncService {
         }
       });
     } catch (e) {
-      debugPrint('AI Memory Sync Error: $e');
+      AppLogger.e('AI Memory Sync Error', e);
     }
   }
 
@@ -318,7 +315,7 @@ class SyncService {
         }
       });
     } catch (e) {
-      debugPrint('Notification Sync Error: $e');
+      AppLogger.e('Notification Sync Error', e);
     }
   }
 }

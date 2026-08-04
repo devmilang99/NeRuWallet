@@ -10,6 +10,8 @@ import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/logger.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -21,7 +23,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  String _statusMessage = "Initializing systems...";
+  String _statusMessage = 'Initializing systems...';
   bool _hasError = false;
 
   @override
@@ -36,11 +38,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     try {
       // 1. Core System Initialization (Supabase/Firebase started in main.dart)
-      if (mounted) setState(() => _statusMessage = "Starting systems...");
+      if (mounted) setState(() => _statusMessage = 'Starting systems...');
       await ref.read(appInitProvider);
 
       // 2. Connectivity & User Data (Parallel)
-      if (mounted) setState(() => _statusMessage = "Syncing data...");
+      if (mounted) setState(() => _statusMessage = 'Syncing data...');
 
       final results = await Future.wait([
         Connectivity().checkConnectivity(),
@@ -49,11 +51,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       ]);
 
       final connectivityResult = results[0] as List<ConnectivityResult>;
-      final bool isFirstTime = (results[1] as bool?) ?? true;
+      final isFirstTime = (results[1] as bool?) ?? true;
 
       // 3. Check Connectivity
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        throw Exception("No internet connection detected.");
+        throw Exception('No internet connection detected.');
       }
 
       if (!mounted) return;
@@ -63,16 +65,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (isFirstTime) {
         await _navigateBasedOnPermissions();
       } else {
+        // 4. Validate Session with server if user exists locally
+        final supabaseUser = sb.Supabase.instance.client.auth.currentUser;
+        if (supabaseUser != null) {
+          if (mounted) setState(() => _statusMessage = 'Validating session...');
+          final isValid = await ref.read(authServiceProvider).validateSession();
+
+          if (!isValid) {
+            await prefService.clearAuthPreferences();
+            await ref.read(authServiceProvider).signOut();
+
+            if (mounted) {
+              await _showInvalidSessionDialog();
+              if (mounted) {
+                context.go('/auth/login');
+              }
+              return;
+            }
+          }
+        }
+
         // Check if user is already authenticated and can skip login
         final destination = await _resolveAuthDestination(prefService);
 
         // If the destination is dashboard and the user enabled app-login via biometrics,
         // prompt for biometric authentication before navigating.
         if (destination == '/dashboard') {
-          final bool biometricEnabled =
+          final biometricEnabled =
               await prefService.getBool('biometrics_login_enabled') ?? false;
 
-          final bool canAuth =
+          final canAuth =
               biometricEnabled && await BiometricService.isEnrolled();
 
           if (canAuth) {
@@ -80,7 +102,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               title: 'NeRuWallet',
               subtitle: 'Authenticate to continue',
               reason: 'Please authenticate to access your wallet',
-              biometricOnly: true,
             );
 
             if (mounted) {
@@ -100,7 +121,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statusMessage = e.toString().replaceAll("Exception: ", "");
+          _statusMessage = e.toString().replaceAll('Exception: ', '');
           _hasError = true;
         });
       }
@@ -116,7 +137,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// - Otherwise, route to the login screen.
   Future<String> _resolveAuthDestination(PreferenceService prefService) async {
     final supabaseUser = sb.Supabase.instance.client.auth.currentUser;
-    final bool registrationComplete =
+    final registrationComplete =
         await prefService.getBool('registration_complete') ?? false;
 
     if (supabaseUser != null) {
@@ -129,25 +150,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // and let the user proceed if they are a social user (who are already authenticated).
       if (!registrationComplete) {
         // TRIGGER BACKGROUND SYNC WITHOUT AWAITING
-        ref
-            .read(syncServiceProvider)
-            .performFullSync()
-            .then((_) async {
-              final restored =
-                  await prefService.getBool('registration_complete') ?? false;
-              if (!restored && isSocialUser) {
-                // If sync failed to restore completion state for a social user,
-                // we might eventually need to handle that, but don't block splash.
-              }
-            })
-            .catchError((e) => debugPrint('Background sync failed: $e'));
+        unawaited(
+          ref
+              .read(syncServiceProvider)
+              .performFullSync()
+              .then<void>((_) async {
+                final restored =
+                    await prefService.getBool('registration_complete') ?? false;
+                if (!restored && isSocialUser) {
+                  // If sync failed to restore completion state for a social user,
+                  // we might eventually need to handle that, but don't block splash.
+                }
+              })
+              .catchError((Object e) {
+                AppLogger.e('Background sync failed', e);
+              }),
+        );
 
         if (isSocialUser) return '/dashboard';
       }
 
       if (isSocialUser) return '/dashboard';
 
-      final bool rememberMe = await prefService.getBool('remember_me') ?? false;
+      final rememberMe = await prefService.getBool('remember_me') ?? false;
       if (rememberMe && registrationComplete) {
         return '/dashboard';
       }
@@ -173,9 +198,40 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
   }
 
+  Future<void> _showInvalidSessionDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLarge),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+              SizedBox(width: 10),
+              Text('Session Expired'),
+            ],
+          ),
+          content: const Text(
+            'Your account session is no longer valid or has been removed. '
+            'To keep your wallet secure, you must register or sign in again.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark
@@ -213,7 +269,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ],
           ),
           child: Image.asset(
-            "assets/icons/app_icon.png",
+            'assets/icons/app_icon.png',
             height: 80,
             width: 80,
           ),
@@ -232,7 +288,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return Column(
       children: [
         Text(
-          "NeRuWallet",
+          'NeRuWallet',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
             color: AppTheme.primaryColor,
             fontSize: 42,
@@ -244,7 +300,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         const SizedBox(height: 24),
 
         if (_hasError) ...[
-          Icon(
+          const Icon(
             Icons.wifi_off_rounded,
             color: AppTheme.errorColor,
             size: 32,
@@ -262,7 +318,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           TextButton.icon(
             onPressed: _initializeApp,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text("Retry Connection"),
+            label: const Text('Retry Connection'),
             style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
           ),
         ] else ...[

@@ -1,0 +1,16 @@
+[package]
+name = "rust_signer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+name = "rust_signer"
+
+[dependencies]
+uniffi = { version = "0.28", features = ["tokio"] }
+ring = "0.17"
+anyhow = "1.0"
+
+[build-dependencies]
+uniffi = { version = "0.28", features = ["build"] }

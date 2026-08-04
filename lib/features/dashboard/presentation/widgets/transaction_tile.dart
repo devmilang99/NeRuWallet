@@ -12,26 +12,23 @@ class TransactionTile extends StatelessWidget {
   final int index;
 
   const TransactionTile({
-    super.key,
-    required this.transaction,
-    required this.isDark,
-    required this.index,
+    required this.transaction, required this.isDark, required this.index, super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     final isCredit = transaction.amount > 0;
-    final double displayAmount =
+    final displayAmount =
         transaction.amount.abs() + transaction.fee + transaction.tax;
-    final Color iconColor = Color(transaction.colorValue);
-    final IconData iconData = IconUtils.getIconData(transaction.iconCode);
-    final String formattedDate = DateFormat(
+    final iconColor = Color(transaction.colorValue);
+    final iconData = IconUtils.getIconData(transaction.iconCode);
+    final formattedDate = DateFormat(
       'hh:mm a',
     ).format(transaction.createdAt);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: isDark ? AppTheme.surfaceDark : Colors.white,
           borderRadius: AppTheme.radiusMedium,

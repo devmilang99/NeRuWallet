@@ -46,16 +46,13 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       return;
     }
 
-    final double fee = TransactionService.getServiceCharge(
+    final fee = TransactionService.getServiceCharge(
       TransactionType.withdraw,
       amount,
     );
-    final double tax = TransactionService.getTax(
-      TransactionType.withdraw,
-      amount,
-    );
-    final double totalPayable = amount + fee + tax;
-    final double currentBalance = ref.read(balanceProvider).totalBalance;
+    final tax = TransactionService.getTax(TransactionType.withdraw, amount);
+    final totalPayable = amount + fee + tax;
+    final currentBalance = ref.read(balanceProvider).totalBalance;
 
     if (totalPayable > currentBalance) {
       GlassDialog.showError(

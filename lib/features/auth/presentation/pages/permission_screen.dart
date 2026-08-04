@@ -20,6 +20,7 @@ class _PermissionScreenState extends State<PermissionScreen>
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isRequesting = false;
+
   // State for each: 0=Initial, 1=Granted, 2=Denied, 3=PermanentlyDenied
   List<int> _permissionStates = [];
 
@@ -42,45 +43,46 @@ class _PermissionScreenState extends State<PermissionScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      debugPrint("PermissionScreen Resumed: Re-checking state to avoid hang.");
+      debugPrint('PermissionScreen Resumed: Re-checking state to avoid hang.');
     }
   }
 
   Future<void> _initializeSteps() async {
-    final List<PermissionStep> allSteps = [
+    final allSteps = <PermissionStep>[
       PermissionStep(
-        title: "Camera Access",
-        subtitle: "Required for scanning QR codes and ID verification.",
+        title: 'Camera Access',
+        subtitle: 'Required for scanning QR codes and ID verification.',
         icon: Icons.camera_alt_rounded,
         permission: Permission.camera,
         color: const Color(0xFF6366F1),
       ),
       PermissionStep(
-        title: "Smart Notifications",
-        subtitle: "Stay notified about transactions and secure logins.",
+        title: 'Smart Notifications',
+        subtitle: 'Stay notified about transactions and secure logins.',
         icon: Icons.notifications_active_rounded,
         permission: Permission.notification,
         color: const Color(0xFF10B981),
       ),
       PermissionStep(
-        title: "Media Storage",
-        subtitle: "Needed to save receipts and documents to your device.",
+        title: 'Media Storage',
+        subtitle: 'Needed to save receipts and documents to your device.',
         icon: Icons.storage_rounded,
-        permission: Permission.storage, // We'll adjust below
+        permission: Permission.storage,
+        // We'll adjust below
         color: const Color(0xFFF59E0B),
       ),
       PermissionStep(
-        title: "Contacts Access",
-        subtitle: "Easily find and send money to your friends.",
+        title: 'Contacts Access',
+        subtitle: 'Easily find and send money to your friends.',
         icon: Icons.contacts_rounded,
         permission: Permission.contacts,
         color: const Color(0xFF8B5CF6),
       ),
     ];
 
-    List<PermissionStep> ungrantedSteps = [];
+    final ungrantedSteps = <PermissionStep>[];
 
-    int androidVersion = 0;
+    var androidVersion = 0;
     if (Platform.isAndroid) {
       final deviceInfo = await DeviceInfoPlugin().androidInfo;
       androidVersion = deviceInfo.version.sdkInt;
@@ -89,7 +91,7 @@ class _PermissionScreenState extends State<PermissionScreen>
     for (final step in allSteps) {
       final targetPerm = step.permission;
       // Handle Storage Permission correctly for Android 33+
-      if (step.title == "Media Storage" && Platform.isAndroid) {
+      if (step.title == 'Media Storage' && Platform.isAndroid) {
         if (androidVersion >= 33) {
           // On Android 13+, we check for specific media permissions
           final photosStatus = await Permission.photos.status;
@@ -134,9 +136,9 @@ class _PermissionScreenState extends State<PermissionScreen>
       final step = _steps[_currentStep];
 
       // Special handling for storage on modern Android
-      Permission targetPermission = step.permission;
+      final targetPermission = step.permission;
 
-      if (step.title == "Media Storage" && Platform.isAndroid) {
+      if (step.title == 'Media Storage' && Platform.isAndroid) {
         final deviceInfo = await DeviceInfoPlugin().androidInfo;
         if (deviceInfo.version.sdkInt >= 33) {
           // Request photos and videos for Android 13+
@@ -158,8 +160,8 @@ class _PermissionScreenState extends State<PermissionScreen>
       final status = await targetPermission.request();
       _handleDenied(status, step);
     } catch (e) {
-      debugPrint("Permission Error: $e");
-      _showErrorSnackBar("An unexpected error occurred. Please try again.");
+      debugPrint('Permission Error: $e');
+      _showErrorSnackBar('An unexpected error occurred. Please try again.');
     } finally {
       if (mounted) setState(() => _isRequesting = false);
     }
@@ -172,12 +174,12 @@ class _PermissionScreenState extends State<PermissionScreen>
     } else if (status.isPermanentlyDenied) {
       _updateState(3);
       _showErrorSnackBar(
-        "Permission permanently denied. Please enable it in settings.",
+        'Permission permanently denied. Please enable it in settings.',
         isPermanent: true,
       );
     } else {
       _updateState(2);
-      _showErrorSnackBar("${step.title} is necessary for specific features.");
+      _showErrorSnackBar('${step.title} is necessary for specific features.');
     }
   }
 
@@ -202,23 +204,25 @@ class _PermissionScreenState extends State<PermissionScreen>
 
   Future<void> _finishOnboarding() async {
     // Check if Camera was in our steps and if it was granted
-    bool cameraInSteps = _steps.any((s) => s.permission == Permission.camera);
-    bool cameraGrantedLocally = false;
+    final cameraInSteps = _steps.any((s) => s.permission == Permission.camera);
+    var cameraGrantedLocally = false;
 
     if (cameraInSteps) {
-      int index = _steps.indexWhere((s) => s.permission == Permission.camera);
+      final index = _steps.indexWhere((s) => s.permission == Permission.camera);
       cameraGrantedLocally = _permissionStates[index] == 1;
     }
 
     // Double check with actual system status
-    bool isCameraGranted = await Permission.camera.isGranted;
+    final isCameraGranted = await Permission.camera.isGranted;
 
     if (!isCameraGranted && !cameraGrantedLocally) {
       _showErrorSnackBar(
-        "Camera access is mandatory for security verification.",
+        'Camera access is mandatory for security verification.',
       );
       if (cameraInSteps) {
-        int index = _steps.indexWhere((s) => s.permission == Permission.camera);
+        final index = _steps.indexWhere(
+          (s) => s.permission == Permission.camera,
+        );
         _pageController.animateToPage(
           index,
           duration: 600.ms,
@@ -240,7 +244,7 @@ class _PermissionScreenState extends State<PermissionScreen>
         behavior: SnackBarBehavior.floating,
         action: isPermanent
             ? SnackBarAction(
-                label: "Settings",
+                label: 'Settings',
                 textColor: Colors.white,
                 onPressed: () => openAppSettings(),
               )
@@ -251,7 +255,7 @@ class _PermissionScreenState extends State<PermissionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
@@ -311,7 +315,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                       ),
               ),
               Text(
-                _steps.isEmpty ? "" : "${_currentStep + 1} of ${_steps.length}",
+                _steps.isEmpty ? '' : '${_currentStep + 1} of ${_steps.length}',
                 style: TextStyle(
                   color: isDark ? Colors.white38 : AppTheme.textHintColor,
                   fontWeight: FontWeight.bold,
@@ -322,7 +326,7 @@ class _PermissionScreenState extends State<PermissionScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            "Quick Setup",
+            'Quick Setup',
             style: TextStyle(
               color: isDark ? Colors.white : AppTheme.textBodyColor,
               fontWeight: FontWeight.w900,
@@ -387,17 +391,17 @@ class _PermissionScreenState extends State<PermissionScreen>
 
     switch (state) {
       case 1:
-        text = "Access Granted";
+        text = 'Access Granted';
         color = Colors.green;
         icon = Icons.check_circle_rounded;
         break;
       case 2:
-        text = "Access Denied";
+        text = 'Access Denied';
         color = AppTheme.errorColor;
         icon = Icons.error_rounded;
         break;
       case 3:
-        text = "Permanently Denied";
+        text = 'Permanently Denied';
         color = AppTheme.errorColor;
         icon = Icons.settings_rounded;
         break;
@@ -460,8 +464,8 @@ class _PermissionScreenState extends State<PermissionScreen>
                   : Text(
                       _currentStep == _steps.length - 1 &&
                               _permissionStates[_currentStep] == 1
-                          ? "Get Started"
-                          : "Grant Access",
+                          ? 'Get Started'
+                          : 'Grant Access',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -474,7 +478,7 @@ class _PermissionScreenState extends State<PermissionScreen>
             onPressed: () =>
                 _nextPage(), // Moves to the next slider when skipping
             child: Text(
-              _currentStep == _steps.length - 1 ? "Finish Setup" : "Skip this",
+              _currentStep == _steps.length - 1 ? 'Finish Setup' : 'Skip this',
               style: TextStyle(
                 color: isDark ? Colors.white38 : AppTheme.textSecondaryColor,
                 fontWeight: FontWeight.w600,

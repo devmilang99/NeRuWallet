@@ -1,16 +1,32 @@
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
+class FaceState {
+  final bool isPresent;
+  final double? smileProb;
+  final double? leftEyeOpenProb;
+  final double? rightEyeOpenProb;
+  final double? headEulerAngleY; // Left/Right
+  final double? headEulerAngleX; // Up/Down
+
+  FaceState({
+    required this.isPresent,
+    this.smileProb,
+    this.leftEyeOpenProb,
+    this.rightEyeOpenProb,
+    this.headEulerAngleY,
+    this.headEulerAngleX,
+  });
+}
+
 class MLKitService {
-  final TextRecognizer _textRecognizer = TextRecognizer(
-    script: TextRecognitionScript.latin,
-  );
+  final TextRecognizer _textRecognizer = TextRecognizer();
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(
       enableContours: true,
       enableLandmarks: true,
       enableClassification: true,
-      performanceMode: FaceDetectorMode.accurate,
+      performanceMode: FaceDetectorMode.fast,
     ),
   );
 
@@ -20,44 +36,44 @@ class MLKitService {
   }
 
   Future<String?> processDocumentImage(InputImage inputImage) async {
-    final RecognizedText recognizedText = await _textRecognizer.processImage(
-      inputImage,
-    );
+    try {
+      final recognizedText = await _textRecognizer.processImage(inputImage);
+      final text = recognizedText.text;
 
-    String text = recognizedText.text;
-    if (text.isEmpty) return null;
+      // Relaxed keywords for demo version
+      final lowercaseText = text.toLowerCase();
+      final hasKeywords =
+          lowercaseText.contains('id') ||
+          lowercaseText.contains('card') ||
+          lowercaseText.contains('name') ||
+          text.length > 30; // Length as a fallback for demo
 
-    return text;
+      if (text.length > 10 && hasKeywords) {
+        return text;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
-  Future<bool> verifyFace(String imagePath) async {
-    final inputImage = InputImage.fromFilePath(imagePath);
-    return verifyFaceImage(inputImage);
-  }
+  Future<FaceState> detectFaceState(InputImage inputImage) async {
+    try {
+      final faces = await _faceDetector.processImage(inputImage);
+      if (faces.isEmpty) return FaceState(isPresent: false);
 
-  Future<bool> verifyFaceImage(InputImage inputImage) async {
-    final List<Face> faces = await _faceDetector.processImage(inputImage);
-
-    if (faces.isEmpty) return false;
-
-    final face = faces.first;
-
-    final double? rotY = face.headEulerAngleY;
-    final double? rotZ = face.headEulerAngleZ;
-
-    if (rotY != null && (rotY > 10 || rotY < -10)) return false;
-    if (rotZ != null && (rotZ > 10 || rotZ < -10)) return false;
-
-    if (face.leftEyeOpenProbability != null &&
-        face.leftEyeOpenProbability! < 0.5) {
-      return false;
+      final face = faces.first;
+      return FaceState(
+        isPresent: true,
+        smileProb: face.smilingProbability,
+        leftEyeOpenProb: face.leftEyeOpenProbability,
+        rightEyeOpenProb: face.rightEyeOpenProbability,
+        headEulerAngleY: face.headEulerAngleY,
+        headEulerAngleX: face.headEulerAngleX,
+      );
+    } catch (e) {
+      return FaceState(isPresent: false);
     }
-    if (face.rightEyeOpenProbability != null &&
-        face.rightEyeOpenProbability! < 0.5) {
-      return false;
-    }
-
-    return true;
   }
 
   void dispose() {

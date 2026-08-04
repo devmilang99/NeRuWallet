@@ -80,7 +80,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       if (mounted) {
         GlassDialog.showError(
           context,
-          "No internet connection. Please check your network.",
+          'No internet connection. Please check your network.',
         );
       }
       return false;
@@ -89,9 +89,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   }
 
   Future<void> _loadLatestAnalysis() async {
-    final memories = await ref
-        .read(appDatabaseProvider)
-        .getAiMemories(limit: 50);
+    final memories = await ref.read(appDatabaseProvider).getAiMemories();
     final latestJson = memories.firstWhereOrNull((m) => m.type == 'json');
     if (latestJson != null) {
       try {
@@ -137,10 +135,10 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("Analysis Error: $e");
+      debugPrint('Analysis Error: $e');
       setState(() {
         _isLoading = false;
-        _errorMessage = "Failed to analyze data. Please try again.";
+        _errorMessage = 'Failed to analyze data. Please try again.';
       });
     }
   }
@@ -150,6 +148,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     if (message.isEmpty) return;
 
     if (!await _checkConnectivity()) return;
+    if (!mounted) return;
 
     FocusScope.of(context).unfocus();
     _chatController.clear();
@@ -180,7 +179,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "AI encountered an issue. Tap to retry.";
+          _errorMessage = 'AI encountered an issue. Tap to retry.';
         });
       }
     }
@@ -238,7 +237,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  "AI Assistant",
+                  'AI Assistant',
                   style: TextStyle(
                     color: Color(0xFF10B981),
                     fontSize: 14,
@@ -249,9 +248,34 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             ),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-              onPressed: () => setState(() => _currentSessionMessages.clear()),
+            Builder(
+              builder: (context) {
+                final tabController = DefaultTabController.of(context);
+                return IconButton(
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF10B981),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.refresh_rounded,
+                          color: Colors.white70,
+                        ),
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          if (tabController.index == 0) {
+                            _getSummary();
+                          } else {
+                            setState(() => _currentSessionMessages.clear());
+                          }
+                        },
+                );
+              },
             ),
           ],
         ),
@@ -262,8 +286,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               labelColor: Color(0xFF10B981),
               unselectedLabelColor: Colors.white38,
               tabs: [
-                Tab(text: "Analysis"),
-                Tab(text: "Chat"),
+                Tab(text: 'Analysis'),
+                Tab(text: 'Chat'),
               ],
             ),
             Expanded(
@@ -288,8 +312,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             const SizedBox(height: 16),
           ],
           _buildChart(isDark),
-          const SizedBox(height: 16),
-          _buildAnalysisActions(isDark),
           const SizedBox(height: 24),
           if (_isLoading && _structuredSummary == null)
             const Padding(
@@ -301,37 +323,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           const SizedBox(height: 100),
         ],
       ),
-    );
-  }
-
-  Widget _buildAnalysisActions(bool isDark) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _isLoading ? null : _getSummary,
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                : const Icon(Icons.auto_awesome_rounded, size: 18),
-            label: const Text("Refresh Analysis"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -387,7 +378,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 width: 30,
                 child:
                     const Text(
-                          "...",
+                          '...',
                           style: TextStyle(
                             color: Color(0xFF10B981),
                             fontSize: 20,
@@ -435,7 +426,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               }
             },
             child: const Text(
-              "Retry",
+              'Retry',
               style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
@@ -445,7 +436,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final user = authService.currentUser;
     final userName = (user?.name ?? 'User').toUpperCase();
 
@@ -467,7 +458,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
           const SizedBox(height: 32),
           Text(
-            "Hi, $userName!",
+            'Hi, $userName!',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 28,
@@ -475,7 +466,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             ),
           ),
           const Text(
-            "What can I help you find today?",
+            'What can I help you find today?',
             style: TextStyle(color: Colors.white60, fontSize: 16),
           ),
           const SizedBox(height: 48),
@@ -485,7 +476,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Quick Explore",
+                  'Quick Explore',
                   style: TextStyle(
                     color: Color(0xFF10B981),
                     fontWeight: FontWeight.bold,
@@ -501,23 +492,23 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   childAspectRatio: 1.5,
                   children: [
                     _buildExploreCard(
-                      "Monthly Report",
-                      "Financial status",
+                      'Monthly Report',
+                      'Financial status',
                       Icons.analytics_outlined,
                     ),
                     _buildExploreCard(
-                      "Savings Tips",
-                      "Save more daily",
+                      'Savings Tips',
+                      'Save more daily',
                       Icons.lightbulb_outline_rounded,
                     ),
                     _buildExploreCard(
-                      "Budget Goal",
-                      "Set spending limit",
+                      'Budget Goal',
+                      'Set spending limit',
                       Icons.track_changes_rounded,
                     ),
                     _buildExploreCard(
-                      "Recent Impact",
-                      "Balance analysis",
+                      'Recent Impact',
+                      'Balance analysis',
                       Icons.trending_up_rounded,
                     ),
                   ],
@@ -534,7 +525,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   Widget _buildExploreCard(String title, String subtitle, IconData icon) {
     return InkWell(
       onTap: () {
-        _chatController.text = "Analyze my $title";
+        _chatController.text = 'Analyze my $title';
         _sendMessage();
       },
       child: Container(
@@ -574,7 +565,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
   Widget _buildChatBubble(Map<String, dynamic> msg, bool isDark) {
     final isUser = msg['role'] == 'user';
     final isJson = msg['isJson'] == true;
-    String content = msg['content'].toString();
+    var content = msg['content'].toString();
 
     if (isJson && !isUser) {
       content = _parseChatResponse(content);
@@ -621,7 +612,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        "NERU AI",
+                        'NERU AI',
                         style: TextStyle(
                           color: Color(0xFF10B981),
                           fontSize: 10,
@@ -651,7 +642,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
 
   String _parseChatResponse(String rawContent) {
     try {
-      String cleaned = rawContent.trim();
+      var cleaned = rawContent.trim();
 
       // Remove markdown backticks if present
       if (cleaned.contains('```')) {
@@ -675,17 +666,17 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       if (data is Map) {
         return data['text']?.toString() ??
             data['message']?.toString() ??
-            "Analysis complete.";
+            'Analysis complete.';
       } else if (data is List && data.isNotEmpty) {
         final first = data.first;
         if (first is Map) {
           return first['text']?.toString() ??
               first['message']?.toString() ??
-              "Analysis complete.";
+              'Analysis complete.';
         }
       }
     } catch (e) {
-      debugPrint("Failed to parse AI JSON: $e");
+      debugPrint('Failed to parse AI JSON: $e');
 
       // Fallback: If JSON parsing fails, try to extract content between "text": " and "
       final textPattern = RegExp(r'"text"\s*:\s*"([^"]*)"');
@@ -731,7 +722,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 controller: _chatController,
                 style: const TextStyle(color: Colors.white, fontSize: 15),
                 decoration: const InputDecoration(
-                  hintText: "Ask NeRu about your finances...",
+                  hintText: 'Ask NeRu about your finances...',
                   hintStyle: TextStyle(color: Colors.white24, fontSize: 14),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
@@ -787,8 +778,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     if (transactions.isEmpty) {
       return _buildStatusCard(
         Icons.account_balance_wallet_outlined,
-        "No Transactions Yet",
-        "Make some transactions to enable AI financial analysis.",
+        'No Transactions Yet',
+        'Make some transactions to enable AI financial analysis.',
         null,
       );
     }
@@ -796,8 +787,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     if (!hasExpenses) {
       return _buildStatusCard(
         Icons.shopping_cart_outlined,
-        "No Expenses Found",
-        "We need some expense data to analyze your spending habits.",
+        'No Expenses Found',
+        'We need some expense data to analyze your spending habits.',
         null,
       );
     }
@@ -812,7 +803,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         if (_structuredSummary!['summary'] != null &&
             _structuredSummary!['summary'].toString().isNotEmpty)
           _buildInfoCard(
-            "Analysis Summary",
+            'Analysis Summary',
             _structuredSummary!['summary'],
             Icons.psychology_rounded,
             const Color(0xFF10B981),
@@ -826,7 +817,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         if (_structuredSummary!['potential'] != null &&
             _structuredSummary!['potential'].toString().isNotEmpty)
           _buildInfoCard(
-            "Savings Potential",
+            'Savings Potential',
             _structuredSummary!['potential'],
             Icons.savings_outlined,
             Colors.orange,
@@ -858,7 +849,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
               SizedBox(width: 12),
               Text(
-                "Unusual Activity",
+                'Unusual Activity',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -877,7 +868,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        u['t']?.toString() ?? "Transaction",
+                        u['t']?.toString() ?? 'Transaction',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -894,7 +885,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    u['r']?.toString() ?? "",
+                    u['r']?.toString() ?? '',
                     style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                 ],
@@ -926,7 +917,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               Icon(Icons.directions_rounded, color: Colors.blue, size: 20),
               SizedBox(width: 12),
               Text(
-                "Recommended Steps",
+                'Recommended Steps',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1074,7 +1065,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Savings Suggestions",
+            'Savings Suggestions',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -1157,11 +1148,11 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         labelFormat = DateFormat('dd MMM');
     }
 
-    List<FlSpot> incomeSpots = [];
-    List<FlSpot> expenseSpots = [];
-    List<DateTime> pointDates = [];
+    final incomeSpots = <FlSpot>[];
+    final expenseSpots = <FlSpot>[];
+    final pointDates = <DateTime>[];
 
-    for (int i = 0; i < numPoints; i++) {
+    for (var i = 0; i < numPoints; i++) {
       final pointStart = startDate.add(interval * i);
       final pointEnd = pointStart.add(interval);
       pointDates.add(pointStart);
@@ -1218,8 +1209,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                       spacing: 12,
                       runSpacing: 4,
                       children: [
-                        _buildLegendItem("Income", const Color(0xFF10B981)),
-                        _buildLegendItem("Expense", const Color(0xFF8B5CF6)),
+                        _buildLegendItem('Income', const Color(0xFF10B981)),
+                        _buildLegendItem('Expense', const Color(0xFF8B5CF6)),
                       ],
                     ),
                   ],
@@ -1236,7 +1227,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 minY: 0,
                 maxY: maxY,
                 gridData: FlGridData(
-                  show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Colors.white.withValues(alpha: 0.05),
@@ -1244,13 +1234,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   ),
                 ),
                 titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -1259,7 +1244,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                         if (value == meta.max || value == meta.min) {
                           return const SizedBox.shrink();
                         }
-                        String text = '';
+                        var text = '';
                         if (value >= 1000) {
                           text = '${(value / 1000).toStringAsFixed(0)}k';
                         } else {
@@ -1279,13 +1264,13 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        int index = value.toInt();
+                        final index = value.toInt();
                         if (index < 0 || index >= pointDates.length) {
                           return const SizedBox.shrink();
                         }
 
                         // Label frequency
-                        bool showLabel = false;
+                        var showLabel = false;
                         if (_selectedPeriod == '1D') {
                           showLabel = index % 3 == 0;
                         } else if (_selectedPeriod == '1W') {
@@ -1318,10 +1303,9 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                     spots: incomeSpots,
                     isCurved: true,
                     color: const Color(0xFF10B981),
-                    barWidth: 2,
                     isStrokeCapRound: true,
                     dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(show: false),
+                    belowBarData: BarAreaData(),
                   ),
                   LineChartBarData(
                     spots: expenseSpots,
@@ -1346,7 +1330,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   ),
                 ],
                 lineTouchData: LineTouchData(
-                  handleBuiltInTouches: true,
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (spot) => const Color(0xFF1F2937),
                     tooltipRoundedRadius: 12,
@@ -1355,7 +1338,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                         final date = pointDates[spot.x.toInt()];
                         final isIncome = spot.barIndex == 0;
                         return LineTooltipItem(
-                          isIncome ? "Income\n" : "Expense\n",
+                          isIncome ? 'Income\n' : 'Expense\n',
                           TextStyle(
                             color: isIncome
                                 ? const Color(0xFF10B981)
@@ -1393,10 +1376,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                           return TouchedSpotIndicatorData(
                             FlLine(
                               color: barData.color ?? const Color(0xFF8B5CF6),
-                              strokeWidth: 2,
                             ),
                             FlDotData(
-                              show: true,
                               getDotPainter: (spot, percent, barData, index) =>
                                   FlDotCirclePainter(
                                     radius: 6,
@@ -1456,56 +1437,6 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     );
   }
 
-  Widget _buildImpactSummary(bool isDark) {
-    final transactions = _getFilteredTransactions();
-    final totalExpense = transactions
-        .where((t) => t.amount < 0)
-        .fold(0.0, (sum, t) => sum + t.amount.abs());
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.account_balance_wallet_outlined,
-              color: Color(0xFF10B981),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Monthly Spending",
-                style: TextStyle(color: Colors.white38, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Rs. ${NumberFormat('#,###').format(totalExpense)}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   List<Transaction> _getFilteredTransactions() {
     final all = ref.watch(balanceProvider).transactions;
     final now = DateTime.now();
@@ -1548,7 +1479,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               ).animate().shimmer(duration: 2.seconds),
               const SizedBox(height: 40),
               const Text(
-                "Secure AI Analysis",
+                'Secure AI Analysis',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 26,
@@ -1558,20 +1489,20 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               const SizedBox(height: 24),
               _buildConsentDetail(
                 Icons.lock_outline_rounded,
-                "Privacy First",
-                "Your transaction data is analyzed securely and never shared with third parties.",
+                'Privacy First',
+                'Your transaction data is analyzed securely and never shared with third parties.',
               ),
               const SizedBox(height: 16),
               _buildConsentDetail(
                 Icons.insights_rounded,
-                "Personalized Insights",
-                "Gemini uses your spending patterns to create custom saving strategies for you.",
+                'Personalized Insights',
+                'Gemini uses your spending patterns to create custom saving strategies for you.',
               ),
               const SizedBox(height: 16),
               _buildConsentDetail(
                 Icons.data_usage_rounded,
                 "You're in Control",
-                "You can clear your AI memory and revoke this consent at any time in settings.",
+                'You can clear your AI memory and revoke this consent at any time in settings.',
               ),
               const Spacer(),
               ElevatedButton(
@@ -1585,7 +1516,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   ),
                 ),
                 child: const Text(
-                  "I Consent & Continue",
+                  'I Consent & Continue',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
@@ -1593,7 +1524,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text(
-                  "Not Now",
+                  'Not Now',
                   style: TextStyle(color: Colors.white38, fontSize: 14),
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+
 import '../../data/models/currency.dart';
 
 class CurrencySelectorSheet extends StatelessWidget {
@@ -8,15 +9,15 @@ class CurrencySelectorSheet extends StatelessWidget {
   final Function(Currency) onSelected;
 
   const CurrencySelectorSheet({
-    super.key,
     required this.currencies,
     required this.selectedCurrency,
     required this.onSelected,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -37,7 +38,7 @@ class CurrencySelectorSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-            "Select Currency",
+            'Select Currency',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -49,18 +50,32 @@ class CurrencySelectorSheet extends StatelessWidget {
                 final isSelected = selectedCurrency?.code == currency.code;
 
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                  leading: Text(currency.flag, style: const TextStyle(fontSize: 28)),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 4,
+                  ),
+                  leading: Text(
+                    currency.flag,
+                    style: const TextStyle(fontSize: 28),
+                  ),
                   title: Text(
                     currency.name,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isDark ? Colors.white : AppTheme.textBodyColor,
                     ),
                   ),
-                  subtitle: Text(currency.code, style: const TextStyle(color: Colors.grey)),
+                  subtitle: Text(
+                    currency.code,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor)
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: AppTheme.primaryColor,
+                        )
                       : null,
                   onTap: () {
                     onSelected(currency);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+
 import '../../data/models/currency.dart';
 import '../../data/services/mock_exchange_service.dart';
 
@@ -8,10 +9,10 @@ class RateListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final popularRates = MockExchangeService.getPopularRates('USD');
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusLarge,
@@ -30,20 +31,29 @@ class RateListCard extends StatelessWidget {
         separatorBuilder: (context, index) => Divider(
           height: 1,
           indent: 70,
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
         ),
         itemBuilder: (context, index) {
           final rateData = popularRates[index];
-          final currency = Currency.currencies.firstWhere((c) => c.code == rateData['code']);
+          final currency = Currency.currencies.firstWhere(
+            (c) => c.code == rateData['code'],
+          );
           final double change = rateData['change'];
           final isPositive = change >= 0;
 
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
             leading: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey[100],
                 shape: BoxShape.circle,
               ),
               child: Text(currency.flag, style: const TextStyle(fontSize: 24)),
@@ -65,7 +75,10 @@ class RateListCard extends StatelessWidget {
               children: [
                 Text(
                   "1.00 USD = ${rateData['rate'].toStringAsFixed(2)}",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(

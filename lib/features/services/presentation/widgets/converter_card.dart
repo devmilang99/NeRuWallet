@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/currency_model.dart';
 import '../../data/services/mock_exchange_service.dart';
@@ -14,8 +15,10 @@ class ConverterCard extends StatefulWidget {
 
 class _ConverterCardState extends State<ConverterCard> {
   Currency _fromCurrency = Currency.currencies[0]; // USD
-  Currency _toCurrency = Currency.currencies[9];   // NPR
-  final TextEditingController _fromController = TextEditingController(text: "1");
+  Currency _toCurrency = Currency.currencies[9]; // NPR
+  final TextEditingController _fromController = TextEditingController(
+    text: '1',
+  );
   final TextEditingController _toController = TextEditingController();
 
   @override
@@ -69,7 +72,7 @@ class _ConverterCardState extends State<ConverterCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -87,7 +90,7 @@ class _ConverterCardState extends State<ConverterCard> {
       child: Column(
         children: [
           _buildCurrencyInput(
-            title: "From",
+            title: 'From',
             controller: _fromController,
             currency: _fromCurrency,
             onCurrencyTap: () => _openSelector(true),
@@ -101,27 +104,33 @@ class _ConverterCardState extends State<ConverterCard> {
               children: [
                 Divider(color: isDark ? Colors.white10 : Colors.black12),
                 InkWell(
-                  onTap: _swapCurrencies,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark ? AppTheme.surfaceDark : Colors.white,
-                        width: 4,
+                      onTap: _swapCurrencies,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark ? AppTheme.surfaceDark : Colors.white,
+                            width: 4,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.swap_vert_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    child: const Icon(Icons.swap_vert_rounded, color: Colors.white, size: 24),
-                  ),
-                ).animate(target: 1).rotate(duration: 400.ms, curve: Curves.easeInOut),
+                    )
+                    .animate(target: 1)
+                    .rotate(duration: 400.ms, curve: Curves.easeInOut),
               ],
             ),
           ),
           const SizedBox(height: 12),
           _buildCurrencyInput(
-            title: "To",
+            title: 'To',
             controller: _toController,
             currency: _toCurrency,
             onCurrencyTap: () => _openSelector(false),
@@ -130,7 +139,7 @@ class _ConverterCardState extends State<ConverterCard> {
           ),
           const SizedBox(height: 24),
           Text(
-            "1 ${_fromCurrency.code} = ${MockExchangeService.getRate(_fromCurrency.code, _toCurrency.code).toStringAsFixed(4)} ${_toCurrency.code}",
+            '1 ${_fromCurrency.code} = ${MockExchangeService.getRate(_fromCurrency.code, _toCurrency.code).toStringAsFixed(4)} ${_toCurrency.code}',
             style: const TextStyle(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
@@ -169,9 +178,14 @@ class _ConverterCardState extends State<ConverterCard> {
               onTap: onCurrencyTap,
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -180,7 +194,10 @@ class _ConverterCardState extends State<ConverterCard> {
                     const SizedBox(width: 8),
                     Text(
                       currency.code,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
                   ],
@@ -193,7 +210,9 @@ class _ConverterCardState extends State<ConverterCard> {
                 controller: controller,
                 readOnly: readOnly,
                 onChanged: onChanged,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 textAlign: TextAlign.right,
                 style: const TextStyle(
                   fontSize: 24,
