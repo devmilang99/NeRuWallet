@@ -15,6 +15,7 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
+android/.kotlin/
 
 # The .vscode/ directory contains internal settings for Visual Studio Code.
 .vscode/
