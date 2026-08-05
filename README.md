@@ -17,7 +17,7 @@ Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first 
 harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture,
 now featuring **Hardware-Backed Multi-Signature Vaults**.
 
-[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Architecture](#architecture) · [Getting Started](#getting-started)
+[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Getting Started](#getting-started)
 
 ---
 
@@ -90,6 +90,24 @@ multisigs, every participant's approval is anchored in their own device's hardwa
 4. **Finalization**: Once the threshold is met, the transaction is cryptographically finalized and
    broadcast.
 
+```mermaid
+sequenceDiagram
+    participant P1 as Proposer (HSM 1)
+    participant SB as Supabase (Real-time)
+    participant P2 as Co-Signer (HSM 2)
+    participant Rust as Rust Core (ring)
+    
+    P1->>SB: Propose Multi-Sig Tx + Signature 1
+    SB-->>P2: Notification: Transaction Pending
+    P2->>P2: View Details & Biometric Auth
+    P2->>P2: HSM 2 signs Transaction Hash
+    P2->>SB: Submit Signature 2
+    SB->>Rust: Aggregated Signatures Verification
+    Note over Rust: Validates M-of-N Hardware Keys
+    Rust-->>SB: Success / Verification Proof
+    SB-->>P1: Transaction Finalized & Broadcast
+```
+
 ---
 
 ## <a id="neru-ai"></a> 🤖 Neru AI: The Intelligent Advisor
@@ -127,6 +145,34 @@ transparency.
 
 ---
 
+## <a id="screenshots"></a> 📸 Screenshots
+
+### 🏠 Core Experience
+
+|                 Splash                  |              Login              |                Dashboard                |               Profile               |
+|:---------------------------------------:|:-------------------------------:|:---------------------------------------:|:-----------------------------------:|
+| ![Splash](screenshots/splashscreen.png) | ![Login](screenshots/login.png) | ![Dashboard](screenshots/dashboard.png) | ![Profile](screenshots/profile.png) |
+
+### 🤖 Neru AI: Intelligence Advisor
+
+|           Analysis            |             Chat              |           Insights            |            Advisor            |
+|:-----------------------------:|:-----------------------------:|:-----------------------------:|:-----------------------------:|
+| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_2.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_4.png) |
+
+### 💸 Secure Transaction Flow
+
+|                 Step 1                 |                 Step 2                 |                 Step 3                 |                 Step 4                 |
+|:--------------------------------------:|:--------------------------------------:|:--------------------------------------:|:--------------------------------------:|
+| ![Send 1](screenshots/sendMoney_1.png) | ![Send 2](screenshots/sendMoney_2.png) | ![Send 3](screenshots/sendMoney_3.png) | ![Send 4](screenshots/sendMoney_4.png) |
+
+### 📊 Utility & QR
+
+|               History               |            QR Scan            |            QR Code            |
+|:-----------------------------------:|:-----------------------------:|:-----------------------------:|
+| ![History](screenshots/history.png) | ![QR 1](screenshots/qr_1.png) | ![QR 2](screenshots/qr_2.png) |
+
+---
+
 ## <a id="tech-stack"></a> 🛠 Tech Stack
 
 | Layer                 | Technology                                                    |
@@ -149,12 +195,16 @@ is isolated and testable.
 graph TD
     UI[Flutter UI Layer] --> BL[Business Logic - Riverpod]
     BL --> SS[SecureSigningService]
+    BL --> MS[Multi-Sig Coordinator]
     BL --> AS[AIService - Gemini]
+    MS --> SB[Supabase Realtime]
     SS --> NS[Native Security Provider]
     NS --> RS[Rust Core - ring]
     NS --> HSM[Hardware HSM]
     BL --> DB[Drift Local DB]
-    BL --> SB[Supabase Realtime]
+    BL --> SB
+    MS --> RS
+
 ```
 
 ---

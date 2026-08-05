@@ -79,6 +79,8 @@ class _CameraViewState extends State<CameraView> {
     final inputImage = _inputImageFromCameraImage(image);
     if (inputImage != null) {
       widget.onImageStream!(inputImage);
+    } else {
+      debugPrint('Warning: Could not convert camera image to InputImage');
     }
   }
 
@@ -154,7 +156,7 @@ class _CameraViewState extends State<CameraView> {
             (Platform.isAndroid
                 ? InputImageFormat.nv21
                 : InputImageFormat.bgra8888),
-        bytesPerRow: image.planes[0].bytesPerRow,
+        bytesPerRow: image.width, // Use width since padding was stripped
       ),
     );
   }

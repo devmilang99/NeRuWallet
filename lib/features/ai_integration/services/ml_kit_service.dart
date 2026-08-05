@@ -1,6 +1,20 @@
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
+class DocumentRecognitionResult {
+  final String? text;
+  final String message;
+  final bool isValid;
+  final bool isAligned;
+
+  DocumentRecognitionResult({
+    this.text,
+    required this.message,
+    required this.isValid,
+    this.isAligned = false,
+  });
+}
+
 class FaceState {
   final bool isPresent;
   final double? smileProb;
@@ -32,13 +46,23 @@ class MLKitService {
 
   Future<String?> processDocument(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
-    return processDocumentImage(inputImage);
+    final result = await processDocumentImage(inputImage);
+    return result.text;
   }
 
-  Future<String?> processDocumentImage(InputImage inputImage) async {
+  Future<DocumentRecognitionResult> processDocumentImage(
+    InputImage inputImage,
+  ) async {
     try {
       final recognizedText = await _textRecognizer.processImage(inputImage);
       final text = recognizedText.text;
+
+      if (text.isEmpty) {
+        return DocumentRecognitionResult(
+          message: 'No document detected. Please align your ID card.',
+          isValid: false,
+        );
+      }
 
       // Relaxed keywords for demo version
       final lowercaseText = text.toLowerCase();
@@ -46,14 +70,43 @@ class MLKitService {
           lowercaseText.contains('id') ||
           lowercaseText.contains('card') ||
           lowercaseText.contains('name') ||
-          text.length > 30; // Length as a fallback for demo
+          text.length > 50; // Increased threshold for better quality
 
-      if (text.length > 10 && hasKeywords) {
-        return text;
+      if (text.length < 20) {
+        return DocumentRecognitionResult(
+          message: 'Please move the document closer.',
+          isValid: false,
+        );
       }
-      return null;
+
+      if (!hasKeywords) {
+        return DocumentRecognitionResult(
+          message: 'Invalid document type. Please use a valid ID card.',
+          isValid: false,
+        );
+      }
+
+      // Basic alignment check (text should be somewhat distributed)
+      final isAligned = recognizedText.blocks.length >= 3;
+
+      if (!isAligned) {
+        return DocumentRecognitionResult(
+          message: 'Align the document within the frame.',
+          isValid: false,
+        );
+      }
+
+      return DocumentRecognitionResult(
+        text: text,
+        message: 'Document recognized! Hold still...',
+        isValid: true,
+        isAligned: true,
+      );
     } catch (e) {
-      return null;
+      return DocumentRecognitionResult(
+        message: 'Error scanning document. Please try again.',
+        isValid: false,
+      );
     }
   }
 

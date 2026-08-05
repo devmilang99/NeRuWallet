@@ -18,8 +18,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
   bool _isProcessing = false;
   bool _isBusy = false;
   bool _isDocumentValid = false;
+  String _feedbackMessage = 'Align your document within the frame.';
   int _consecutiveValidFrames = 0;
-  static const int _requiredValidFrames = 2; // Reduced for demo speed
+  static const int _requiredValidFrames = 5; // Increased for better stability
 
   Future<void> _handleImage(String path) async {
     if (_isProcessing) return;
@@ -53,20 +54,27 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     _isBusy = true;
 
     try {
-      final text = await _mlKitService.processDocumentImage(inputImage);
-      final isValid = text != null;
+      final result = await _mlKitService.processDocumentImage(inputImage);
+      debugPrint(
+        'Stream processing result: ${result.message}, isValid: ${result.isValid}',
+      );
 
       if (mounted) {
         setState(() {
-          _isDocumentValid = isValid;
+          _isDocumentValid = result.isValid;
+          _feedbackMessage = result.message;
         });
       }
 
-      if (isValid) {
+      if (result.isValid && result.text != null) {
         _consecutiveValidFrames++;
+        debugPrint(
+          'Valid frames: $_consecutiveValidFrames/$_requiredValidFrames',
+        );
         if (_consecutiveValidFrames >= _requiredValidFrames) {
           _isProcessing = true; // Stop stream processing
-          widget.onDocumentCaptured(text);
+          debugPrint('Auto-capture triggered!');
+          widget.onDocumentCaptured(result.text!);
         }
       } else {
         _consecutiveValidFrames = 0;
@@ -90,8 +98,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       children: [
         CameraView(
           title: 'Document Scan',
-          instruction:
-              'Align your document within the frame. It will capture automatically.',
+          instruction: _feedbackMessage,
           onImageCaptured: _handleImage,
           onImageStream: _processImageStream,
           overlay: _buildOverlay(),

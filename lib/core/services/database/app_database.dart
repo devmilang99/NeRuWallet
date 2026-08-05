@@ -89,7 +89,7 @@ class MultiSigMembers extends Table {
 class PendingSignatures extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  TextColumn get transactionId => text().references(transactions, #id)();
+  TextColumn get transactionId => text().references(Transactions, #id)();
 
   TextColumn get signerId => text()();
 

@@ -8,7 +8,9 @@ class $TransactionsTable extends Transactions
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
+
   $TransactionsTable(this.attachedDatabase, [this._alias]);
+
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -135,6 +137,28 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('completed'),
+  );
+
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -149,12 +173,17 @@ class $TransactionsTable extends Transactions
     transactionType,
     createdAt,
     metadata,
+    groupId,
+    status,
   ];
+
   @override
   String get aliasedName => _alias ?? actualTableName;
+
   @override
   String get actualTableName => $name;
   static const String $name = 'transactions';
+
   @override
   VerificationContext validateIntegrity(
     Insertable<Transaction> instance, {
@@ -246,11 +275,24 @@ class $TransactionsTable extends Transactions
         metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta),
       );
     }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
     return context;
   }
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+
   @override
   Transaction map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -303,6 +345,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}metadata'],
       ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
     );
   }
 
@@ -325,6 +375,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String? transactionType;
   final DateTime createdAt;
   final String? metadata;
+  final String? groupId;
+  final String status;
+
   const Transaction({
     required this.id,
     required this.title,
@@ -338,7 +391,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.transactionType,
     required this.createdAt,
     this.metadata,
+    this.groupId,
+    required this.status,
   });
+
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -358,6 +414,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || metadata != null) {
       map['metadata'] = Variable<String>(metadata);
     }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    map['status'] = Variable<String>(status);
     return map;
   }
 
@@ -379,6 +439,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       metadata: metadata == null && nullToAbsent
           ? const Value.absent()
           : Value(metadata),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      status: Value(status),
     );
   }
 
@@ -400,8 +464,11 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       transactionType: serializer.fromJson<String?>(json['transactionType']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       metadata: serializer.fromJson<String?>(json['metadata']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      status: serializer.fromJson<String>(json['status']),
     );
   }
+
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -418,6 +485,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'transactionType': serializer.toJson<String?>(transactionType),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'metadata': serializer.toJson<String?>(metadata),
+      'groupId': serializer.toJson<String?>(groupId),
+      'status': serializer.toJson<String>(status),
     };
   }
 
@@ -434,6 +503,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<String?> transactionType = const Value.absent(),
     DateTime? createdAt,
     Value<String?> metadata = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
+    String? status,
   }) => Transaction(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -449,7 +520,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         : this.transactionType,
     createdAt: createdAt ?? this.createdAt,
     metadata: metadata.present ? metadata.value : this.metadata,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    status: status ?? this.status,
   );
+
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
       id: data.id.present ? data.id.value : this.id,
@@ -468,6 +542,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           : this.transactionType,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       metadata: data.metadata.present ? data.metadata.value : this.metadata,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      status: data.status.present ? data.status.value : this.status,
     );
   }
 
@@ -485,7 +561,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('category: $category, ')
           ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
-          ..write('metadata: $metadata')
+          ..write('metadata: $metadata, ')
+          ..write('groupId: $groupId, ')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
@@ -504,7 +582,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     transactionType,
     createdAt,
     metadata,
+    groupId,
+    status,
   );
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -520,7 +601,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.category == this.category &&
           other.transactionType == this.transactionType &&
           other.createdAt == this.createdAt &&
-          other.metadata == this.metadata);
+          other.metadata == this.metadata &&
+          other.groupId == this.groupId &&
+          other.status == this.status);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -536,7 +619,10 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> transactionType;
   final Value<DateTime> createdAt;
   final Value<String?> metadata;
+  final Value<String?> groupId;
+  final Value<String> status;
   final Value<int> rowid;
+
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -550,8 +636,11 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   });
+
   TransactionsCompanion.insert({
     required String id,
     required String title,
@@ -565,6 +654,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.transactionType = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.metadata = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -572,6 +663,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
        amount = Value(amount),
        iconCode = Value(iconCode),
        colorValue = Value(colorValue);
+
   static Insertable<Transaction> custom({
     Expression<String>? id,
     Expression<String>? title,
@@ -585,6 +677,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? transactionType,
     Expression<DateTime>? createdAt,
     Expression<String>? metadata,
+    Expression<String>? groupId,
+    Expression<String>? status,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -600,6 +694,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (transactionType != null) 'transaction_type': transactionType,
       if (createdAt != null) 'created_at': createdAt,
       if (metadata != null) 'metadata': metadata,
+      if (groupId != null) 'group_id': groupId,
+      if (status != null) 'status': status,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -617,6 +713,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String?>? transactionType,
     Value<DateTime>? createdAt,
     Value<String?>? metadata,
+    Value<String?>? groupId,
+    Value<String>? status,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -632,6 +730,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       transactionType: transactionType ?? this.transactionType,
       createdAt: createdAt ?? this.createdAt,
       metadata: metadata ?? this.metadata,
+      groupId: groupId ?? this.groupId,
+      status: status ?? this.status,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -675,6 +775,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (metadata.present) {
       map['metadata'] = Variable<String>(metadata.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -696,6 +802,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('transactionType: $transactionType, ')
           ..write('createdAt: $createdAt, ')
           ..write('metadata: $metadata, ')
+          ..write('groupId: $groupId, ')
+          ..write('status: $status, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -707,7 +815,9 @@ class $AppPreferencesTable extends AppPreferences
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
+
   $AppPreferencesTable(this.attachedDatabase, [this._alias]);
+
   static const VerificationMeta _keyMeta = const VerificationMeta('key');
   @override
   late final GeneratedColumn<String> key = GeneratedColumn<String>(
@@ -726,13 +836,17 @@ class $AppPreferencesTable extends AppPreferences
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+
   @override
   List<GeneratedColumn> get $columns => [key, value];
+
   @override
   String get aliasedName => _alias ?? actualTableName;
+
   @override
   String get actualTableName => $name;
   static const String $name = 'app_preferences';
+
   @override
   VerificationContext validateIntegrity(
     Insertable<AppPreference> instance, {
@@ -759,6 +873,7 @@ class $AppPreferencesTable extends AppPreferences
 
   @override
   Set<GeneratedColumn> get $primaryKey => {key};
+
   @override
   AppPreference map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -783,7 +898,9 @@ class $AppPreferencesTable extends AppPreferences
 class AppPreference extends DataClass implements Insertable<AppPreference> {
   final String key;
   final String? value;
+
   const AppPreference({required this.key, this.value});
+
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -813,6 +930,7 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
       value: serializer.fromJson<String?>(json['value']),
     );
   }
+
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -829,6 +947,7 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
     key: key ?? this.key,
     value: value.present ? value.value : this.value,
   );
+
   AppPreference copyWithCompanion(AppPreferencesCompanion data) {
     return AppPreference(
       key: data.key.present ? data.key.value : this.key,
@@ -847,6 +966,7 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
 
   @override
   int get hashCode => Object.hash(key, value);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -859,16 +979,19 @@ class AppPreferencesCompanion extends UpdateCompanion<AppPreference> {
   final Value<String> key;
   final Value<String?> value;
   final Value<int> rowid;
+
   const AppPreferencesCompanion({
     this.key = const Value.absent(),
     this.value = const Value.absent(),
     this.rowid = const Value.absent(),
   });
+
   AppPreferencesCompanion.insert({
     required String key,
     this.value = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : key = Value(key);
+
   static Insertable<AppPreference> custom({
     Expression<String>? key,
     Expression<String>? value,
@@ -924,7 +1047,9 @@ class $DbNotificationsTable extends DbNotifications
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
+
   $DbNotificationsTable(this.attachedDatabase, [this._alias]);
+
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -981,13 +1106,17 @@ class $DbNotificationsTable extends DbNotifications
     ),
     defaultValue: const Constant(false),
   );
+
   @override
   List<GeneratedColumn> get $columns => [id, title, body, receivedAt, isRead];
+
   @override
   String get aliasedName => _alias ?? actualTableName;
+
   @override
   String get actualTableName => $name;
   static const String $name = 'db_notifications';
+
   @override
   VerificationContext validateIntegrity(
     Insertable<DbNotification> instance, {
@@ -1031,6 +1160,7 @@ class $DbNotificationsTable extends DbNotifications
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+
   @override
   DbNotification map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1070,6 +1200,7 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
   final String body;
   final DateTime receivedAt;
   final bool isRead;
+
   const DbNotification({
     required this.id,
     required this.title,
@@ -1077,6 +1208,7 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
     required this.receivedAt,
     required this.isRead,
   });
+
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1111,6 +1243,7 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
       isRead: serializer.fromJson<bool>(json['isRead']),
     );
   }
+
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -1136,6 +1269,7 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
     receivedAt: receivedAt ?? this.receivedAt,
     isRead: isRead ?? this.isRead,
   );
+
   DbNotification copyWithCompanion(DbNotificationsCompanion data) {
     return DbNotification(
       id: data.id.present ? data.id.value : this.id,
@@ -1162,6 +1296,7 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
 
   @override
   int get hashCode => Object.hash(id, title, body, receivedAt, isRead);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1179,6 +1314,7 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
   final Value<String> body;
   final Value<DateTime> receivedAt;
   final Value<bool> isRead;
+
   const DbNotificationsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -1186,6 +1322,7 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
     this.receivedAt = const Value.absent(),
     this.isRead = const Value.absent(),
   });
+
   DbNotificationsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
@@ -1194,6 +1331,7 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
     this.isRead = const Value.absent(),
   }) : title = Value(title),
        body = Value(body);
+
   static Insertable<DbNotification> custom({
     Expression<int>? id,
     Expression<String>? title,
@@ -1265,7 +1403,9 @@ class $AiMemoriesTable extends AiMemories
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
+
   $AiMemoriesTable(this.attachedDatabase, [this._alias]);
+
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1321,13 +1461,17 @@ class $AiMemoriesTable extends AiMemories
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+
   @override
   List<GeneratedColumn> get $columns => [id, role, content, type, createdAt];
+
   @override
   String get aliasedName => _alias ?? actualTableName;
+
   @override
   String get actualTableName => $name;
   static const String $name = 'ai_memories';
+
   @override
   VerificationContext validateIntegrity(
     Insertable<AiMemory> instance, {
@@ -1371,6 +1515,7 @@ class $AiMemoriesTable extends AiMemories
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+
   @override
   AiMemory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1410,6 +1555,7 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
   final String content;
   final String type;
   final DateTime createdAt;
+
   const AiMemory({
     required this.id,
     required this.role,
@@ -1417,6 +1563,7 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
     required this.type,
     required this.createdAt,
   });
+
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1451,6 +1598,7 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
+
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -1476,6 +1624,7 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
     type: type ?? this.type,
     createdAt: createdAt ?? this.createdAt,
   );
+
   AiMemory copyWithCompanion(AiMemoriesCompanion data) {
     return AiMemory(
       id: data.id.present ? data.id.value : this.id,
@@ -1500,6 +1649,7 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
 
   @override
   int get hashCode => Object.hash(id, role, content, type, createdAt);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1517,6 +1667,7 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
   final Value<String> content;
   final Value<String> type;
   final Value<DateTime> createdAt;
+
   const AiMemoriesCompanion({
     this.id = const Value.absent(),
     this.role = const Value.absent(),
@@ -1524,6 +1675,7 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
     this.type = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
+
   AiMemoriesCompanion.insert({
     this.id = const Value.absent(),
     required String role,
@@ -1532,6 +1684,7 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
     this.createdAt = const Value.absent(),
   }) : role = Value(role),
        content = Value(content);
+
   static Insertable<AiMemory> custom({
     Expression<int>? id,
     Expression<String>? role,
@@ -1598,8 +1751,1095 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
   }
 }
 
+class $MultiSigGroupsTable extends MultiSigGroups
+    with TableInfo<$MultiSigGroupsTable, MultiSigGroup> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+
+  $MultiSigGroupsTable(this.attachedDatabase, [this._alias]);
+
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _creatorIdMeta = const VerificationMeta(
+    'creatorId',
+  );
+  @override
+  late final GeneratedColumn<String> creatorId = GeneratedColumn<String>(
+    'creator_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _thresholdMeta = const VerificationMeta(
+    'threshold',
+  );
+  @override
+  late final GeneratedColumn<int> threshold = GeneratedColumn<int>(
+    'threshold',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalMembersMeta = const VerificationMeta(
+    'totalMembers',
+  );
+  @override
+  late final GeneratedColumn<int> totalMembers = GeneratedColumn<int>(
+    'total_members',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    creatorId,
+    threshold,
+    totalMembers,
+    createdAt,
+  ];
+
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'multi_sig_groups';
+
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MultiSigGroup> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('creator_id')) {
+      context.handle(
+        _creatorIdMeta,
+        creatorId.isAcceptableOrUnknown(data['creator_id']!, _creatorIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_creatorIdMeta);
+    }
+    if (data.containsKey('threshold')) {
+      context.handle(
+        _thresholdMeta,
+        threshold.isAcceptableOrUnknown(data['threshold']!, _thresholdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_thresholdMeta);
+    }
+    if (data.containsKey('total_members')) {
+      context.handle(
+        _totalMembersMeta,
+        totalMembers.isAcceptableOrUnknown(
+          data['total_members']!,
+          _totalMembersMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalMembersMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+
+  @override
+  MultiSigGroup map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MultiSigGroup(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      creatorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}creator_id'],
+      )!,
+      threshold: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}threshold'],
+      )!,
+      totalMembers: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_members'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MultiSigGroupsTable createAlias(String alias) {
+    return $MultiSigGroupsTable(attachedDatabase, alias);
+  }
+}
+
+class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
+  final String id;
+  final String name;
+  final String creatorId;
+  final int threshold;
+  final int totalMembers;
+  final DateTime createdAt;
+
+  const MultiSigGroup({
+    required this.id,
+    required this.name,
+    required this.creatorId,
+    required this.threshold,
+    required this.totalMembers,
+    required this.createdAt,
+  });
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['creator_id'] = Variable<String>(creatorId);
+    map['threshold'] = Variable<int>(threshold);
+    map['total_members'] = Variable<int>(totalMembers);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  MultiSigGroupsCompanion toCompanion(bool nullToAbsent) {
+    return MultiSigGroupsCompanion(
+      id: Value(id),
+      name: Value(name),
+      creatorId: Value(creatorId),
+      threshold: Value(threshold),
+      totalMembers: Value(totalMembers),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory MultiSigGroup.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MultiSigGroup(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      creatorId: serializer.fromJson<String>(json['creatorId']),
+      threshold: serializer.fromJson<int>(json['threshold']),
+      totalMembers: serializer.fromJson<int>(json['totalMembers']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'creatorId': serializer.toJson<String>(creatorId),
+      'threshold': serializer.toJson<int>(threshold),
+      'totalMembers': serializer.toJson<int>(totalMembers),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  MultiSigGroup copyWith({
+    String? id,
+    String? name,
+    String? creatorId,
+    int? threshold,
+    int? totalMembers,
+    DateTime? createdAt,
+  }) => MultiSigGroup(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    creatorId: creatorId ?? this.creatorId,
+    threshold: threshold ?? this.threshold,
+    totalMembers: totalMembers ?? this.totalMembers,
+    createdAt: createdAt ?? this.createdAt,
+  );
+
+  MultiSigGroup copyWithCompanion(MultiSigGroupsCompanion data) {
+    return MultiSigGroup(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      creatorId: data.creatorId.present ? data.creatorId.value : this.creatorId,
+      threshold: data.threshold.present ? data.threshold.value : this.threshold,
+      totalMembers: data.totalMembers.present
+          ? data.totalMembers.value
+          : this.totalMembers,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MultiSigGroup(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('creatorId: $creatorId, ')
+          ..write('threshold: $threshold, ')
+          ..write('totalMembers: $totalMembers, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, creatorId, threshold, totalMembers, createdAt);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MultiSigGroup &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.creatorId == this.creatorId &&
+          other.threshold == this.threshold &&
+          other.totalMembers == this.totalMembers &&
+          other.createdAt == this.createdAt);
+}
+
+class MultiSigGroupsCompanion extends UpdateCompanion<MultiSigGroup> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> creatorId;
+  final Value<int> threshold;
+  final Value<int> totalMembers;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+
+  const MultiSigGroupsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.creatorId = const Value.absent(),
+    this.threshold = const Value.absent(),
+    this.totalMembers = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+
+  MultiSigGroupsCompanion.insert({
+    required String id,
+    required String name,
+    required String creatorId,
+    required int threshold,
+    required int totalMembers,
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       creatorId = Value(creatorId),
+       threshold = Value(threshold),
+       totalMembers = Value(totalMembers);
+
+  static Insertable<MultiSigGroup> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? creatorId,
+    Expression<int>? threshold,
+    Expression<int>? totalMembers,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (creatorId != null) 'creator_id': creatorId,
+      if (threshold != null) 'threshold': threshold,
+      if (totalMembers != null) 'total_members': totalMembers,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MultiSigGroupsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? creatorId,
+    Value<int>? threshold,
+    Value<int>? totalMembers,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return MultiSigGroupsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      creatorId: creatorId ?? this.creatorId,
+      threshold: threshold ?? this.threshold,
+      totalMembers: totalMembers ?? this.totalMembers,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (creatorId.present) {
+      map['creator_id'] = Variable<String>(creatorId.value);
+    }
+    if (threshold.present) {
+      map['threshold'] = Variable<int>(threshold.value);
+    }
+    if (totalMembers.present) {
+      map['total_members'] = Variable<int>(totalMembers.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MultiSigGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('creatorId: $creatorId, ')
+          ..write('threshold: $threshold, ')
+          ..write('totalMembers: $totalMembers, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MultiSigMembersTable extends MultiSigMembers
+    with TableInfo<$MultiSigMembersTable, MultiSigMember> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+
+  $MultiSigMembersTable(this.attachedDatabase, [this._alias]);
+
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES multi_sig_groups (id)',
+    ),
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _publicKeyMeta = const VerificationMeta(
+    'publicKey',
+  );
+  @override
+  late final GeneratedColumn<String> publicKey = GeneratedColumn<String>(
+    'public_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+
+  @override
+  List<GeneratedColumn> get $columns => [groupId, userId, publicKey];
+
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'multi_sig_members';
+
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MultiSigMember> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('public_key')) {
+      context.handle(
+        _publicKeyMeta,
+        publicKey.isAcceptableOrUnknown(data['public_key']!, _publicKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_publicKeyMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId, userId};
+
+  @override
+  MultiSigMember map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MultiSigMember(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      publicKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}public_key'],
+      )!,
+    );
+  }
+
+  @override
+  $MultiSigMembersTable createAlias(String alias) {
+    return $MultiSigMembersTable(attachedDatabase, alias);
+  }
+}
+
+class MultiSigMember extends DataClass implements Insertable<MultiSigMember> {
+  final String groupId;
+  final String userId;
+  final String publicKey;
+
+  const MultiSigMember({
+    required this.groupId,
+    required this.userId,
+    required this.publicKey,
+  });
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<String>(groupId);
+    map['user_id'] = Variable<String>(userId);
+    map['public_key'] = Variable<String>(publicKey);
+    return map;
+  }
+
+  MultiSigMembersCompanion toCompanion(bool nullToAbsent) {
+    return MultiSigMembersCompanion(
+      groupId: Value(groupId),
+      userId: Value(userId),
+      publicKey: Value(publicKey),
+    );
+  }
+
+  factory MultiSigMember.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MultiSigMember(
+      groupId: serializer.fromJson<String>(json['groupId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      publicKey: serializer.fromJson<String>(json['publicKey']),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<String>(groupId),
+      'userId': serializer.toJson<String>(userId),
+      'publicKey': serializer.toJson<String>(publicKey),
+    };
+  }
+
+  MultiSigMember copyWith({
+    String? groupId,
+    String? userId,
+    String? publicKey,
+  }) => MultiSigMember(
+    groupId: groupId ?? this.groupId,
+    userId: userId ?? this.userId,
+    publicKey: publicKey ?? this.publicKey,
+  );
+
+  MultiSigMember copyWithCompanion(MultiSigMembersCompanion data) {
+    return MultiSigMember(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      publicKey: data.publicKey.present ? data.publicKey.value : this.publicKey,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MultiSigMember(')
+          ..write('groupId: $groupId, ')
+          ..write('userId: $userId, ')
+          ..write('publicKey: $publicKey')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, userId, publicKey);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MultiSigMember &&
+          other.groupId == this.groupId &&
+          other.userId == this.userId &&
+          other.publicKey == this.publicKey);
+}
+
+class MultiSigMembersCompanion extends UpdateCompanion<MultiSigMember> {
+  final Value<String> groupId;
+  final Value<String> userId;
+  final Value<String> publicKey;
+  final Value<int> rowid;
+
+  const MultiSigMembersCompanion({
+    this.groupId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.publicKey = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+
+  MultiSigMembersCompanion.insert({
+    required String groupId,
+    required String userId,
+    required String publicKey,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       userId = Value(userId),
+       publicKey = Value(publicKey);
+
+  static Insertable<MultiSigMember> custom({
+    Expression<String>? groupId,
+    Expression<String>? userId,
+    Expression<String>? publicKey,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (userId != null) 'user_id': userId,
+      if (publicKey != null) 'public_key': publicKey,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MultiSigMembersCompanion copyWith({
+    Value<String>? groupId,
+    Value<String>? userId,
+    Value<String>? publicKey,
+    Value<int>? rowid,
+  }) {
+    return MultiSigMembersCompanion(
+      groupId: groupId ?? this.groupId,
+      userId: userId ?? this.userId,
+      publicKey: publicKey ?? this.publicKey,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (publicKey.present) {
+      map['public_key'] = Variable<String>(publicKey.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MultiSigMembersCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('userId: $userId, ')
+          ..write('publicKey: $publicKey, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PendingSignaturesTable extends PendingSignatures
+    with TableInfo<$PendingSignaturesTable, PendingSignature> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+
+  $PendingSignaturesTable(this.attachedDatabase, [this._alias]);
+
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<String> transactionId = GeneratedColumn<String>(
+    'transaction_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES transactions (id)',
+    ),
+  );
+  static const VerificationMeta _signerIdMeta = const VerificationMeta(
+    'signerId',
+  );
+  @override
+  late final GeneratedColumn<String> signerId = GeneratedColumn<String>(
+    'signer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _signatureMeta = const VerificationMeta(
+    'signature',
+  );
+  @override
+  late final GeneratedColumn<String> signature = GeneratedColumn<String>(
+    'signature',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _signedAtMeta = const VerificationMeta(
+    'signedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> signedAt = GeneratedColumn<DateTime>(
+    'signed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    transactionId,
+    signerId,
+    signature,
+    signedAt,
+  ];
+
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pending_signatures';
+
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PendingSignature> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transactionIdMeta);
+    }
+    if (data.containsKey('signer_id')) {
+      context.handle(
+        _signerIdMeta,
+        signerId.isAcceptableOrUnknown(data['signer_id']!, _signerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_signerIdMeta);
+    }
+    if (data.containsKey('signature')) {
+      context.handle(
+        _signatureMeta,
+        signature.isAcceptableOrUnknown(data['signature']!, _signatureMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_signatureMeta);
+    }
+    if (data.containsKey('signed_at')) {
+      context.handle(
+        _signedAtMeta,
+        signedAt.isAcceptableOrUnknown(data['signed_at']!, _signedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+
+  @override
+  PendingSignature map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PendingSignature(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_id'],
+      )!,
+      signerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signer_id'],
+      )!,
+      signature: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signature'],
+      )!,
+      signedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}signed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PendingSignaturesTable createAlias(String alias) {
+    return $PendingSignaturesTable(attachedDatabase, alias);
+  }
+}
+
+class PendingSignature extends DataClass
+    implements Insertable<PendingSignature> {
+  final int id;
+  final String transactionId;
+  final String signerId;
+  final String signature;
+  final DateTime signedAt;
+
+  const PendingSignature({
+    required this.id,
+    required this.transactionId,
+    required this.signerId,
+    required this.signature,
+    required this.signedAt,
+  });
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['transaction_id'] = Variable<String>(transactionId);
+    map['signer_id'] = Variable<String>(signerId);
+    map['signature'] = Variable<String>(signature);
+    map['signed_at'] = Variable<DateTime>(signedAt);
+    return map;
+  }
+
+  PendingSignaturesCompanion toCompanion(bool nullToAbsent) {
+    return PendingSignaturesCompanion(
+      id: Value(id),
+      transactionId: Value(transactionId),
+      signerId: Value(signerId),
+      signature: Value(signature),
+      signedAt: Value(signedAt),
+    );
+  }
+
+  factory PendingSignature.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PendingSignature(
+      id: serializer.fromJson<int>(json['id']),
+      transactionId: serializer.fromJson<String>(json['transactionId']),
+      signerId: serializer.fromJson<String>(json['signerId']),
+      signature: serializer.fromJson<String>(json['signature']),
+      signedAt: serializer.fromJson<DateTime>(json['signedAt']),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'transactionId': serializer.toJson<String>(transactionId),
+      'signerId': serializer.toJson<String>(signerId),
+      'signature': serializer.toJson<String>(signature),
+      'signedAt': serializer.toJson<DateTime>(signedAt),
+    };
+  }
+
+  PendingSignature copyWith({
+    int? id,
+    String? transactionId,
+    String? signerId,
+    String? signature,
+    DateTime? signedAt,
+  }) => PendingSignature(
+    id: id ?? this.id,
+    transactionId: transactionId ?? this.transactionId,
+    signerId: signerId ?? this.signerId,
+    signature: signature ?? this.signature,
+    signedAt: signedAt ?? this.signedAt,
+  );
+
+  PendingSignature copyWithCompanion(PendingSignaturesCompanion data) {
+    return PendingSignature(
+      id: data.id.present ? data.id.value : this.id,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      signerId: data.signerId.present ? data.signerId.value : this.signerId,
+      signature: data.signature.present ? data.signature.value : this.signature,
+      signedAt: data.signedAt.present ? data.signedAt.value : this.signedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingSignature(')
+          ..write('id: $id, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('signerId: $signerId, ')
+          ..write('signature: $signature, ')
+          ..write('signedAt: $signedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, transactionId, signerId, signature, signedAt);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PendingSignature &&
+          other.id == this.id &&
+          other.transactionId == this.transactionId &&
+          other.signerId == this.signerId &&
+          other.signature == this.signature &&
+          other.signedAt == this.signedAt);
+}
+
+class PendingSignaturesCompanion extends UpdateCompanion<PendingSignature> {
+  final Value<int> id;
+  final Value<String> transactionId;
+  final Value<String> signerId;
+  final Value<String> signature;
+  final Value<DateTime> signedAt;
+
+  const PendingSignaturesCompanion({
+    this.id = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.signerId = const Value.absent(),
+    this.signature = const Value.absent(),
+    this.signedAt = const Value.absent(),
+  });
+
+  PendingSignaturesCompanion.insert({
+    this.id = const Value.absent(),
+    required String transactionId,
+    required String signerId,
+    required String signature,
+    this.signedAt = const Value.absent(),
+  }) : transactionId = Value(transactionId),
+       signerId = Value(signerId),
+       signature = Value(signature);
+
+  static Insertable<PendingSignature> custom({
+    Expression<int>? id,
+    Expression<String>? transactionId,
+    Expression<String>? signerId,
+    Expression<String>? signature,
+    Expression<DateTime>? signedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (signerId != null) 'signer_id': signerId,
+      if (signature != null) 'signature': signature,
+      if (signedAt != null) 'signed_at': signedAt,
+    });
+  }
+
+  PendingSignaturesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? transactionId,
+    Value<String>? signerId,
+    Value<String>? signature,
+    Value<DateTime>? signedAt,
+  }) {
+    return PendingSignaturesCompanion(
+      id: id ?? this.id,
+      transactionId: transactionId ?? this.transactionId,
+      signerId: signerId ?? this.signerId,
+      signature: signature ?? this.signature,
+      signedAt: signedAt ?? this.signedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<String>(transactionId.value);
+    }
+    if (signerId.present) {
+      map['signer_id'] = Variable<String>(signerId.value);
+    }
+    if (signature.present) {
+      map['signature'] = Variable<String>(signature.value);
+    }
+    if (signedAt.present) {
+      map['signed_at'] = Variable<DateTime>(signedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingSignaturesCompanion(')
+          ..write('id: $id, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('signerId: $signerId, ')
+          ..write('signature: $signature, ')
+          ..write('signedAt: $signedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
+
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $AppPreferencesTable appPreferences = $AppPreferencesTable(this);
@@ -1607,15 +2847,26 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $AiMemoriesTable aiMemories = $AiMemoriesTable(this);
+  late final $MultiSigGroupsTable multiSigGroups = $MultiSigGroupsTable(this);
+  late final $MultiSigMembersTable multiSigMembers = $MultiSigMembersTable(
+    this,
+  );
+  late final $PendingSignaturesTable pendingSignatures =
+      $PendingSignaturesTable(this);
+
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     transactions,
     appPreferences,
     dbNotifications,
     aiMemories,
+    multiSigGroups,
+    multiSigMembers,
+    pendingSignatures,
   ];
 }
 
@@ -1633,6 +2884,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
+      Value<String?> groupId,
+      Value<String> status,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -1649,8 +2902,39 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> transactionType,
       Value<DateTime> createdAt,
       Value<String?> metadata,
+      Value<String?> groupId,
+      Value<String> status,
       Value<int> rowid,
     });
+
+final class $$TransactionsTableReferences
+    extends BaseReferences<_$AppDatabase, $TransactionsTable, Transaction> {
+  $$TransactionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PendingSignaturesTable, List<PendingSignature>>
+  _pendingSignaturesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.pendingSignatures,
+        aliasName: $_aliasNameGenerator(
+          db.transactions.id,
+          db.pendingSignatures.transactionId,
+        ),
+      );
+
+  $$PendingSignaturesTableProcessedTableManager get pendingSignaturesRefs {
+    final manager = $$PendingSignaturesTableTableManager(
+      $_db,
+      $_db.pendingSignatures,
+    ).filter((f) => f.transactionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _pendingSignaturesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$TransactionsTableFilterComposer
     extends Composer<_$AppDatabase, $TransactionsTable> {
@@ -1661,6 +2945,7 @@ class $$TransactionsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -1720,6 +3005,41 @@ class $$TransactionsTableFilterComposer
     column: $table.metadata,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> pendingSignaturesRefs(
+    Expression<bool> Function($$PendingSignaturesTableFilterComposer f) f,
+  ) {
+    final $$PendingSignaturesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.pendingSignatures,
+      getReferencedColumn: (t) => t.transactionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PendingSignaturesTableFilterComposer(
+            $db: $db,
+            $table: $db.pendingSignatures,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableOrderingComposer
@@ -1731,6 +3051,7 @@ class $$TransactionsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -1790,6 +3111,16 @@ class $$TransactionsTableOrderingComposer
     column: $table.metadata,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -1801,6 +3132,7 @@ class $$TransactionsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -1840,6 +3172,38 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get metadata =>
       $composableBuilder(column: $table.metadata, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  Expression<T> pendingSignaturesRefs<T extends Object>(
+    Expression<T> Function($$PendingSignaturesTableAnnotationComposer a) f,
+  ) {
+    final $$PendingSignaturesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.pendingSignatures,
+          getReferencedColumn: (t) => t.transactionId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$PendingSignaturesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.pendingSignatures,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -1853,12 +3217,9 @@ class $$TransactionsTableTableManager
           $$TransactionsTableAnnotationComposer,
           $$TransactionsTableCreateCompanionBuilder,
           $$TransactionsTableUpdateCompanionBuilder,
-          (
-            Transaction,
-            BaseReferences<_$AppDatabase, $TransactionsTable, Transaction>,
-          ),
+          (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool pendingSignaturesRefs})
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -1885,6 +3246,8 @@ class $$TransactionsTableTableManager
                 Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -1899,6 +3262,8 @@ class $$TransactionsTableTableManager
                 transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
+                groupId: groupId,
+                status: status,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1915,6 +3280,8 @@ class $$TransactionsTableTableManager
                 Value<String?> transactionType = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -1929,12 +3296,52 @@ class $$TransactionsTableTableManager
                 transactionType: transactionType,
                 createdAt: createdAt,
                 metadata: metadata,
+                groupId: groupId,
+                status: status,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$TransactionsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({pendingSignaturesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (pendingSignaturesRefs) db.pendingSignatures,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (pendingSignaturesRefs)
+                    await $_getPrefetchedData<
+                      Transaction,
+                      $TransactionsTable,
+                      PendingSignature
+                    >(
+                      currentTable: table,
+                      referencedTable: $$TransactionsTableReferences
+                          ._pendingSignaturesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$TransactionsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).pendingSignaturesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.transactionId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -1949,12 +3356,9 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableAnnotationComposer,
       $$TransactionsTableCreateCompanionBuilder,
       $$TransactionsTableUpdateCompanionBuilder,
-      (
-        Transaction,
-        BaseReferences<_$AppDatabase, $TransactionsTable, Transaction>,
-      ),
+      (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool pendingSignaturesRefs})
     >;
 typedef $$AppPreferencesTableCreateCompanionBuilder =
     AppPreferencesCompanion Function({
@@ -1978,6 +3382,7 @@ class $$AppPreferencesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnFilters<String> get key => $composableBuilder(
     column: $table.key,
     builder: (column) => ColumnFilters(column),
@@ -1998,6 +3403,7 @@ class $$AppPreferencesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnOrderings<String> get key => $composableBuilder(
     column: $table.key,
     builder: (column) => ColumnOrderings(column),
@@ -2018,6 +3424,7 @@ class $$AppPreferencesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   GeneratedColumn<String> get key =>
       $composableBuilder(column: $table.key, builder: (column) => column);
 
@@ -2124,6 +3531,7 @@ class $$DbNotificationsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -2159,6 +3567,7 @@ class $$DbNotificationsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -2194,6 +3603,7 @@ class $$DbNotificationsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -2326,6 +3736,7 @@ class $$AiMemoriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -2361,6 +3772,7 @@ class $$AiMemoriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -2396,6 +3808,7 @@ class $$AiMemoriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -2488,18 +3901,998 @@ typedef $$AiMemoriesTableProcessedTableManager =
       AiMemory,
       PrefetchHooks Function()
     >;
+typedef $$MultiSigGroupsTableCreateCompanionBuilder =
+    MultiSigGroupsCompanion Function({
+      required String id,
+      required String name,
+      required String creatorId,
+      required int threshold,
+      required int totalMembers,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$MultiSigGroupsTableUpdateCompanionBuilder =
+    MultiSigGroupsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> creatorId,
+      Value<int> threshold,
+      Value<int> totalMembers,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$MultiSigGroupsTableReferences
+    extends BaseReferences<_$AppDatabase, $MultiSigGroupsTable, MultiSigGroup> {
+  $$MultiSigGroupsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$MultiSigMembersTable, List<MultiSigMember>>
+  _multiSigMembersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.multiSigMembers,
+    aliasName: $_aliasNameGenerator(
+      db.multiSigGroups.id,
+      db.multiSigMembers.groupId,
+    ),
+  );
+
+  $$MultiSigMembersTableProcessedTableManager get multiSigMembersRefs {
+    final manager = $$MultiSigMembersTableTableManager(
+      $_db,
+      $_db.multiSigMembers,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _multiSigMembersRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$MultiSigGroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $MultiSigGroupsTable> {
+  $$MultiSigGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get creatorId => $composableBuilder(
+    column: $table.creatorId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get threshold => $composableBuilder(
+    column: $table.threshold,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalMembers => $composableBuilder(
+    column: $table.totalMembers,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> multiSigMembersRefs(
+    Expression<bool> Function($$MultiSigMembersTableFilterComposer f) f,
+  ) {
+    final $$MultiSigMembersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.multiSigMembers,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MultiSigMembersTableFilterComposer(
+            $db: $db,
+            $table: $db.multiSigMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$MultiSigGroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MultiSigGroupsTable> {
+  $$MultiSigGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get creatorId => $composableBuilder(
+    column: $table.creatorId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get threshold => $composableBuilder(
+    column: $table.threshold,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalMembers => $composableBuilder(
+    column: $table.totalMembers,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MultiSigGroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MultiSigGroupsTable> {
+  $$MultiSigGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get creatorId =>
+      $composableBuilder(column: $table.creatorId, builder: (column) => column);
+
+  GeneratedColumn<int> get threshold =>
+      $composableBuilder(column: $table.threshold, builder: (column) => column);
+
+  GeneratedColumn<int> get totalMembers => $composableBuilder(
+    column: $table.totalMembers,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> multiSigMembersRefs<T extends Object>(
+    Expression<T> Function($$MultiSigMembersTableAnnotationComposer a) f,
+  ) {
+    final $$MultiSigMembersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.multiSigMembers,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MultiSigMembersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.multiSigMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$MultiSigGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MultiSigGroupsTable,
+          MultiSigGroup,
+          $$MultiSigGroupsTableFilterComposer,
+          $$MultiSigGroupsTableOrderingComposer,
+          $$MultiSigGroupsTableAnnotationComposer,
+          $$MultiSigGroupsTableCreateCompanionBuilder,
+          $$MultiSigGroupsTableUpdateCompanionBuilder,
+          (MultiSigGroup, $$MultiSigGroupsTableReferences),
+          MultiSigGroup,
+          PrefetchHooks Function({bool multiSigMembersRefs})
+        > {
+  $$MultiSigGroupsTableTableManager(
+    _$AppDatabase db,
+    $MultiSigGroupsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MultiSigGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MultiSigGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MultiSigGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> creatorId = const Value.absent(),
+                Value<int> threshold = const Value.absent(),
+                Value<int> totalMembers = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MultiSigGroupsCompanion(
+                id: id,
+                name: name,
+                creatorId: creatorId,
+                threshold: threshold,
+                totalMembers: totalMembers,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String creatorId,
+                required int threshold,
+                required int totalMembers,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MultiSigGroupsCompanion.insert(
+                id: id,
+                name: name,
+                creatorId: creatorId,
+                threshold: threshold,
+                totalMembers: totalMembers,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MultiSigGroupsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({multiSigMembersRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (multiSigMembersRefs) db.multiSigMembers,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (multiSigMembersRefs)
+                    await $_getPrefetchedData<
+                      MultiSigGroup,
+                      $MultiSigGroupsTable,
+                      MultiSigMember
+                    >(
+                      currentTable: table,
+                      referencedTable: $$MultiSigGroupsTableReferences
+                          ._multiSigMembersRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$MultiSigGroupsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).multiSigMembersRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.groupId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MultiSigGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MultiSigGroupsTable,
+      MultiSigGroup,
+      $$MultiSigGroupsTableFilterComposer,
+      $$MultiSigGroupsTableOrderingComposer,
+      $$MultiSigGroupsTableAnnotationComposer,
+      $$MultiSigGroupsTableCreateCompanionBuilder,
+      $$MultiSigGroupsTableUpdateCompanionBuilder,
+      (MultiSigGroup, $$MultiSigGroupsTableReferences),
+      MultiSigGroup,
+      PrefetchHooks Function({bool multiSigMembersRefs})
+    >;
+typedef $$MultiSigMembersTableCreateCompanionBuilder =
+    MultiSigMembersCompanion Function({
+      required String groupId,
+      required String userId,
+      required String publicKey,
+      Value<int> rowid,
+    });
+typedef $$MultiSigMembersTableUpdateCompanionBuilder =
+    MultiSigMembersCompanion Function({
+      Value<String> groupId,
+      Value<String> userId,
+      Value<String> publicKey,
+      Value<int> rowid,
+    });
+
+final class $$MultiSigMembersTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $MultiSigMembersTable, MultiSigMember> {
+  $$MultiSigMembersTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $MultiSigGroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.multiSigGroups.createAlias(
+        $_aliasNameGenerator(db.multiSigMembers.groupId, db.multiSigGroups.id),
+      );
+
+  $$MultiSigGroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $$MultiSigGroupsTableTableManager(
+      $_db,
+      $_db.multiSigGroups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$MultiSigMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $MultiSigMembersTable> {
+  $$MultiSigMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MultiSigGroupsTableFilterComposer get groupId {
+    final $$MultiSigGroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.multiSigGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MultiSigGroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.multiSigGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MultiSigMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $MultiSigMembersTable> {
+  $$MultiSigMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MultiSigGroupsTableOrderingComposer get groupId {
+    final $$MultiSigGroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.multiSigGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MultiSigGroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.multiSigGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MultiSigMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MultiSigMembersTable> {
+  $$MultiSigMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get publicKey =>
+      $composableBuilder(column: $table.publicKey, builder: (column) => column);
+
+  $$MultiSigGroupsTableAnnotationComposer get groupId {
+    final $$MultiSigGroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.multiSigGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MultiSigGroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.multiSigGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MultiSigMembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MultiSigMembersTable,
+          MultiSigMember,
+          $$MultiSigMembersTableFilterComposer,
+          $$MultiSigMembersTableOrderingComposer,
+          $$MultiSigMembersTableAnnotationComposer,
+          $$MultiSigMembersTableCreateCompanionBuilder,
+          $$MultiSigMembersTableUpdateCompanionBuilder,
+          (MultiSigMember, $$MultiSigMembersTableReferences),
+          MultiSigMember,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$MultiSigMembersTableTableManager(
+    _$AppDatabase db,
+    $MultiSigMembersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MultiSigMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MultiSigMembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MultiSigMembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> groupId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> publicKey = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MultiSigMembersCompanion(
+                groupId: groupId,
+                userId: userId,
+                publicKey: publicKey,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String groupId,
+                required String userId,
+                required String publicKey,
+                Value<int> rowid = const Value.absent(),
+              }) => MultiSigMembersCompanion.insert(
+                groupId: groupId,
+                userId: userId,
+                publicKey: publicKey,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MultiSigMembersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.groupId,
+                                referencedTable:
+                                    $$MultiSigMembersTableReferences
+                                        ._groupIdTable(db),
+                                referencedColumn:
+                                    $$MultiSigMembersTableReferences
+                                        ._groupIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MultiSigMembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MultiSigMembersTable,
+      MultiSigMember,
+      $$MultiSigMembersTableFilterComposer,
+      $$MultiSigMembersTableOrderingComposer,
+      $$MultiSigMembersTableAnnotationComposer,
+      $$MultiSigMembersTableCreateCompanionBuilder,
+      $$MultiSigMembersTableUpdateCompanionBuilder,
+      (MultiSigMember, $$MultiSigMembersTableReferences),
+      MultiSigMember,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $$PendingSignaturesTableCreateCompanionBuilder =
+    PendingSignaturesCompanion Function({
+      Value<int> id,
+      required String transactionId,
+      required String signerId,
+      required String signature,
+      Value<DateTime> signedAt,
+    });
+typedef $$PendingSignaturesTableUpdateCompanionBuilder =
+    PendingSignaturesCompanion Function({
+      Value<int> id,
+      Value<String> transactionId,
+      Value<String> signerId,
+      Value<String> signature,
+      Value<DateTime> signedAt,
+    });
+
+final class $$PendingSignaturesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $PendingSignaturesTable,
+          PendingSignature
+        > {
+  $$PendingSignaturesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TransactionsTable _transactionIdTable(_$AppDatabase db) =>
+      db.transactions.createAlias(
+        $_aliasNameGenerator(
+          db.pendingSignatures.transactionId,
+          db.transactions.id,
+        ),
+      );
+
+  $$TransactionsTableProcessedTableManager get transactionId {
+    final $_column = $_itemColumn<String>('transaction_id')!;
+
+    final manager = $$TransactionsTableTableManager(
+      $_db,
+      $_db.transactions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_transactionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PendingSignaturesTableFilterComposer
+    extends Composer<_$AppDatabase, $PendingSignaturesTable> {
+  $$PendingSignaturesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signerId => $composableBuilder(
+    column: $table.signerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signature => $composableBuilder(
+    column: $table.signature,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get signedAt => $composableBuilder(
+    column: $table.signedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TransactionsTableFilterComposer get transactionId {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PendingSignaturesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PendingSignaturesTable> {
+  $$PendingSignaturesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signerId => $composableBuilder(
+    column: $table.signerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signature => $composableBuilder(
+    column: $table.signature,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get signedAt => $composableBuilder(
+    column: $table.signedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TransactionsTableOrderingComposer get transactionId {
+    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PendingSignaturesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PendingSignaturesTable> {
+  $$PendingSignaturesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get signerId =>
+      $composableBuilder(column: $table.signerId, builder: (column) => column);
+
+  GeneratedColumn<String> get signature =>
+      $composableBuilder(column: $table.signature, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get signedAt =>
+      $composableBuilder(column: $table.signedAt, builder: (column) => column);
+
+  $$TransactionsTableAnnotationComposer get transactionId {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PendingSignaturesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PendingSignaturesTable,
+          PendingSignature,
+          $$PendingSignaturesTableFilterComposer,
+          $$PendingSignaturesTableOrderingComposer,
+          $$PendingSignaturesTableAnnotationComposer,
+          $$PendingSignaturesTableCreateCompanionBuilder,
+          $$PendingSignaturesTableUpdateCompanionBuilder,
+          (PendingSignature, $$PendingSignaturesTableReferences),
+          PendingSignature,
+          PrefetchHooks Function({bool transactionId})
+        > {
+  $$PendingSignaturesTableTableManager(
+    _$AppDatabase db,
+    $PendingSignaturesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PendingSignaturesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PendingSignaturesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PendingSignaturesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> transactionId = const Value.absent(),
+                Value<String> signerId = const Value.absent(),
+                Value<String> signature = const Value.absent(),
+                Value<DateTime> signedAt = const Value.absent(),
+              }) => PendingSignaturesCompanion(
+                id: id,
+                transactionId: transactionId,
+                signerId: signerId,
+                signature: signature,
+                signedAt: signedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String transactionId,
+                required String signerId,
+                required String signature,
+                Value<DateTime> signedAt = const Value.absent(),
+              }) => PendingSignaturesCompanion.insert(
+                id: id,
+                transactionId: transactionId,
+                signerId: signerId,
+                signature: signature,
+                signedAt: signedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PendingSignaturesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({transactionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (transactionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.transactionId,
+                                referencedTable:
+                                    $$PendingSignaturesTableReferences
+                                        ._transactionIdTable(db),
+                                referencedColumn:
+                                    $$PendingSignaturesTableReferences
+                                        ._transactionIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PendingSignaturesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PendingSignaturesTable,
+      PendingSignature,
+      $$PendingSignaturesTableFilterComposer,
+      $$PendingSignaturesTableOrderingComposer,
+      $$PendingSignaturesTableAnnotationComposer,
+      $$PendingSignaturesTableCreateCompanionBuilder,
+      $$PendingSignaturesTableUpdateCompanionBuilder,
+      (PendingSignature, $$PendingSignaturesTableReferences),
+      PendingSignature,
+      PrefetchHooks Function({bool transactionId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
+
   $AppDatabaseManager(this._db);
+
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
+
   $$AppPreferencesTableTableManager get appPreferences =>
       $$AppPreferencesTableTableManager(_db, _db.appPreferences);
+
   $$DbNotificationsTableTableManager get dbNotifications =>
       $$DbNotificationsTableTableManager(_db, _db.dbNotifications);
+
   $$AiMemoriesTableTableManager get aiMemories =>
       $$AiMemoriesTableTableManager(_db, _db.aiMemories);
+
+  $$MultiSigGroupsTableTableManager get multiSigGroups =>
+      $$MultiSigGroupsTableTableManager(_db, _db.multiSigGroups);
+
+  $$MultiSigMembersTableTableManager get multiSigMembers =>
+      $$MultiSigMembersTableTableManager(_db, _db.multiSigMembers);
+
+  $$PendingSignaturesTableTableManager get pendingSignatures =>
+      $$PendingSignaturesTableTableManager(_db, _db.pendingSignatures);
 }
 
 // **************************************************************************

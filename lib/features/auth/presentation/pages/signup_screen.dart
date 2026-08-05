@@ -79,123 +79,202 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                  padding: const EdgeInsets.all(12),
-                ),
-              ).animate().fadeIn().slideX(begin: -0.5, end: 0),
-              const SizedBox(height: 32),
-              Text(
-                'Create Account',
-                style: Theme.of(
-                  context,
-                ).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
-              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-              const SizedBox(height: 8),
-              Text(
-                'Join NeRuWallet and manage your financial life efficiently.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isDark ? Colors.white70 : AppTheme.textSecondaryColor,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-              const SizedBox(height: 40),
-              // Card for Signup Fields
-              Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppTheme.surfaceDark.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.8),
-                      borderRadius: AppTheme.radiusLarge,
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.white,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.05,
-                          ),
-                          blurRadius: 30,
-                          offset: const Offset(0, 15),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildTextField(
-                          controller: _nameController,
-                          label: 'Full Name',
-                          hint: 'Enter your full name',
-                          icon: Icons.person_outline_rounded,
-                        ),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _emailController,
-                          label: 'Email address',
-                          hint: 'example@domain.com',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 30),
-                        ElevatedButton(
-                          onPressed: _handleNext,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 64),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppTheme.radiusMedium,
-                            ),
-                          ),
-                          child: const Text('Next'),
-                        ),
-                      ],
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 400.ms)
-                  .scale(
-                    begin: const Offset(0.95, 0.95),
-                    end: const Offset(1, 1),
-                  ),
-              const SizedBox(height: 48),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account?',
-                    style: TextStyle(
-                      color: isDark
-                          ? Colors.white70
-                          : AppTheme.textSecondaryColor,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(delay: 600.ms),
-            ],
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : AppTheme.backgroundColor,
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Opacity(
+              opacity: isDark ? 0.3 : 0.1,
+              child: Image.network(
+                'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop',
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
+          // Gradient Overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    (isDark
+                            ? AppTheme.backgroundDark
+                            : AppTheme.backgroundColor)
+                        .withValues(alpha: 0.8),
+                    isDark ? AppTheme.backgroundDark : AppTheme.backgroundColor,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                      maxWidth: 600,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 20,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          IconButton(
+                            onPressed: () => context.pop(),
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                            style: IconButton.styleFrom(
+                              backgroundColor: isDark
+                                  ? AppTheme.surfaceDark.withValues(alpha: 0.8)
+                                  : Colors.white,
+                              padding: const EdgeInsets.all(12),
+                            ),
+                          ).animate().fadeIn().slideX(begin: -0.5, end: 0),
+                          const SizedBox(height: 32),
+                          Text(
+                                'Create Account',
+                                style: Theme.of(context).textTheme.displayLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 40,
+                                    ),
+                              )
+                              .animate()
+                              .fadeIn(delay: 200.ms)
+                              .slideY(begin: 0.2, end: 0),
+                          const SizedBox(height: 8),
+                          Text(
+                                'Join NeRuWallet and manage your financial life efficiently.',
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : AppTheme.textSecondaryColor,
+                                    ),
+                              )
+                              .animate()
+                              .fadeIn(delay: 300.ms)
+                              .slideY(begin: 0.2, end: 0),
+                          const SizedBox(height: 48),
+                          // Card for Signup Fields
+                          Container(
+                                padding: const EdgeInsets.all(28),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppTheme.surfaceDark.withValues(
+                                          alpha: 0.7,
+                                        )
+                                      : Colors.white.withValues(alpha: 0.9),
+                                  borderRadius: AppTheme.radiusLarge,
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.white,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: isDark ? 0.3 : 0.08,
+                                      ),
+                                      blurRadius: 40,
+                                      offset: const Offset(0, 20),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    _buildTextField(
+                                      controller: _nameController,
+                                      label: 'Full Name',
+                                      hint: 'Enter your full name',
+                                      icon: Icons.person_outline_rounded,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    _buildTextField(
+                                      controller: _emailController,
+                                      label: 'Email address',
+                                      hint: 'example@domain.com',
+                                      icon: Icons.email_outlined,
+                                      keyboardType: TextInputType.emailAddress,
+                                    ),
+                                    const SizedBox(height: 32),
+                                    ElevatedButton(
+                                      onPressed: _handleNext,
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(
+                                          double.infinity,
+                                          64,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: AppTheme.radiusMedium,
+                                        ),
+                                        elevation: 8,
+                                        shadowColor: AppTheme.primaryColor
+                                            .withValues(alpha: 0.3),
+                                      ),
+                                      child: const Text(
+                                        'Next',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(delay: 400.ms)
+                              .scale(
+                                begin: const Offset(0.9, 0.9),
+                                end: const Offset(1, 1),
+                              ),
+                          const SizedBox(height: 48),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Already have an account?',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppTheme.textSecondaryColor,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => context.pop(),
+                                child: const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 600.ms),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
