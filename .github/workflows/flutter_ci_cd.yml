@@ -1,7 +1,13 @@
 name: Flutter CI/CD
 
 on:
-  workflow_dispatch: # Adds the manual "Run workflow" button
+  workflow_dispatch:
+    inputs:
+      clean_build:
+        description: 'Force a clean build (ignore caches)'
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [ "main", "master" ]
   pull_request:
@@ -19,6 +25,24 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Cache Pub packages
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache Build Runner
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
 
       - name: Create dummy .env
         run: |
@@ -45,11 +69,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        if: github.event.inputs.clean_build != 'true'
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
+
+      - name: Cache Pub packages
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache Build Runner
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
 
       - name: Create dummy .env
         run: |
@@ -89,6 +141,33 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Cache Pub packages
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache Build Runner
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
+
+      - name: Cache Pods
+        if: github.event.inputs.clean_build != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       - name: Create dummy .env
         run: |
