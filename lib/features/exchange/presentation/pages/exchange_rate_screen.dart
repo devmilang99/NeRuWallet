@@ -53,11 +53,11 @@ class ExchangeRateScreen extends StatelessWidget {
               
               const SizedBox(height: 40),
               
-              // Rates Header
-              Row((
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Rates Headerr
+              RowmainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text'Live Exchange Rates',
+                  Text(
+                    'Live Exchange Rates',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
