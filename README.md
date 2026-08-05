@@ -5,6 +5,9 @@
 <img src="https://img.shields.io/badge/AI-Gemini--3.5--Flash-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white" />
 <img src="https://img.shields.io/badge/Material--3-Dynamic--UI-6366F1?style=for-the-badge&logo=google&logoColor=white" />
 <img src="https://img.shields.io/badge/Flutter-3.11%2B-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
+<a href="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci_cd.yml">
+  <img src="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci_cd.yml/badge.svg" alt="Flutter CI/CD" />
+</a>
 
 <br /><br />
 
@@ -166,6 +169,23 @@ transparency.
       `SliverAppBar`.
     - **Haptic Feedback**: Micro-interactions are reinforced with subtle vibrations to create a
       tactile sense of security.
+
+---
+
+## <a id="cicd"></a> 🚀 CI/CD & Engineering Excellence
+
+NeRuWallet is backed by a robust **GitHub Actions** pipeline that ensures every commit meets
+high-quality standards across both Android and iOS.
+
+- **Automated Validation**: Every Pull Request and push to `main` triggers a pipeline that runs
+  `flutter analyze` and `flutter test` to prevent regressions.
+- **Code Generation**: Automated `build_runner` execution ensures that Riverpod providers and Drift
+  database classes are always consistent in the build environment.
+- **Continuous Delivery**:
+    - **Android**: Automated release APK generation, uploaded as a GitHub Action artifact for
+      instant testing.
+    - **iOS Validation**: Automated builds on macOS runners to ensure platform-specific
+      compatibility and library linking (CocoaPods) are correct.
 
 ---
 
