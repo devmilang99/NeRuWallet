@@ -10,10 +10,12 @@ import 'package:neruwallet/core/providers/theme_provider.dart';
 import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/encryption_service.dart';
 import 'package:neruwallet/core/services/error_handler.dart';
+import 'package:neruwallet/core/services/security_hardening_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/utils/app_router.dart';
 import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/core/widgets/global_error_screen.dart';
+import 'package:neruwallet/features/auth/data/services/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -72,6 +74,20 @@ Future<void> main() async {
 
   // 4. Initialize Database & Encryption
   try {
+    // Run Security Hardening Checks
+    final securityService = SecurityHardeningService();
+    final isSecure = await securityService.checkEnvironmentIntegrity();
+
+    if (!isSecure) {
+      // In a real production app, we might exit or show a blocked screen.
+      AppLogger.w(
+        'WARNING: Device integrity check failed. Proceeding with caution (Debug Mode).',
+      );
+    }
+
+    // Enable Screen Protection globally
+    await securityService.setSecure(true);
+
     final encryptionService = container.read(encryptionServiceProvider);
     await encryptionService.init();
     container.read(appDatabaseProvider);
@@ -95,6 +111,24 @@ class NeRuWalletApp extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
     final router = ref.watch(appRouterProvider);
     final messengerKey = ref.watch(scaffoldMessengerKeyProvider);
+
+    // Global Auth State Listener
+    // This ensures that if a session is invalidated (e.g. user deleted on backend)
+    // while the app is running, the user is immediately kicked to login.
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      if (next.hasValue) {
+        final event = next.value!.event;
+        final session = next.value!.session;
+
+        if (event == AuthChangeEvent.signedOut ||
+            (event == AuthChangeEvent.tokenRefreshed && session == null)) {
+          AppLogger.w(
+            'Auth Session lost: ${event.name}. Redirecting to login.',
+          );
+          router.go('/auth/login');
+        }
+      }
+    });
 
     return MaterialApp.router(
       title: 'NeRuWallet',

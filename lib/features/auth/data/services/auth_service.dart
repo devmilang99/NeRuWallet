@@ -275,4 +275,12 @@ class AuthService {
       await signOut();
     }
   }
+
+  /// Returns a stream of auth state changes.
+  Stream<sb.AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 }
+
+/// A provider that exposes the authentication state stream.
+final authStateProvider = StreamProvider<sb.AuthState>((ref) {
+  return ref.watch(authServiceProvider).authStateChanges;
+});

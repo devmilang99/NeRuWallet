@@ -57,6 +57,9 @@ import UIKit
                                        details: nil))
                 }
 
+            case "isScreenRecording":
+                result(UIScreen.main.isCaptured)
+
             default:
                 result(FlutterMethodNotImplemented)
             }

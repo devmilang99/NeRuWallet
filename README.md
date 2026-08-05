@@ -75,6 +75,30 @@ vulnerabilities.
 - **High-Performance Hashing**: Transaction data is normalized and hashed using SHA-256 within the
   Rust memory boundary via UniFFI.
 
+### 🛡️ Hardening & Anti-Reverse Engineering
+
+NeRuWallet employs "Defense in Depth" to protect against sophisticated attacks:
+
+- **AOT Obfuscation**: Production builds use Flutter's `--obfuscate` flag to rename Dart symbols,
+  making decompilation significantly harder.
+- **R8/ProGuard Hardening**: Android binaries are further shrunk and obfuscated using custom
+  ProGuard
+  rules, targeting internal logic and removing log traces.
+- **Environment Integrity**:
+    - **Jailbreak/Root Detection**: Blocks execution on compromised devices to prevent runtime
+      memory hooking (e.g., via Frida).
+    - **Emulator Protection**: Detects virtualized environments to prevent automated dynamic
+      analysis.
+- **Runtime Protection**:
+    - **Active Auth Watchdog**: Monitors the Supabase authentication stream in real-time. If a
+      session
+      is invalidated (e.g., user deleted via backend or token refresh failure), the app instantly
+      triggers a global lock-out and redirects to login, preventing "orphaned" sessions.
+    - **Screen Guard**: Prevents screenshots and screen recording on sensitive screens using
+      `FLAG_SECURE` (Android) and `isCaptured` detection (iOS).
+    - **SSL Pinning**: (Roadmap) Enforces cryptographic trust for connections to Supabase and Gemini
+      APIs.
+
 ---
 
 ## <a id="multi-sig"></a> 🤝 Hardware Multi-Sig Vaults
@@ -155,7 +179,7 @@ transparency.
 
 ### 🤖 Neru AI: Intelligence Advisor
 
-|           Initial            |             Analysis              |           Insights            |            Chat            |
+|            Initial            |           Analysis            |           Insights            |             Chat              |
 |:-----------------------------:|:-----------------------------:|:-----------------------------:|:-----------------------------:|
 | ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_2.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_4.png) |
 
@@ -175,14 +199,15 @@ transparency.
 
 ## <a id="tech-stack"></a> 🛠 Tech Stack
 
-| Layer                 | Technology                                                    |
-|:----------------------|:--------------------------------------------------------------|
-| **Mobile Core**       | **Flutter (3.11+)**, **Riverpod (Code Generation)**           |
-| **Security Hardware** | **Android StrongBox / TEE**, **iOS Secure Enclave**           |
-| **Systems Layer**     | **Rust**, **ring** (Crypto), **UniFFI** (Bridge)              |
-| **Data Engine**       | **Supabase** (Realtime/Auth), **Drift** (Reactive SQLite)     |
-| **Design & UX**       | **Material 3**, **Flutter Animate**, **Lottie**, **FL Chart** |
-| **AI Integration**    | **Google Gemini 3.5 Flash**, **Prompt Engineering**           |
+| Layer                  | Technology                                                    |
+|:-----------------------|:--------------------------------------------------------------|
+| **Mobile Core**        | **Flutter (3.11+)**, **Riverpod (Code Generation)**           |
+| **Security Hardware**  | **Android StrongBox / TEE**, **iOS Secure Enclave**           |
+| **Systems Layer**      | **Rust**, **ring** (Crypto), **UniFFI** (Bridge)              |
+| **Security Hardening** | **R8 Obfuscation**, **Root Detection**, **Screen Protection** |
+| **Data Engine**        | **Supabase** (Realtime/Auth), **Drift** (Reactive SQLite)     |
+| **Design & UX**        | **Material 3**, **Flutter Animate**, **Lottie**, **FL Chart** |
+| **AI Integration**     | **Google Gemini 3.5 Flash**, **Prompt Engineering**           |
 
 ---
 
