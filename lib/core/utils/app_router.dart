@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neruwallet/features/multi_sig/presentation/pages/multi_sig_dashboard.dart';
+import 'package:neruwallet/features/multi_sig/presentation/pages/pending_approvals_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/ai_advisor/presentation/pages/ai_advisor_screen.dart';
@@ -147,6 +149,17 @@ GoRouter appRouter(Ref ref) {
         path: '/ai-advisor',
         pageBuilder: (context, state) =>
             _buildPageWithSlideTransition(child: const AIAdvisorScreen()),
+      ),
+      GoRoute(
+        path: '/multi-sig',
+        pageBuilder: (context, state) =>
+            _buildPageWithSlideTransition(child: const MultiSigDashboard()),
+      ),
+      GoRoute(
+        path: '/multi-sig/pending',
+        pageBuilder: (context, state) => _buildPageWithSlideTransition(
+          child: const PendingApprovalsScreen(),
+        ),
       ),
       GoRoute(
         path: '/electricity',

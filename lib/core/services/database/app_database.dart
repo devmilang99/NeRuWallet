@@ -47,8 +47,55 @@ class Transactions extends Table {
   TextColumn get metadata =>
       text().nullable()(); // JSON string for additional data
 
+  TextColumn get groupId => text().nullable()(); // Multi-Sig Group ID
+
+  TextColumn get status => text().withDefault(
+    const Constant('completed'),
+  )(); // pending, signed, failed, completed
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// Multi-Sig Groups table
+class MultiSigGroups extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get name => text()();
+
+  TextColumn get creatorId => text()();
+
+  IntColumn get threshold => integer()(); // M in M-of-N
+  IntColumn get totalMembers => integer()(); // N in M-of-N
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Members of a Multi-Sig Group
+class MultiSigMembers extends Table {
+  TextColumn get groupId => text().references(MultiSigGroups, #id)();
+
+  TextColumn get userId => text()();
+
+  TextColumn get publicKey => text()(); // Device public key for verification
+
+  @override
+  Set<Column> get primaryKey => {groupId, userId};
+}
+
+/// Pending signatures for Multi-Sig transactions
+class PendingSignatures extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  TextColumn get transactionId => text().references(transactions, #id)();
+
+  TextColumn get signerId => text()();
+
+  TextColumn get signature => text()();
+
+  DateTimeColumn get signedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 /// Key-Value store to replace SharedPreferences
@@ -86,13 +133,21 @@ class AiMemories extends Table {
 }
 
 @DriftDatabase(
-  tables: [Transactions, AppPreferences, DbNotifications, AiMemories],
+  tables: [
+    Transactions,
+    AppPreferences,
+    DbNotifications,
+    AiMemories,
+    MultiSigGroups,
+    MultiSigMembers,
+    PendingSignatures,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +161,17 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await m.issueCustomQuery(
           'ALTER TABLE transactions ADD COLUMN transaction_type TEXT',
+        );
+      }
+      if (from < 4) {
+        await m.createTable(multiSigGroups);
+        await m.createTable(multiSigMembers);
+        await m.createTable(pendingSignatures);
+        await m.issueCustomQuery(
+          'ALTER TABLE transactions ADD COLUMN group_id TEXT',
+        );
+        await m.issueCustomQuery(
+          "ALTER TABLE transactions ADD COLUMN status TEXT DEFAULT 'completed'",
         );
       }
     },

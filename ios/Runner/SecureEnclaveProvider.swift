@@ -80,4 +80,25 @@ class SecureEnclaveProvider {
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         return status == errSecSuccess
     }
+
+    func getPublicKey() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassKey,
+            kSecAttrApplicationTag as String: keyTag.data(using: .utf8)!,
+            kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
+            kSecReturnRef as String: true
+        ]
+
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+
+        guard status == errSecSuccess,
+              let privateKey = (item as! SecKey?),
+              let publicKey = SecKeyCopyPublicKey(privateKey),
+              let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, nil) as Data? else {
+            return nil
+        }
+
+        return publicKeyData.base64EncodedString()
+    }
 }

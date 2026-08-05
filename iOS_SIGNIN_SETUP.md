@@ -20,9 +20,9 @@ open ios/Runner.xcworkspace
 ### 3. Configure Code Signing
 
 1. Still in **Signing & Capabilities**, verify:
-   - Team ID is set correctly
-   - Bundle ID is set to: `com.example.neruwallet` (or your actual bundle ID)
-   - Provisioning Profile includes the Sign in with Apple capability
+    - Team ID is set correctly
+    - Bundle ID is set to: `com.example.neruwallet` (or your actual bundle ID)
+    - Provisioning Profile includes the Sign in with Apple capability
 
 ### 4. Verify Runner.entitlements File
 
@@ -34,22 +34,19 @@ open ios/Runner.xcworkspace
 - The URL scheme has been added to `ios/Runner/Info.plist`
 - Current scheme: `com.googleusercontent.apps.722947171092-i3rav08lrj9mar7uskumpus91elmqq31`
 
-### 6. Ensure GoogleService-Info.plist is Present
+### 6. Ensure Google Configuration is Present
 
-1. You need to download `GoogleService-Info.plist` from Firebase Console:
-   - Go to Firebase Console > Project Settings > iOS app
-   - Download the `GoogleService-Info.plist` file
-   - Add it to Xcode: Right-click on Runner folder > Add Files to Runner
-   - Make sure it's added to the Runner target (check "Copy items if needed")
+1. For Google Sign-In to work on iOS, you need to ensure the URL Scheme in `Info.plist` matches your
+   Google Cloud Project.
+2. The current scheme is configured. If you change your Google Client ID, update the
+   `CFBundleURLSchemes` in `ios/Runner/Info.plist`.
 
 ### 7. Update Bundle ID (if needed)
 
 If you're using a different Bundle ID than `com.example.neruwallet`:
 
 1. Update in Xcode: Runner target > General > Bundle Identifier
-2. Update in `lib/firebase_options.dart` - `iosBundleId` value
-3. Update in `ios/Runner/Info.plist` if needed
-4. Re-run: `flutterfire configure` to regenerate Firebase options
+2. Update in `ios/Runner/Info.plist` if needed
 
 ### 8. Trust Development Certificate (for Testing)
 
@@ -77,29 +74,23 @@ flutter run
 
 - **Issue**: Entitlements not properly configured
 - **Solution**:
-  - Verify `Runner.entitlements` exists in ios/Runner/
-  - In Xcode, select Runner target > Build Settings > Code Signing Entitlements
-  - Set to: `Runner/Runner.entitlements`
+    - Verify `Runner.entitlements` exists in ios/Runner/
+    - In Xcode, select Runner target > Build Settings > Code Signing Entitlements
+    - Set to: `Runner/Runner.entitlements`
 
 ### Google Sign-In Fails Silently
 
-- **Issue**: URL scheme not configured or GoogleService-Info.plist missing
+- **Issue**: URL scheme not configured
 - **Solution**:
-  - Check Info.plist has CFBundleURLTypes section
-  - Verify GoogleService-Info.plist is present and added to target
-
-### Firebase not initialized
-
-- **Issue**: GoogleService-Info.plist missing
-- **Solution**: Download and add GoogleService-Info.plist from Firebase Console
+    - Check Info.plist has CFBundleURLTypes section
 
 ### "Invalid Client" or "Keychain error"
 
 - **Issue**: Code signing issues
 - **Solution**:
-  - Clean build folder: Cmd+Shift+K in Xcode
-  - Delete derived data: `rm -rf ~/Library/Developer/Xcode/DerivedData/*`
-  - Rebuild: `flutter clean && flutter run`
+    - Clean build folder: Cmd+Shift+K in Xcode
+    - Delete derived data: `rm -rf ~/Library/Developer/Xcode/DerivedData/*`
+    - Rebuild: `flutter clean && flutter run`
 
 ## After Configuration
 

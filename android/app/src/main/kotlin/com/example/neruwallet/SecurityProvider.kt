@@ -80,4 +80,11 @@ class SecurityProvider(private val context: Context) {
         val keyStore = KeyStore.getInstance(providerName).apply { load(null) }
         return keyStore.containsAlias(keyStoreAlias)
     }
+
+    fun getPublicKey(): String? {
+        val keyStore = KeyStore.getInstance(providerName).apply { load(null) }
+        val certificate = keyStore.getCertificate(keyStoreAlias) ?: return null
+        val publicKey = certificate.publicKey ?: return null
+        return android.util.Base64.encodeToString(publicKey.encoded, android.util.Base64.NO_WRAP)
+    }
 }

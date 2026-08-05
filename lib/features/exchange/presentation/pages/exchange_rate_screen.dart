@@ -56,10 +56,10 @@ class ExchangeRateScreen extends StatelessWidget {
               // Rates Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text((
-                    'Live Exchange Rates'style: TextStyle(
-                      fontSize: 18,
+                children: [ [
+                  Text(
+                    'Live Exchange Rates',
+                    style: TextStylefontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : AppTheme.textBodyColor,
                     ),

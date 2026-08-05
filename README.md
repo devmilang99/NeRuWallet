@@ -14,7 +14,8 @@
 
 **A High-Security, AI-Powered Financial Transaction Ecosystem.**
 Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first platform that
-harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture.
+harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture,
+now featuring **Hardware-Backed Multi-Signature Vaults**.
 
 [Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Architecture](#architecture) · [Getting Started](#getting-started)
 
@@ -63,11 +64,31 @@ sequenceDiagram
 - **Biometric Crypto-Gating**: Signatures are physically locked. The hardware only authorizes a
   signature if a biometric challenge is successfully completed in the same session.
 
-### 🦀 Rust Hashing Layer
+### 🦀 Rust Hashing & Verification Layer
 
-To ensure the integrity of the data being signed, a custom **Rust module** handles normalization. By
-using the `ring` crate, we eliminate entire classes of memory-safety vulnerabilities like buffer
-overflows that are common in software-only implementations.
+To ensure the integrity of the data being signed, a custom **Rust module** handles normalization and
+cryptographic verification. By using the `ring` crate, we eliminate entire classes of memory-safety
+vulnerabilities.
+
+- **Signature Verification**: For Multi-Sig transactions, the Rust core validates ECDSA signatures
+  from peer devices before the local HSM authorizes a co-signature.
+- **High-Performance Hashing**: Transaction data is normalized and hashed using SHA-256 within the
+  Rust memory boundary via UniFFI.
+
+---
+
+## <a id="multi-sig"></a> 🤝 Hardware Multi-Sig Vaults
+
+NeRuWallet enables collaborative finance through **M-of-N Multi-Signature Wallets**. Unlike software
+multisigs, every participant's approval is anchored in their own device's hardware.
+
+1. **Identity Exchange**: Users share hardware-backed public keys (non-exportable) to form a vault.
+2. **Approval Workflow**: When a transaction is initiated, co-signers receive real-time
+   notifications via Supabase.
+3. **Biometric Authorization**: Each co-signer must pass a biometric challenge to unlock their
+   StrongBox/Secure Enclave and produce a valid signature.
+4. **Finalization**: Once the threshold is met, the transaction is cryptographically finalized and
+   broadcast.
 
 ---
 
@@ -140,7 +161,7 @@ graph TD
 
 ## 🚀 Roadmap
 
-- [ ] **Multi-Signature Wallets**: Shared hardware-backed accounts.
+- [x] **Multi-Signature Wallets**: Shared hardware-backed accounts.
 - [ ] **NFC Tap-to-Pay**: Fully integrated contactless transaction pipeline.
 - [ ] **Wear OS Companion**: Real-time alerts and biometric verification from your wrist.
 

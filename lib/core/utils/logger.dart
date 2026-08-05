@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Centralized logger for the application.
-/// In production, this can be easily connected to Sentry or Firebase Crashlytics.
+/// In production, this can be easily connected to Sentry or a log management service.
 class AppLogger {
   static void d(String message, [Object? error, StackTrace? stackTrace]) {
     if (kDebugMode) {

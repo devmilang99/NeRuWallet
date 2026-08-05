@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +14,6 @@ import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/utils/app_router.dart';
 import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/core/widgets/global_error_screen.dart';
-import 'package:neruwallet/firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -55,14 +53,11 @@ Future<void> main() async {
     // 1. Load environment variables
     await dotenv.load();
 
-    // 2. Initialize Firebase & Supabase in parallel
-    await Future.wait([
-      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-      Supabase.initialize(
-        url: dotenv.env['SUPABASE_URL'] ?? '',
-        publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-      ),
-    ]);
+    // 2. Initialize Supabase
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    );
 
     initCompleter.complete();
   } catch (e, stack) {

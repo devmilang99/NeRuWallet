@@ -37,7 +37,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final splashFuture = Future.delayed(const Duration(seconds: 2));
 
     try {
-      // 1. Core System Initialization (Supabase/Firebase started in main.dart)
+      // 1. Core System Initialization (Supabase started in main.dart)
       if (mounted) setState(() => _statusMessage = 'Starting systems...');
       await ref.read(appInitProvider);
 

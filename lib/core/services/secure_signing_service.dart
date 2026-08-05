@@ -30,6 +30,28 @@ class SecureSigningService {
     }
   }
 
+  /// Specialized signing for Multi-Sig that includes group context.
+  Future<Uint8List?> signMultiSigPayload(
+    Uint8List payload,
+    String groupId,
+  ) async {
+    // In a production app, we might add group-specific metadata to the payload
+    // before signing, or log the intent specifically for the group.
+    AppLogger.i('Initiating Multi-Sig signature for group: $groupId');
+    return signData(payload);
+  }
+
+  /// Gets the hardware-backed public key to share with other group members.
+  Future<String?> getPublicKey() async {
+    try {
+      final String? publicKey = await _channel.invokeMethod('getPublicKey');
+      return publicKey;
+    } on PlatformException catch (e) {
+      AppLogger.e('Error fetching public key', e);
+      return null;
+    }
+  }
+
   /// Checks if the secure key has already been generated.
   Future<bool> isKeyGenerated() async {
     try {

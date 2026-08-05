@@ -47,4 +47,58 @@ class SupabaseService {
 
     return response['preferences'] as Map<String, dynamic>?;
   }
+
+  // --- Multi-Sig Integration ---
+
+  /// Fetches groups the current user is a member of.
+  Future<List<Map<String, dynamic>>> getMultiSigGroups() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    try {
+      final response = await _client
+          .from('multi_sig_members')
+          .select('multi_sig_groups(*)')
+          .eq('user_id', userId);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      // AppLogger.e('Error fetching multi-sig groups', e);
+      return [];
+    }
+  }
+
+  /// Pushes a hardware-backed signature to Supabase for a pending transaction.
+  Future<bool> pushSignature({
+    required String transactionId,
+    required String signature,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    try {
+      await _client.from('pending_signatures').insert({
+        'transaction_id': transactionId,
+        'signer_id': userId,
+        'signature': signature,
+        'signed_at': DateTime.now().toIso8601String(),
+      });
+      return true;
+    } catch (e) {
+      // AppLogger.e('Error pushing signature', e);
+      return false;
+    }
+  }
+
+  /// Listens for new signature requirements in real-time.
+  Stream<List<Map<String, dynamic>>> watchPendingApprovals() {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return const Stream.empty();
+
+    // In a real Supabase setup, we'd use .on(SupabaseEventTypes.insert)
+    // for the pending_signatures table joined with user groups.
+    return _client
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .eq('status', 'pending');
+  }
 }

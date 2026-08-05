@@ -48,6 +48,15 @@ import UIKit
             case "isKeyGenerated":
                 result(self?.secureEnclaveProvider.isKeyGenerated() ?? false)
 
+            case "getPublicKey":
+                if let publicKey = self?.secureEnclaveProvider.getPublicKey() {
+                    result(publicKey)
+                } else {
+                    result(FlutterError(code: "KEY_NOT_FOUND",
+                                       message: "Public key not found",
+                                       details: nil))
+                }
+
             default:
                 result(FlutterMethodNotImplemented)
             }

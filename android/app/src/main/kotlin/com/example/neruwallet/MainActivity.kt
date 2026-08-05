@@ -51,6 +51,15 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(securityProvider.isKeyGenerated())
                 }
 
+                "getPublicKey" -> {
+                    val publicKey = securityProvider.getPublicKey()
+                    if (publicKey != null) {
+                        result.success(publicKey)
+                    } else {
+                        result.error("KEY_NOT_FOUND", "Public key not found", null)
+                    }
+                }
+
                 else -> {
                     result.notImplemented()
                 }
