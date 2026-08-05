@@ -86,7 +86,7 @@ class _HistoryTabState extends State<HistoryTab> {
     String? lastDate;
 
     for (final t in transactions) {
-      final dateStr = DateFormat('yyyy/MM/dd').format(t.createdAt);
+      final dateStr = DateFormat('MMM dd, yyyy').format(t.createdAt);
       if (dateStr != lastDate) {
         items.add(dateStr);
         lastDate = dateStr;

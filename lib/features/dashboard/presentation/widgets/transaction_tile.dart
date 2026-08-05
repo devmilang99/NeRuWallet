@@ -12,7 +12,10 @@ class TransactionTile extends StatelessWidget {
   final int index;
 
   const TransactionTile({
-    required this.transaction, required this.isDark, required this.index, super.key,
+    required this.transaction,
+    required this.isDark,
+    required this.index,
+    super.key,
   });
 
   @override
@@ -22,9 +25,7 @@ class TransactionTile extends StatelessWidget {
         transaction.amount.abs() + transaction.fee + transaction.tax;
     final iconColor = Color(transaction.colorValue);
     final iconData = IconUtils.getIconData(transaction.iconCode);
-    final formattedDate = DateFormat(
-      'hh:mm a',
-    ).format(transaction.createdAt);
+    final formattedDate = DateFormat('hh:mm a').format(transaction.createdAt);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),

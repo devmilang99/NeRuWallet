@@ -44,7 +44,7 @@ class SecureSigningService {
   /// Gets the hardware-backed public key to share with other group members.
   Future<String?> getPublicKey() async {
     try {
-      final String? publicKey = await _channel.invokeMethod('getPublicKey');
+      final publicKey = await _channel.invokeMethod('getPublicKey');
       return publicKey;
     } on PlatformException catch (e) {
       AppLogger.e('Error fetching public key', e);

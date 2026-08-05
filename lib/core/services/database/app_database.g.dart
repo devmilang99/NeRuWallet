@@ -8,9 +8,7 @@ class $TransactionsTable extends Transactions
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $TransactionsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -158,7 +156,6 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant('completed'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -176,14 +173,11 @@ class $TransactionsTable extends Transactions
     groupId,
     status,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'transactions';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Transaction> instance, {
@@ -292,7 +286,6 @@ class $TransactionsTable extends Transactions
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   Transaction map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -377,7 +370,6 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String? metadata;
   final String? groupId;
   final String status;
-
   const Transaction({
     required this.id,
     required this.title,
@@ -394,7 +386,6 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.groupId,
     required this.status,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -468,7 +459,6 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       status: serializer.fromJson<String>(json['status']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -523,7 +513,6 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     groupId: groupId.present ? groupId.value : this.groupId,
     status: status ?? this.status,
   );
-
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
       id: data.id.present ? data.id.value : this.id,
@@ -585,7 +574,6 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     groupId,
     status,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -622,7 +610,6 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> groupId;
   final Value<String> status;
   final Value<int> rowid;
-
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -640,7 +627,6 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-
   TransactionsCompanion.insert({
     required String id,
     required String title,
@@ -663,7 +649,6 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
        amount = Value(amount),
        iconCode = Value(iconCode),
        colorValue = Value(colorValue);
-
   static Insertable<Transaction> custom({
     Expression<String>? id,
     Expression<String>? title,
@@ -815,9 +800,7 @@ class $AppPreferencesTable extends AppPreferences
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $AppPreferencesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _keyMeta = const VerificationMeta('key');
   @override
   late final GeneratedColumn<String> key = GeneratedColumn<String>(
@@ -836,17 +819,13 @@ class $AppPreferencesTable extends AppPreferences
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-
   @override
   List<GeneratedColumn> get $columns => [key, value];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'app_preferences';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<AppPreference> instance, {
@@ -873,7 +852,6 @@ class $AppPreferencesTable extends AppPreferences
 
   @override
   Set<GeneratedColumn> get $primaryKey => {key};
-
   @override
   AppPreference map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -898,9 +876,7 @@ class $AppPreferencesTable extends AppPreferences
 class AppPreference extends DataClass implements Insertable<AppPreference> {
   final String key;
   final String? value;
-
   const AppPreference({required this.key, this.value});
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -930,7 +906,6 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
       value: serializer.fromJson<String?>(json['value']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -947,7 +922,6 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
     key: key ?? this.key,
     value: value.present ? value.value : this.value,
   );
-
   AppPreference copyWithCompanion(AppPreferencesCompanion data) {
     return AppPreference(
       key: data.key.present ? data.key.value : this.key,
@@ -966,7 +940,6 @@ class AppPreference extends DataClass implements Insertable<AppPreference> {
 
   @override
   int get hashCode => Object.hash(key, value);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -979,19 +952,16 @@ class AppPreferencesCompanion extends UpdateCompanion<AppPreference> {
   final Value<String> key;
   final Value<String?> value;
   final Value<int> rowid;
-
   const AppPreferencesCompanion({
     this.key = const Value.absent(),
     this.value = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-
   AppPreferencesCompanion.insert({
     required String key,
     this.value = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : key = Value(key);
-
   static Insertable<AppPreference> custom({
     Expression<String>? key,
     Expression<String>? value,
@@ -1047,9 +1017,7 @@ class $DbNotificationsTable extends DbNotifications
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $DbNotificationsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1106,17 +1074,13 @@ class $DbNotificationsTable extends DbNotifications
     ),
     defaultValue: const Constant(false),
   );
-
   @override
   List<GeneratedColumn> get $columns => [id, title, body, receivedAt, isRead];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'db_notifications';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<DbNotification> instance, {
@@ -1160,7 +1124,6 @@ class $DbNotificationsTable extends DbNotifications
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   DbNotification map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1200,7 +1163,6 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
   final String body;
   final DateTime receivedAt;
   final bool isRead;
-
   const DbNotification({
     required this.id,
     required this.title,
@@ -1208,7 +1170,6 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
     required this.receivedAt,
     required this.isRead,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1243,7 +1204,6 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
       isRead: serializer.fromJson<bool>(json['isRead']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -1269,7 +1229,6 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
     receivedAt: receivedAt ?? this.receivedAt,
     isRead: isRead ?? this.isRead,
   );
-
   DbNotification copyWithCompanion(DbNotificationsCompanion data) {
     return DbNotification(
       id: data.id.present ? data.id.value : this.id,
@@ -1296,7 +1255,6 @@ class DbNotification extends DataClass implements Insertable<DbNotification> {
 
   @override
   int get hashCode => Object.hash(id, title, body, receivedAt, isRead);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1314,7 +1272,6 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
   final Value<String> body;
   final Value<DateTime> receivedAt;
   final Value<bool> isRead;
-
   const DbNotificationsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -1322,7 +1279,6 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
     this.receivedAt = const Value.absent(),
     this.isRead = const Value.absent(),
   });
-
   DbNotificationsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
@@ -1331,7 +1287,6 @@ class DbNotificationsCompanion extends UpdateCompanion<DbNotification> {
     this.isRead = const Value.absent(),
   }) : title = Value(title),
        body = Value(body);
-
   static Insertable<DbNotification> custom({
     Expression<int>? id,
     Expression<String>? title,
@@ -1403,9 +1358,7 @@ class $AiMemoriesTable extends AiMemories
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $AiMemoriesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1461,17 +1414,13 @@ class $AiMemoriesTable extends AiMemories
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [id, role, content, type, createdAt];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'ai_memories';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<AiMemory> instance, {
@@ -1515,7 +1464,6 @@ class $AiMemoriesTable extends AiMemories
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   AiMemory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1555,7 +1503,6 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
   final String content;
   final String type;
   final DateTime createdAt;
-
   const AiMemory({
     required this.id,
     required this.role,
@@ -1563,7 +1510,6 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
     required this.type,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1598,7 +1544,6 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -1624,7 +1569,6 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
     type: type ?? this.type,
     createdAt: createdAt ?? this.createdAt,
   );
-
   AiMemory copyWithCompanion(AiMemoriesCompanion data) {
     return AiMemory(
       id: data.id.present ? data.id.value : this.id,
@@ -1649,7 +1593,6 @@ class AiMemory extends DataClass implements Insertable<AiMemory> {
 
   @override
   int get hashCode => Object.hash(id, role, content, type, createdAt);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1667,7 +1610,6 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
   final Value<String> content;
   final Value<String> type;
   final Value<DateTime> createdAt;
-
   const AiMemoriesCompanion({
     this.id = const Value.absent(),
     this.role = const Value.absent(),
@@ -1675,7 +1617,6 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
     this.type = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-
   AiMemoriesCompanion.insert({
     this.id = const Value.absent(),
     required String role,
@@ -1684,7 +1625,6 @@ class AiMemoriesCompanion extends UpdateCompanion<AiMemory> {
     this.createdAt = const Value.absent(),
   }) : role = Value(role),
        content = Value(content);
-
   static Insertable<AiMemory> custom({
     Expression<int>? id,
     Expression<String>? role,
@@ -1756,9 +1696,7 @@ class $MultiSigGroupsTable extends MultiSigGroups
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MultiSigGroupsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1822,7 +1760,6 @@ class $MultiSigGroupsTable extends MultiSigGroups
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1832,14 +1769,11 @@ class $MultiSigGroupsTable extends MultiSigGroups
     totalMembers,
     createdAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'multi_sig_groups';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MultiSigGroup> instance, {
@@ -1898,7 +1832,6 @@ class $MultiSigGroupsTable extends MultiSigGroups
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   MultiSigGroup map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1943,7 +1876,6 @@ class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
   final int threshold;
   final int totalMembers;
   final DateTime createdAt;
-
   const MultiSigGroup({
     required this.id,
     required this.name,
@@ -1952,7 +1884,6 @@ class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
     required this.totalMembers,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1990,7 +1921,6 @@ class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -2019,7 +1949,6 @@ class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
     totalMembers: totalMembers ?? this.totalMembers,
     createdAt: createdAt ?? this.createdAt,
   );
-
   MultiSigGroup copyWithCompanion(MultiSigGroupsCompanion data) {
     return MultiSigGroup(
       id: data.id.present ? data.id.value : this.id,
@@ -2049,7 +1978,6 @@ class MultiSigGroup extends DataClass implements Insertable<MultiSigGroup> {
   @override
   int get hashCode =>
       Object.hash(id, name, creatorId, threshold, totalMembers, createdAt);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2070,7 +1998,6 @@ class MultiSigGroupsCompanion extends UpdateCompanion<MultiSigGroup> {
   final Value<int> totalMembers;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
-
   const MultiSigGroupsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2080,7 +2007,6 @@ class MultiSigGroupsCompanion extends UpdateCompanion<MultiSigGroup> {
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-
   MultiSigGroupsCompanion.insert({
     required String id,
     required String name,
@@ -2094,7 +2020,6 @@ class MultiSigGroupsCompanion extends UpdateCompanion<MultiSigGroup> {
        creatorId = Value(creatorId),
        threshold = Value(threshold),
        totalMembers = Value(totalMembers);
-
   static Insertable<MultiSigGroup> custom({
     Expression<String>? id,
     Expression<String>? name,
@@ -2182,9 +2107,7 @@ class $MultiSigMembersTable extends MultiSigMembers
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MultiSigMembersTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _groupIdMeta = const VerificationMeta(
     'groupId',
   );
@@ -2219,17 +2142,13 @@ class $MultiSigMembersTable extends MultiSigMembers
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-
   @override
   List<GeneratedColumn> get $columns => [groupId, userId, publicKey];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'multi_sig_members';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MultiSigMember> instance, {
@@ -2266,7 +2185,6 @@ class $MultiSigMembersTable extends MultiSigMembers
 
   @override
   Set<GeneratedColumn> get $primaryKey => {groupId, userId};
-
   @override
   MultiSigMember map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -2296,13 +2214,11 @@ class MultiSigMember extends DataClass implements Insertable<MultiSigMember> {
   final String groupId;
   final String userId;
   final String publicKey;
-
   const MultiSigMember({
     required this.groupId,
     required this.userId,
     required this.publicKey,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2331,7 +2247,6 @@ class MultiSigMember extends DataClass implements Insertable<MultiSigMember> {
       publicKey: serializer.fromJson<String>(json['publicKey']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -2351,7 +2266,6 @@ class MultiSigMember extends DataClass implements Insertable<MultiSigMember> {
     userId: userId ?? this.userId,
     publicKey: publicKey ?? this.publicKey,
   );
-
   MultiSigMember copyWithCompanion(MultiSigMembersCompanion data) {
     return MultiSigMember(
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
@@ -2372,7 +2286,6 @@ class MultiSigMember extends DataClass implements Insertable<MultiSigMember> {
 
   @override
   int get hashCode => Object.hash(groupId, userId, publicKey);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2387,14 +2300,12 @@ class MultiSigMembersCompanion extends UpdateCompanion<MultiSigMember> {
   final Value<String> userId;
   final Value<String> publicKey;
   final Value<int> rowid;
-
   const MultiSigMembersCompanion({
     this.groupId = const Value.absent(),
     this.userId = const Value.absent(),
     this.publicKey = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-
   MultiSigMembersCompanion.insert({
     required String groupId,
     required String userId,
@@ -2403,7 +2314,6 @@ class MultiSigMembersCompanion extends UpdateCompanion<MultiSigMember> {
   }) : groupId = Value(groupId),
        userId = Value(userId),
        publicKey = Value(publicKey);
-
   static Insertable<MultiSigMember> custom({
     Expression<String>? groupId,
     Expression<String>? userId,
@@ -2467,9 +2377,7 @@ class $PendingSignaturesTable extends PendingSignatures
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $PendingSignaturesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -2531,7 +2439,6 @@ class $PendingSignaturesTable extends PendingSignatures
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2540,14 +2447,11 @@ class $PendingSignaturesTable extends PendingSignatures
     signature,
     signedAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'pending_signatures';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<PendingSignature> instance, {
@@ -2596,7 +2500,6 @@ class $PendingSignaturesTable extends PendingSignatures
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   PendingSignature map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -2637,7 +2540,6 @@ class PendingSignature extends DataClass
   final String signerId;
   final String signature;
   final DateTime signedAt;
-
   const PendingSignature({
     required this.id,
     required this.transactionId,
@@ -2645,7 +2547,6 @@ class PendingSignature extends DataClass
     required this.signature,
     required this.signedAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2680,7 +2581,6 @@ class PendingSignature extends DataClass
       signedAt: serializer.fromJson<DateTime>(json['signedAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -2706,7 +2606,6 @@ class PendingSignature extends DataClass
     signature: signature ?? this.signature,
     signedAt: signedAt ?? this.signedAt,
   );
-
   PendingSignature copyWithCompanion(PendingSignaturesCompanion data) {
     return PendingSignature(
       id: data.id.present ? data.id.value : this.id,
@@ -2734,7 +2633,6 @@ class PendingSignature extends DataClass
   @override
   int get hashCode =>
       Object.hash(id, transactionId, signerId, signature, signedAt);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2752,7 +2650,6 @@ class PendingSignaturesCompanion extends UpdateCompanion<PendingSignature> {
   final Value<String> signerId;
   final Value<String> signature;
   final Value<DateTime> signedAt;
-
   const PendingSignaturesCompanion({
     this.id = const Value.absent(),
     this.transactionId = const Value.absent(),
@@ -2760,7 +2657,6 @@ class PendingSignaturesCompanion extends UpdateCompanion<PendingSignature> {
     this.signature = const Value.absent(),
     this.signedAt = const Value.absent(),
   });
-
   PendingSignaturesCompanion.insert({
     this.id = const Value.absent(),
     required String transactionId,
@@ -2770,7 +2666,6 @@ class PendingSignaturesCompanion extends UpdateCompanion<PendingSignature> {
   }) : transactionId = Value(transactionId),
        signerId = Value(signerId),
        signature = Value(signature);
-
   static Insertable<PendingSignature> custom({
     Expression<int>? id,
     Expression<String>? transactionId,
@@ -2839,7 +2734,6 @@ class PendingSignaturesCompanion extends UpdateCompanion<PendingSignature> {
 
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
-
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $AppPreferencesTable appPreferences = $AppPreferencesTable(this);
@@ -2853,11 +2747,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $PendingSignaturesTable pendingSignatures =
       $PendingSignaturesTable(this);
-
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
-
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     transactions,
@@ -2945,7 +2837,6 @@ class $$TransactionsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -3051,7 +2942,6 @@ class $$TransactionsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -3132,7 +3022,6 @@ class $$TransactionsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -3382,7 +3271,6 @@ class $$AppPreferencesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get key => $composableBuilder(
     column: $table.key,
     builder: (column) => ColumnFilters(column),
@@ -3403,7 +3291,6 @@ class $$AppPreferencesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get key => $composableBuilder(
     column: $table.key,
     builder: (column) => ColumnOrderings(column),
@@ -3424,7 +3311,6 @@ class $$AppPreferencesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get key =>
       $composableBuilder(column: $table.key, builder: (column) => column);
 
@@ -3531,7 +3417,6 @@ class $$DbNotificationsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -3567,7 +3452,6 @@ class $$DbNotificationsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -3603,7 +3487,6 @@ class $$DbNotificationsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -3736,7 +3619,6 @@ class $$AiMemoriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -3772,7 +3654,6 @@ class $$AiMemoriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -3808,7 +3689,6 @@ class $$AiMemoriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -3963,7 +3843,6 @@ class $$MultiSigGroupsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -4029,7 +3908,6 @@ class $$MultiSigGroupsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -4070,7 +3948,6 @@ class $$MultiSigGroupsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -4292,7 +4169,6 @@ class $$MultiSigMembersTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get userId => $composableBuilder(
     column: $table.userId,
     builder: (column) => ColumnFilters(column),
@@ -4336,7 +4212,6 @@ class $$MultiSigMembersTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get userId => $composableBuilder(
     column: $table.userId,
     builder: (column) => ColumnOrderings(column),
@@ -4380,7 +4255,6 @@ class $$MultiSigMembersTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
@@ -4594,7 +4468,6 @@ class $$PendingSignaturesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -4648,7 +4521,6 @@ class $$PendingSignaturesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -4702,7 +4574,6 @@ class $$PendingSignaturesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -4870,27 +4741,19 @@ typedef $$PendingSignaturesTableProcessedTableManager =
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
-
   $AppDatabaseManager(this._db);
-
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
-
   $$AppPreferencesTableTableManager get appPreferences =>
       $$AppPreferencesTableTableManager(_db, _db.appPreferences);
-
   $$DbNotificationsTableTableManager get dbNotifications =>
       $$DbNotificationsTableTableManager(_db, _db.dbNotifications);
-
   $$AiMemoriesTableTableManager get aiMemories =>
       $$AiMemoriesTableTableManager(_db, _db.aiMemories);
-
   $$MultiSigGroupsTableTableManager get multiSigGroups =>
       $$MultiSigGroupsTableTableManager(_db, _db.multiSigGroups);
-
   $$MultiSigMembersTableTableManager get multiSigMembers =>
       $$MultiSigMembersTableTableManager(_db, _db.multiSigMembers);
-
   $$PendingSignaturesTableTableManager get pendingSignatures =>
       $$PendingSignaturesTableTableManager(_db, _db.pendingSignatures);
 }

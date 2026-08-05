@@ -56,7 +56,7 @@ class MultiSigDashboard extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -68,8 +68,8 @@ class MultiSigDashboard extends ConsumerWidget {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           'Multi-Signature Security',
           style: TextStyle(
             fontWeight: FontWeight.w900,

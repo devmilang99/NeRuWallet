@@ -20,6 +20,7 @@ linter:
     - always_declare_return_types
     - always_put_required_named_parameters_first
     - avoid_escaping_inner_quotes
+    - avoid_print
     - avoid_redundant_argument_values
     - avoid_unused_constructor_parameters
     - cascade_invocations

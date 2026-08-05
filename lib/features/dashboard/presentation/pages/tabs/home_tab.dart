@@ -238,7 +238,12 @@ class HomeTab extends StatelessWidget {
           const SizedBox(width: 12),
           ElevatedButton(
             onPressed: () {
-              context.push('/ekyc');
+              GlassDialog.showInfo(
+                context,
+                title: 'Coming Soon',
+                message:
+                    'AI-powered eKYC verification will be available in the next iteration.',
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,

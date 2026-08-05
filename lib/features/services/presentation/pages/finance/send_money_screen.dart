@@ -7,9 +7,9 @@ import 'package:neruwallet/core/services/transaction_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
 import 'package:neruwallet/features/auth/presentation/pages/transaction_pin_screen.dart';
+import 'package:neruwallet/features/services/presentation/providers/transaction_provider.dart';
 import 'package:neruwallet/features/services/presentation/widgets/service_widgets.dart';
 import 'package:neruwallet/features/services/presentation/widgets/transaction_receipt_sheet.dart';
-import 'package:neruwallet/features/transactions/presentation/providers/transaction_provider.dart';
 
 class SendMoneyScreen extends ConsumerStatefulWidget {
   const SendMoneyScreen({super.key});

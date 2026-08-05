@@ -8,9 +8,9 @@ class DocumentRecognitionResult {
   final bool isAligned;
 
   DocumentRecognitionResult({
-    this.text,
     required this.message,
     required this.isValid,
+    this.text,
     this.isAligned = false,
   });
 }
@@ -40,7 +40,6 @@ class MLKitService {
       enableContours: true,
       enableLandmarks: true,
       enableClassification: true,
-      performanceMode: FaceDetectorMode.fast,
     ),
   );
 

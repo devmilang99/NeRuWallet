@@ -172,6 +172,23 @@ transparency.
 
 ---
 
+## <a id="production-optimization"></a> 🛠️ Production Optimization & Code Quality
+
+NeRuWallet is engineered for production-grade performance and maintainability.
+
+- **Clean Architecture**: Consistently follows a **Feature-First** structure, ensuring high
+  modularity and easy scalability.
+- **Redundancy-Free Codebase**: Recently optimized to remove legacy duplicate features (`exchange`,
+  `transactions`), reducing project noise and maintaining a single source of truth.
+- **Zero-Error Analysis**: The codebase passes `flutter analyze` with **0 fatal errors**, adhering
+  to strict linting rules (`analysis_options.yaml`) for clean, predictable code.
+- **Optimized Bundle Size**: Unused dependencies like `lottie` and `font_awesome_flutter` have been
+  stripped to ensure a lean binary size for the final APK/IPA.
+- **Automated Refactoring**: Leverages `dart fix` and `build_runner` to maintain consistent code
+  style and up-to-date generated providers.
+
+---
+
 ## <a id="cicd"></a> 🚀 CI/CD & Engineering Excellence
 
 NeRuWallet is backed by a robust **GitHub Actions** pipeline that ensures every commit meets
@@ -226,7 +243,7 @@ high-quality standards across both Android and iOS.
 | **Systems Layer**      | **Rust**, **ring** (Crypto), **UniFFI** (Bridge)              |
 | **Security Hardening** | **R8 Obfuscation**, **Root Detection**, **Screen Protection** |
 | **Data Engine**        | **Supabase** (Realtime/Auth), **Drift** (Reactive SQLite)     |
-| **Design & UX**        | **Material 3**, **Flutter Animate**, **Lottie**, **FL Chart** |
+| **Design & UX**        | **Material 3**, **Flutter Animate**, **FL Chart**             |
 | **AI Integration**     | **Google Gemini 3.5 Flash**, **Prompt Engineering**           |
 
 ---
@@ -257,6 +274,7 @@ graph TD
 ## 🚀 Roadmap
 
 - [x] **Multi-Signature Wallets**: Shared hardware-backed accounts.
+- [ ] **eKYC Integration**: AI-powered biometric identity verification (Coming in next iteration).
 - [ ] **NFC Tap-to-Pay**: Fully integrated contactless transaction pipeline.
 - [ ] **Wear OS Companion**: Real-time alerts and biometric verification from your wrist.
 

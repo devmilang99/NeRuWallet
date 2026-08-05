@@ -23,7 +23,7 @@ class TransactionDetailSheet extends StatelessWidget {
     final iconColor = Color(transaction.colorValue);
     final iconData = IconUtils.getIconData(transaction.iconCode);
     final formattedDate = DateFormat(
-      'dd MMM, hh:mm a',
+      'MMM dd, hh:mm a',
     ).format(transaction.createdAt);
 
     var metadata = <String, dynamic>{};
