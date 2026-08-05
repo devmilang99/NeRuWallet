@@ -28,3 +28,9 @@
 -keepclassmembers class * extends java.security.Signature { *; }
 -keepclassmembers class * extends java.security.KeyPairGenerator { *; }
 -keepclassmembers class * extends java.security.KeyStore { *; }
+
+# Fix R8/ProGuard errors for Play Core and ML Kit
+-dontwarn com.google.android.play.core.**
+-dontwarn com.google.mlkit.vision.text.**
+-dontwarn com.google.mlkit.vision.common.internal.ContextUtils
+-dontwarn com.google.android.gms.internal.mlkit_vision_text_common.**
