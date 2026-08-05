@@ -157,7 +157,7 @@ transparency.
 
 |           Analysis            |             Chat              |           Insights            |            Advisor            |
 |:-----------------------------:|:-----------------------------:|:-----------------------------:|:-----------------------------:|
-| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_2.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_4.png) |
+| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_4.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_2.png) |
 
 ### 💸 Secure Transaction Flow
 
