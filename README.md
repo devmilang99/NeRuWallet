@@ -155,9 +155,9 @@ transparency.
 
 ### 🤖 Neru AI: Intelligence Advisor
 
-|           Analysis            |             Chat              |           Insights            |            Advisor            |
+|           Initial            |             Analysis              |           Insights            |            Chat            |
 |:-----------------------------:|:-----------------------------:|:-----------------------------:|:-----------------------------:|
-| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_4.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_2.png) |
+| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_2.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_4.png) |
 
 ### 💸 Secure Transaction Flow
 
