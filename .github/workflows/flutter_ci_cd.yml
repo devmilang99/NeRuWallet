@@ -1,4 +1,4 @@
-name: Flutter CI/CD
+name: NeRuWallet CI/CD
 
 on:
   push:
@@ -44,15 +44,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
-      - name: Setup CocoaPods
-        run: |
-          sudo gem install cocoapods
-          pod repo update
-
-      - name: Clear iOS build cache
-        run: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
       - name: Create .env file
         run: |
