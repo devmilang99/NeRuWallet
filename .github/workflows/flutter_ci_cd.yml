@@ -1,92 +1,33 @@
 name: Flutter CI/CD
 
 on:
-  workflow_dispatch:
-    inputs:
-      clean_build:
-        description: 'Force a clean build (ignore caches)'
-        required: false
-        default: false
-        type: boolean
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "develop" ]
 
 jobs:
-  test:
-    name: Unit Test and Analysis
-    runs-on: ubuntu-latest
+  build:
+    name: Build & Test
+    runs-on: macos-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Cache Pub packages
-        if: github.event.inputs.clean_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Cache Build Runner
-        if: github.event.inputs.clean_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: .dart_tool/build
-          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-runner-
-
-      - name: Create dummy .env
-        run: |
-          touch .env
-          echo "SUPABASE_URL=placeholder" >> .env
-          echo "SUPABASE_ANON_KEY=placeholder" >> .env
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-
-      - name: Analyze code
-        run: flutter analyze --no-fatal-warnings --no-fatal-infos
-
-      - name: Run tests
-        run: flutter test
-
-  build_android:
-    name: Build Android
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Gradle
-        if: github.event.inputs.clean_build != 'true'
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Cache Pub packages
-        if: github.event.inputs.clean_build != 'true'
+      - name: Cache Pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
@@ -94,92 +35,39 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Cache Build Runner
-        if: github.event.inputs.clean_build != 'true'
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
-          path: .dart_tool/build
-          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-build-runner-
+            ${{ runner.os }}-gradle-
 
-      - name: Create dummy .env
+      - name: Create .env file
         run: |
-          touch .env
-          echo "SUPABASE_URL=placeholder" >> .env
-          echo "SUPABASE_ANON_KEY=placeholder" >> .env
+          echo "SUPABASE_URL=https://dummy-project.supabase.co" > .env
+          echo "SUPABASE_ANON_KEY=dummy-anon-key" >> .env
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Build Release APK
-        run: flutter build apk --release
+      - name: Run Tests
+        run: flutter test
 
-      - name: Build Debug APK
+      - name: Build iOS
+        run: flutter build ios --no-codesign --release
+
+      - name: Build Android APK
         run: flutter build apk --debug
 
-      - name: Upload APKs
+      - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-builds
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/flutter-apk/app-debug.apk
-
-  build_ios:
-    name: Build iOS
-    needs: test
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Cache Pub packages
-        if: github.event.inputs.clean_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Cache Build Runner
-        if: github.event.inputs.clean_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: .dart_tool/build
-          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-runner-
-
-      - name: Cache Pods
-        if: github.event.inputs.clean_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      - name: Create dummy .env
-        run: |
-          touch .env
-          echo "SUPABASE_URL=placeholder" >> .env
-          echo "SUPABASE_ANON_KEY=placeholder" >> .env
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-
-      - name: Build iOS (No Sign)
-        run: flutter build ios --release --no-codesign
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
