@@ -4,6 +4,7 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate {
     private let secureEnclaveProvider = SecureEnclaveProvider()
+    private lazy var rustSigner = RustSigner()
 
     override func application(
         _ application: UIApplication,
@@ -59,6 +60,32 @@ import UIKit
 
             case "isScreenRecording":
                 result(UIScreen.main.isCaptured)
+
+            case "processTransactionData":
+                guard let args = call.arguments as? [String: Any],
+                      let data = args["data"] as? FlutterStandardTypedData else {
+                    result(FlutterError(code: "INVALID_ARGUMENT",
+                                       message: "Data is missing",
+                                       details: nil))
+                    return
+                }
+                let processed = self?.rustSigner.processTransactionData(data: data.data)
+                result(FlutterStandardTypedData(bytes: processed ?? Data()))
+
+            case "verifyRustSignature":
+                guard let args = call.arguments as? [String: Any],
+                      let pubKey = args["publicKey"] as? FlutterStandardTypedData,
+                      let msg = args["message"] as? FlutterStandardTypedData,
+                      let sig = args["signature"] as? FlutterStandardTypedData else {
+                    result(FlutterError(code: "INVALID_ARGUMENT",
+                                       message: "Missing arguments for verification",
+                                       details: nil))
+                    return
+                }
+                let isValid = self?.rustSigner.verifySignature(publicKey: pubKey.data,
+                                                               message: msg.data,
+                                                               signature: sig.data)
+                result(isValid)
 
             default:
                 result(FlutterMethodNotImplemented)

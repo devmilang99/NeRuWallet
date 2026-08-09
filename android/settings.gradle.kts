@@ -11,9 +11,9 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
+        gradlePluginPortal()
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
 }
 
@@ -22,6 +22,7 @@ plugins {
     id("com.android.application") version "8.9.1" apply false
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
     id("androidx.baselineprofile") version "1.3.1" apply false
+    id("org.mozilla.rust-android-gradle.rust-android") version "0.9.6" apply false
 }
 
 include(":app")

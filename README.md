@@ -33,6 +33,36 @@ experience are not mutually exclusive. Most mobile wallets prioritize ease of us
 software-based vulnerabilities; NeRuWallet anchors every transaction in **Physical Hardware (HSM)**
 and high-performance **Rust code**, while delivering a modern, "Liquid UI" experience.
 
+### 🏠 Offline-First & Atomic Sync
+
+NeRuWallet is built with an **Offline-First** philosophy. Using **Drift (SQLite)**, all transaction
+data, AI memories, and user preferences are persisted locally with reactive stream updates. A custom
+`SyncService` handles **Atomic Synchronization** with Supabase, ensuring data consistency even
+across flaky network conditions.
+
+---
+
+## <a id="architecture"></a> 🏗️ Component Architecture
+
+NeRuWallet follows a **Feature-First Architecture**, ensuring that domain logic (AI, Payments, Auth)
+is isolated and testable.
+
+```mermaid
+graph TD
+    UI[Flutter UI Layer] --> BL[Business Logic - Riverpod]
+    BL --> SS[SecureSigningService]
+    BL --> MS[Multi-Sig Coordinator]
+    BL --> AS[AIService - Gemini]
+    MS --> SB[Supabase Realtime]
+    SS --> NS[Native Security Provider]
+    NS --> RS[Rust Core - ring]
+    NS --> HSM[Hardware HSM]
+    BL --> DB[Drift Local DB]
+    BL --> SB
+    MS --> RS
+
+```
+
 ---
 
 ## <a id="security-pipeline"></a> 🔒 The Secure Signing Pipeline (HSM + Rust)
@@ -77,6 +107,9 @@ vulnerabilities.
   from peer devices before the local HSM authorizes a co-signature.
 - **High-Performance Hashing**: Transaction data is normalized and hashed using SHA-256 within the
   Rust memory boundary via UniFFI.
+- **Automated Native Pipeline**: The Rust core is integrated directly into the Gradle/Xcode build
+  systems via a `build.rs` scaffolding generator, ensuring the FFI bridge is always
+  version-synchronized with the native binaries.
 
 ### 🛡️ Hardening & Anti-Reverse Engineering
 
@@ -234,40 +267,40 @@ high-quality standards across both Android and iOS.
 
 ---
 
-## <a id="tech-stack"></a> 🛠 Tech Stack
+## <a id="why-this-stack"></a> 🤔 Why This Stack?
 
-| Layer                  | Technology                                                    |
-|:-----------------------|:--------------------------------------------------------------|
-| **Mobile Core**        | **Flutter (3.11+)**, **Riverpod (Code Generation)**           |
-| **Security Hardware**  | **Android StrongBox / TEE**, **iOS Secure Enclave**           |
-| **Systems Layer**      | **Rust**, **ring** (Crypto), **UniFFI** (Bridge)              |
-| **Security Hardening** | **R8 Obfuscation**, **Root Detection**, **Screen Protection** |
-| **Data Engine**        | **Supabase** (Realtime/Auth), **Drift** (Reactive SQLite)     |
-| **Design & UX**        | **Material 3**, **Flutter Animate**, **FL Chart**             |
-| **AI Integration**     | **Google Gemini 3.5 Flash**, **Prompt Engineering**           |
+The NeRuWallet architecture was meticulously selected to solve the "Fintech Trilemma": balancing *
+*Security**, **Performance**, and **User Experience**.
+
+- **Why Rust?**: We use Rust for the core cryptographic layer because it offers C-level performance
+  with mathematical memory safety. By handling sensitive hashing and signature verification in Rust,
+  we eliminate entire categories of memory-corruption bugs that often plague native FFI bridges.
+- **Why Hardware HSMs?**: Storing private keys in software is a single point of failure. By
+  anchoring trust in **StrongBox** and **Secure Enclave**, we ensure that even a compromised
+  operating system cannot extract the user's keys.
+- **Why Riverpod & Code Gen?**: To maintain a complex, multi-layered state (Rust FFI, Supabase
+  Realtime, and Drift SQLite), we chose Riverpod. Its compile-time safety and declarative nature
+  ensure that the app remains predictable and easy to test as new features are added.
+- **Why Offline-First?**: Financial apps must be reliable. Using Drift for local persistence ensures
+  that users can manage their assets in low-connectivity areas, with atomic sync handling the cloud
+  reconciliation automatically.
+- **Why Gemini 3.5 Flash?**: We chose a "Flash" model to optimize for speed and cost while providing
+  deep financial forensics. By using strict JSON schema enforcement, the AI acts as a reliable
+  internal service rather than just a conversational bot.
 
 ---
 
-## <a id="architecture"></a> 🏗️ Component Architecture
+## <a id="tech-stack"></a> 🛠 Tech Stack
 
-NeRuWallet follows a **Feature-First Architecture**, ensuring that domain logic (AI, Payments, Auth)
-is isolated and testable.
-
-```mermaid
-graph TD
-    UI[Flutter UI Layer] --> BL[Business Logic - Riverpod]
-    BL --> SS[SecureSigningService]
-    BL --> MS[Multi-Sig Coordinator]
-    BL --> AS[AIService - Gemini]
-    MS --> SB[Supabase Realtime]
-    SS --> NS[Native Security Provider]
-    NS --> RS[Rust Core - ring]
-    NS --> HSM[Hardware HSM]
-    BL --> DB[Drift Local DB]
-    BL --> SB
-    MS --> RS
-
-```
+| Layer                 | Technology                     | Key Architectural Benefit                                    |
+|:----------------------|:-------------------------------|:-------------------------------------------------------------|
+| **Mobile Core**       | **Flutter 3.x**, **Riverpod**  | Reactive UI with modular code-generation.                    |
+| **Systems Core**      | **Rust (UniFFI)**              | Memory-safe, high-performance SHA-256 & ECDSA.               |
+| **Security Hardware** | **StrongBox / Secure Enclave** | Hardware-isolated, non-exportable private keys.              |
+| **Persistence**       | **Drift (SQLite)**             | **Offline-First** architecture with reactive stream updates. |
+| **Cloud/Sync**        | **Supabase**                   | Atomic sync with Row-Level Security (RLS).                   |
+| **Intelligence**      | **Gemini 3.5 Flash**           | Deterministic AI forensics via JSON tool-calling.            |
+| **Vision**            | **Google ML Kit**              | On-device OCR and Biometric Liveness detection.              |
 
 ---
 

@@ -10,10 +10,13 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executor
+// Import the generated Rust bindings (will be available after build)
+import uniffi.rust_signer.RustSigner
 
 class MainActivity : FlutterFragmentActivity() {
     private val CHANNEL = "com.example.neruwallet/security"
     private lateinit var securityProvider: SecurityProvider
+    private val rustSigner: RustSigner by lazy { RustSigner() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +72,42 @@ class MainActivity : FlutterFragmentActivity() {
                         window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     }
                     result.success(null)
+                }
+
+                // Rust-backed cryptographic operations
+                "processTransactionData" -> {
+                    val data = call.argument<ByteArray>("data")
+                    if (data != null) {
+                        try {
+                            val processed =
+                                rustSigner.processTransactionData(data.map { it.toUByte() })
+                            result.success(processed.map { it.toByte() }.toByteArray())
+                        } catch (e: Exception) {
+                            result.error("RUST_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Data is null", null)
+                    }
+                }
+
+                "verifyRustSignature" -> {
+                    val pubKey = call.argument<ByteArray>("publicKey")
+                    val msg = call.argument<ByteArray>("message")
+                    val sig = call.argument<ByteArray>("signature")
+                    if (pubKey != null && msg != null && sig != null) {
+                        try {
+                            val isValid = rustSigner.verifySignature(
+                                pubKey.map { it.toUByte() },
+                                msg.map { it.toUByte() },
+                                sig.map { it.toUByte() }
+                            )
+                            result.success(isValid)
+                        } catch (e: Exception) {
+                            result.error("RUST_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Missing arguments for verification", null)
+                    }
                 }
 
                 else -> {

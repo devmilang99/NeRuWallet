@@ -4,6 +4,7 @@ plugins {
     id("androidx.baselineprofile")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("org.mozilla.rust-android-gradle.rust-android")
 }
 
 android {
@@ -63,6 +64,12 @@ android {
             include("com.example.neruwallet.**")
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/kotlin")
+        }
+    }
 }
 
 flutter {
@@ -73,14 +80,37 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
 }
 
-// In a real environment, you would add the Rust Android Gradle plugin:
-// plugins { id("org.mozilla.rust-android-gradle") version "0.9.3" }
-// and configure it:
-// cargo {
-//     module = "../../rust_signer"
-//     libname = "rust_signer"
-//     targets = ["arm64"]
-// }
+tasks.register<Exec>("generateUniFFIBindings") {
+    workingDir = file("../../rust_signer")
+    // Assumes uniffi-bindgen is installed. On Windows Cargo installs it as uniffi-bindgen-cli.
+    val bindgenCommand = if (System.getProperty("os.name").lowercase().contains("windows")) {
+        "uniffi-bindgen-cli"
+    } else {
+        "uniffi-bindgen"
+    }
+    commandLine(
+        bindgenCommand,
+        "generate",
+        "src/rust_signer.udl",
+        "--language",
+        "kotlin",
+        "--out-dir",
+        "${projectDir}/src/main/kotlin"
+    )
+}
+
+afterEvaluate {
+    tasks.named("preBuild") {
+        dependsOn("generateUniFFIBindings")
+    }
+}
+
+cargo {
+    module = "../../rust_signer"
+    libname = "rust_signer"
+    targets = listOf("arm64", "x86_64")
+}
 
