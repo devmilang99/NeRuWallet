@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
-name = "rust_signer"
+name = "uniffi_rust_signer"
 
 [dependencies]
 uniffi = { version = "0.28", features = ["tokio"] }

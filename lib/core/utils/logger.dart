@@ -34,8 +34,39 @@ class AppLogger {
     StackTrace? stackTrace,
   ]) {
     final timestamp = DateTime.now().toIso8601String().split('T').last;
-    debugPrint('[$timestamp] [$level] $message');
-    if (error != null) debugPrint('Error: $error');
-    if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
+
+    // ANSI Color Codes
+    const reset = '\x1B[0m';
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const cyan = '\x1B[36m';
+    const magenta = '\x1B[35m';
+
+    String color;
+    switch (level) {
+      case 'DEBUG':
+        color = cyan;
+        break;
+      case 'INFO':
+        color = green;
+        break;
+      case 'WARN':
+        color = yellow;
+        break;
+      case 'ERROR':
+        color = red;
+        break;
+      case 'FATAL':
+        color = magenta;
+        break;
+      default:
+        color = reset;
+    }
+
+    debugPrint('$color[$timestamp] [$level] $message$reset');
+    if (error != null) debugPrint('$red Error: $error$reset');
+    if (stackTrace != null)
+      debugPrint('$magenta StackTrace: $stackTrace$reset');
   }
 }

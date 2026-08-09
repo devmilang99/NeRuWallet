@@ -6,6 +6,7 @@ import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
 import 'package:neruwallet/core/services/secure_signing_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:neruwallet/core/utils/logger.dart';
 
 class BiometricSettingsScreen extends ConsumerStatefulWidget {
   const BiometricSettingsScreen({super.key});
@@ -46,13 +47,17 @@ class _BiometricSettingsScreenState
 
   Future<void> _updateSetting(String key, bool value) async {
     final prefService = ref.read(preferenceServiceProvider);
+    AppLogger.d('Settings: Updating $key to $value');
 
     // If enabling transaction verification, ensure hardware key is generated
     if (key == 'biometrics_transaction_enabled' && value == true) {
       final signingService = ref.read(secureSigningServiceProvider);
       final isGenerated = await signingService.isKeyGenerated();
+      AppLogger.d('Settings: Key already generated? $isGenerated');
       if (!isGenerated) {
-        await signingService.generateSecureKey();
+        AppLogger.i('Settings: Requesting hardware key generation...');
+        final success = await signingService.generateSecureKey();
+        AppLogger.i('Settings: Key generation success: $success');
       }
     }
 

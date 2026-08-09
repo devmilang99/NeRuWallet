@@ -9,6 +9,7 @@ import 'package:neruwallet/core/providers/balance_provider.dart';
 import 'package:neruwallet/core/providers/kyc_provider.dart';
 import 'package:neruwallet/core/services/biometric_service.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/secure_signing_service.dart';
 import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
 import 'package:neruwallet/core/widgets/glass_dialog.dart';
@@ -333,6 +334,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             final prefService = ref.read(
                               preferenceServiceProvider,
                             );
+
+                            // Ensure hardware key is generated if enabling biometrics
+                            if (enableLogin || enableTrans) {
+                              final signingService = ref.read(
+                                secureSigningServiceProvider,
+                              );
+                              final isGenerated = await signingService
+                                  .isKeyGenerated();
+                              if (!isGenerated) {
+                                await signingService.generateSecureKey();
+                              }
+                            }
+
                             await prefService.setBool(
                               'biometrics_login_enabled',
                               enableLogin,

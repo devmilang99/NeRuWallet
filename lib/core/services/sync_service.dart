@@ -254,7 +254,13 @@ class SyncService {
         }
       });
     } catch (e) {
-      AppLogger.e('Preferences Sync Error', e);
+      if (e is sb.PostgrestException && e.code == 'PGRST205') {
+        AppLogger.w(
+          '⚠️ Remote "app_preferences" table not found in Supabase. Skipping sync.',
+        );
+      } else {
+        AppLogger.e('Preferences Sync Error', e);
+      }
     }
   }
 
@@ -287,7 +293,13 @@ class SyncService {
         }
       });
     } catch (e) {
-      AppLogger.e('AI Memory Sync Error', e);
+      if (e is sb.PostgrestException && e.code == 'PGRST205') {
+        AppLogger.w(
+          '⚠️ Remote "ai_memories" table not found in Supabase. Skipping sync.',
+        );
+      } else {
+        AppLogger.e('AI Memory Sync Error', e);
+      }
     }
   }
 
@@ -315,7 +327,14 @@ class SyncService {
         }
       });
     } catch (e) {
-      AppLogger.e('Notification Sync Error', e);
+      if (e is sb.PostgrestException && e.code == 'PGRST205') {
+        AppLogger.w(
+          '⚠️ Remote "notifications" table not found in Supabase. Skipping sync. '
+          'Please ensure the table is created using the provided SQL script.',
+        );
+      } else {
+        AppLogger.e('Notification Sync Error', e);
+      }
     }
   }
 }

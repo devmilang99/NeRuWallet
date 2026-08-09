@@ -10,7 +10,7 @@ plugins {
 android {
     namespace = "com.example.neruwallet"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -110,7 +110,7 @@ afterEvaluate {
 
 cargo {
     module = "../../rust_signer"
-    libname = "rust_signer"
+    libname = "uniffi_rust_signer"
     targets = listOf("arm64", "x86_64")
 }
 

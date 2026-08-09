@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -177,7 +179,9 @@ class PendingApprovalsScreen extends ConsumerWidget {
     // Simulate multi-sig signing process
     // In real app, we would sign a SHA-256 hash of the transaction metadata
     final result = await signingService.signMultiSigPayload(
-      DateTime.now().toIso8601String().codeUnits as dynamic, // Mock payload
+      Uint8List.fromList(
+        DateTime.now().toIso8601String().codeUnits,
+      ), // Mock payload
       'group_id_123',
     );
 

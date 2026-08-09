@@ -24,22 +24,39 @@ class SecureSigningService {
     }
   }
 
+  /// Independent Rust hashing for non-biometric flows.
+  Future<Uint8List?> hashDataOnly(Uint8List data) async {
+    if (_ref == null) return null;
+    final rustService = _ref!.read(rustServiceProvider);
+    AppLogger.d('SECURITY_PIPELINE: Independent Rust hashing initiated');
+    return await rustService.processTransactionData(data);
+  }
+
   /// Combined workflow: Hashing with Rust, then signing with Secure Hardware.
   /// This ensures that the data being signed has been processed by our
   /// high-performance Rust core.
   Future<Uint8List?> signDataWithRustHash(Uint8List data) async {
-    if (_ref == null) return signData(data);
+    AppLogger.d('SECURITY_PIPELINE: signDataWithRustHash initiated');
+    if (_ref == null) {
+      AppLogger.w(
+        'SECURITY_PIPELINE: Ref is null, falling back to raw signing',
+      );
+      return signData(data);
+    }
 
     final rustService = _ref!.read(rustServiceProvider);
+    AppLogger.d(
+      'SECURITY_PIPELINE: Calling RustService.processTransactionData',
+    );
     final hashedData = await rustService.processTransactionData(data);
 
     if (hashedData == null) {
-      AppLogger.w('Rust hashing failed, falling back to raw data signing.');
+      AppLogger.e('SECURITY_PIPELINE: Rust hashing failed');
       return signData(data);
     }
 
     AppLogger.i(
-      'Data successfully hashed by Rust. Proceeding to hardware signature.',
+      'SECURITY_PIPELINE: Rust hashing success. Proceeding to hardware sign.',
     );
     return signData(hashedData);
   }
@@ -63,7 +80,7 @@ class SecureSigningService {
     // In a production app, we might add group-specific metadata to the payload
     // before signing, or log the intent specifically for the group.
     AppLogger.i('Initiating Multi-Sig signature for group: $groupId');
-    return signData(payload);
+    return signDataWithRustHash(payload);
   }
 
   /// Gets the hardware-backed public key to share with other group members.

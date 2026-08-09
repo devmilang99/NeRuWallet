@@ -114,21 +114,37 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
 
   Future<void> _checkBiometricForVerification() async {
     var authenticated = false;
+    AppLogger.d('Security: Checking Biometric/Hardware availability...');
+
+    // ALWAYS perform Rust Hashing first for integrity verification
+    final dataToHash = Uint8List.fromList(
+      'integrity_check_${DateTime.now().millisecondsSinceEpoch}'.codeUnits,
+    );
+    final signingService = ref.read(secureSigningServiceProvider);
+    await signingService.hashDataOnly(dataToHash);
 
     try {
       if (Platform.isAndroid || Platform.isIOS) {
-        final signingService = ref.read(secureSigningServiceProvider);
         final isGenerated = await signingService.isKeyGenerated();
+        AppLogger.d('Security: Hardware Key Generated: $isGenerated');
 
         if (isGenerated) {
-          // Use Hardware-backed signing (StrongBox/TEE/SecureEnclave)
-          // This will trigger FaceID/TouchID/Fingerprint with Device PIN fallback
+          AppLogger.i('Security: Initiating Hardware Signing Pipeline');
           final dataToSign = Uint8List.fromList(
             'verify_transaction_${DateTime.now().millisecondsSinceEpoch}'
                 .codeUnits,
           );
-          final signature = await signingService.signData(dataToSign);
+          final signature = await signingService.signDataWithRustHash(
+            dataToSign,
+          );
           authenticated = signature != null;
+          AppLogger.d(
+            'SECURITY_PIPELINE: Authentication result: $authenticated',
+          );
+        } else {
+          AppLogger.w(
+            'Security: Hardware Key not found. Biometric signing skipped.',
+          );
         }
       }
     } catch (e) {

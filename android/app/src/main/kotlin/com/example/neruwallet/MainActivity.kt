@@ -1,6 +1,7 @@
 package com.example.neruwallet
 
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.NonNull
 import androidx.biometric.BiometricManager
@@ -78,11 +79,22 @@ class MainActivity : FlutterFragmentActivity() {
                 "processTransactionData" -> {
                     val data = call.argument<ByteArray>("data")
                     if (data != null) {
+                        Log.d(
+                            "RustSigner",
+                            "Kotlin: Initiating Rust hashing for ${data.size} bytes"
+                        )
                         try {
+                            val startTime = System.currentTimeMillis()
                             val processed =
                                 rustSigner.processTransactionData(data.map { it.toUByte() })
+                            val endTime = System.currentTimeMillis()
+                            Log.d(
+                                "RustSigner",
+                                "Kotlin: Rust hashing completed in ${endTime - startTime}ms"
+                            )
                             result.success(processed.map { it.toByte() }.toByteArray())
                         } catch (e: Exception) {
+                            Log.e("RustSigner", "Kotlin: Rust hashing failed: ${e.message}")
                             result.error("RUST_ERROR", e.message, null)
                         }
                     } else {
@@ -95,14 +107,22 @@ class MainActivity : FlutterFragmentActivity() {
                     val msg = call.argument<ByteArray>("message")
                     val sig = call.argument<ByteArray>("signature")
                     if (pubKey != null && msg != null && sig != null) {
+                        Log.d("RustSigner", "Kotlin: Initiating Rust signature verification")
                         try {
+                            val startTime = System.currentTimeMillis()
                             val isValid = rustSigner.verifySignature(
                                 pubKey.map { it.toUByte() },
                                 msg.map { it.toUByte() },
                                 sig.map { it.toUByte() }
                             )
+                            val endTime = System.currentTimeMillis()
+                            Log.d(
+                                "RustSigner",
+                                "Kotlin: Rust verification completed in ${endTime - startTime}ms. Result: $isValid"
+                            )
                             result.success(isValid)
                         } catch (e: Exception) {
+                            Log.e("RustSigner", "Kotlin: Rust verification failed: ${e.message}")
                             result.error("RUST_ERROR", e.message, null)
                         }
                     } else {

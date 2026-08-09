@@ -64,7 +64,7 @@ open class RustBuffer : Structure() {
     companion object {
         internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
             // Note: need to convert the size to a `Long` value to make this work with JVM.
-            UniffiLib.ffi_rust_signer_rustbuffer_alloc(size.toLong(), status)
+            UniffiLib.ffi_uniffi_rust_signer_rustbuffer_alloc(size.toLong(), status)
         }.also {
             if (it.data == null) {
                 throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
@@ -80,7 +80,7 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
-            UniffiLib.ffi_rust_signer_rustbuffer_free(buf, status)
+            UniffiLib.ffi_uniffi_rust_signer_rustbuffer_free(buf, status)
         }
     }
 
@@ -745,22 +745,22 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckApiChecksums(this)
     }
 
-    external fun uniffi_rust_signer_checksum_func_process_transaction_data(
+    external fun uniffi_uniffi_rust_signer_checksum_func_process_transaction_data(
     ): Int
 
-    external fun uniffi_rust_signer_checksum_func_verify_signature(
+    external fun uniffi_uniffi_rust_signer_checksum_func_verify_signature(
     ): Int
 
-    external fun uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data(
+    external fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data(
     ): Int
 
-    external fun uniffi_rust_signer_checksum_method_rustsigner_verify_signature(
+    external fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature(
     ): Int
 
-    external fun uniffi_rust_signer_checksum_constructor_rustsigner_new(
+    external fun uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new(
     ): Int
 
-    external fun ffi_rust_signer_uniffi_contract_version(
+    external fun ffi_uniffi_rust_signer_uniffi_contract_version(
     ): Int
 
 
@@ -780,23 +780,23 @@ internal object UniffiLib {
 
     }
 
-    external fun uniffi_rust_signer_fn_clone_rustsigner(
+    external fun uniffi_uniffi_rust_signer_fn_clone_rustsigner(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun uniffi_rust_signer_fn_free_rustsigner(
+    external fun uniffi_uniffi_rust_signer_fn_free_rustsigner(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
-    external fun uniffi_rust_signer_fn_constructor_rustsigner_new(
+    external fun uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
         uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
+    external fun uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
         `ptr`: Long, `data`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun uniffi_rust_signer_fn_method_rustsigner_verify_signature(
+    external fun uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
         `ptr`: Long,
         `publicKey`: RustBuffer.ByValue,
         `message`: RustBuffer.ByValue,
@@ -804,222 +804,222 @@ internal object UniffiLib {
         uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun uniffi_rust_signer_fn_func_process_transaction_data(
+    external fun uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
         `data`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun uniffi_rust_signer_fn_func_verify_signature(
+    external fun uniffi_uniffi_rust_signer_fn_func_verify_signature(
         `publicKey`: RustBuffer.ByValue,
         `message`: RustBuffer.ByValue,
         `signature`: RustBuffer.ByValue,
         uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun ffi_rust_signer_rustbuffer_alloc(
+    external fun ffi_uniffi_rust_signer_rustbuffer_alloc(
         `size`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_rust_signer_rustbuffer_from_bytes(
+    external fun ffi_uniffi_rust_signer_rustbuffer_from_bytes(
         `bytes`: ForeignBytes.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_rust_signer_rustbuffer_free(
+    external fun ffi_uniffi_rust_signer_rustbuffer_free(
         `buf`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
-    external fun ffi_rust_signer_rustbuffer_reserve(
+    external fun ffi_uniffi_rust_signer_rustbuffer_reserve(
         `buf`: RustBuffer.ByValue, `additional`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_rust_signer_rust_future_poll_u8(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_u8(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_u8(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_u8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_u8(
+    external fun ffi_uniffi_rust_signer_rust_future_free_u8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_u8(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_u8(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_rust_signer_rust_future_poll_i8(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_i8(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_i8(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_i8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_i8(
+    external fun ffi_uniffi_rust_signer_rust_future_free_i8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_i8(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_i8(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun ffi_rust_signer_rust_future_poll_u16(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_u16(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_u16(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_u16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_u16(
+    external fun ffi_uniffi_rust_signer_rust_future_free_u16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_u16(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_u16(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_rust_signer_rust_future_poll_i16(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_i16(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_i16(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_i16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_i16(
+    external fun ffi_uniffi_rust_signer_rust_future_free_i16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_i16(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_i16(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Short
 
-    external fun ffi_rust_signer_rust_future_poll_u32(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_u32(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_u32(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_u32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_u32(
+    external fun ffi_uniffi_rust_signer_rust_future_free_u32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_u32(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_u32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_rust_signer_rust_future_poll_i32(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_i32(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_i32(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_i32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_i32(
+    external fun ffi_uniffi_rust_signer_rust_future_free_i32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_i32(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_i32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_rust_signer_rust_future_poll_u64(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_u64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_u64(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_u64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_u64(
+    external fun ffi_uniffi_rust_signer_rust_future_free_u64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_u64(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_u64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun ffi_rust_signer_rust_future_poll_i64(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_i64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_i64(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_i64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_i64(
+    external fun ffi_uniffi_rust_signer_rust_future_free_i64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_i64(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_i64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun ffi_rust_signer_rust_future_poll_f32(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_f32(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_f32(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_f32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_f32(
+    external fun ffi_uniffi_rust_signer_rust_future_free_f32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_f32(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_f32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Float
 
-    external fun ffi_rust_signer_rust_future_poll_f64(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_f64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_f64(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_f64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_f64(
+    external fun ffi_uniffi_rust_signer_rust_future_free_f64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_f64(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_f64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Double
 
-    external fun ffi_rust_signer_rust_future_poll_rust_buffer(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_rust_buffer(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_rust_buffer(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_rust_buffer(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_rust_buffer(
+    external fun ffi_uniffi_rust_signer_rust_future_free_rust_buffer(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_rust_buffer(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_rust_buffer(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_rust_signer_rust_future_poll_void(
+    external fun ffi_uniffi_rust_signer_rust_future_poll_void(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_cancel_void(
+    external fun ffi_uniffi_rust_signer_rust_future_cancel_void(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_free_void(
+    external fun ffi_uniffi_rust_signer_rust_future_free_void(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_rust_signer_rust_future_complete_void(
+    external fun ffi_uniffi_rust_signer_rust_future_complete_void(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
@@ -1030,7 +1030,7 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     // Get the bindings contract version from our ComponentInterface
     val bindings_contract_version = 31
     // Get the scaffolding contract version by calling the into the dylib
-    val scaffolding_contract_version = lib.ffi_rust_signer_uniffi_contract_version()
+    val scaffolding_contract_version = lib.ffi_uniffi_rust_signer_uniffi_contract_version()
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
@@ -1038,19 +1038,19 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if ((lib.uniffi_rust_signer_checksum_func_process_transaction_data() and 0xFFFF) != 65429) {
+    if ((lib.uniffi_uniffi_rust_signer_checksum_func_process_transaction_data() and 0xFFFF) != 33344) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_rust_signer_checksum_func_verify_signature() and 0xFFFF) != 32827) {
+    if ((lib.uniffi_uniffi_rust_signer_checksum_func_verify_signature() and 0xFFFF) != 24354) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data() and 0xFFFF) != 61910) {
+    if ((lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data() and 0xFFFF) != 53965) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_rust_signer_checksum_method_rustsigner_verify_signature() and 0xFFFF) != 56129) {
+    if ((lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature() and 0xFFFF) != 26130) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_rust_signer_checksum_constructor_rustsigner_new() and 0xFFFF) != 8181) {
+    if ((lib.uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new() and 0xFFFF) != 41516) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1458,7 +1458,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
             this(
                 UniffiWithHandle,
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_rust_signer_fn_constructor_rustsigner_new(
+                    UniffiLib.uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
 
                         _status
                     )
@@ -1524,7 +1524,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
                 return;
             }
             uniffiRustCall { status ->
-                UniffiLib.uniffi_rust_signer_fn_free_rustsigner(handle, status)
+                UniffiLib.uniffi_uniffi_rust_signer_fn_free_rustsigner(handle, status)
             }
         }
     }
@@ -1537,7 +1537,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
             throw InternalException("uniffiCloneHandle() called on NoHandle object");
         }
         return uniffiRustCall() { status ->
-            UniffiLib.uniffi_rust_signer_fn_clone_rustsigner(handle, status)
+            UniffiLib.uniffi_uniffi_rust_signer_fn_clone_rustsigner(handle, status)
         }
     }
 
@@ -1545,7 +1545,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
         return FfiConverterSequenceUByte.lift(
             callWithHandle {
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
+                    UniffiLib.uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
                         it,
 
                         FfiConverterSequenceUByte.lower(`data`), _status
@@ -1564,7 +1564,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
         return FfiConverterBoolean.lift(
             callWithHandle {
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_rust_signer_fn_method_rustsigner_verify_signature(
+                    UniffiLib.uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
                         it,
 
                         FfiConverterSequenceUByte.lower(`publicKey`),
@@ -1637,7 +1637,7 @@ public object FfiConverterSequenceUByte : FfiConverterRustBuffer<List<kotlin.UBy
 fun `processTransactionData`(`data`: List<kotlin.UByte>): List<kotlin.UByte> {
     return FfiConverterSequenceUByte.lift(
         uniffiRustCall() { _status ->
-            UniffiLib.uniffi_rust_signer_fn_func_process_transaction_data(
+            UniffiLib.uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
 
 
                 FfiConverterSequenceUByte.lower(`data`), _status
@@ -1653,7 +1653,7 @@ fun `verifySignature`(
 ): kotlin.Boolean {
     return FfiConverterBoolean.lift(
         uniffiRustCall() { _status ->
-            UniffiLib.uniffi_rust_signer_fn_func_verify_signature(
+            UniffiLib.uniffi_uniffi_rust_signer_fn_func_verify_signature(
 
 
                 FfiConverterSequenceUByte.lower(`publicKey`),

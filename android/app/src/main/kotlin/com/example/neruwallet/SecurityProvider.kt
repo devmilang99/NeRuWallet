@@ -10,25 +10,34 @@ import java.security.KeyStore
 import java.security.Signature
 import java.security.spec.ECGenParameterSpec
 
+import android.util.Log
+
 class SecurityProvider(private val context: Context) {
 
     private val keyStoreAlias = "neru_wallet_signing_key"
     private val providerName = "AndroidKeyStore"
+    private val TAG = "RustSigner"
 
     fun generateHardwareBackedKey(): Boolean {
+        Log.d(TAG, "Kotlin: generateHardwareBackedKey requested")
         return try {
             generateKey(true) // Try StrongBox
+            Log.d(TAG, "Kotlin: Key generated successfully with StrongBox")
             true
         } catch (e: Exception) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && e is StrongBoxUnavailableException) {
+            Log.w(TAG, "Kotlin: StrongBox generation failed: ${e.message}. Trying TEE fallback.")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 // Fallback to TEE
                 try {
                     generateKey(false)
+                    Log.d(TAG, "Kotlin: Key generated successfully with TEE")
                     true
                 } catch (inner: Exception) {
+                    Log.e(TAG, "Kotlin: TEE generation failed: ${inner.message}")
                     false
                 }
             } else {
+                Log.e(TAG, "Kotlin: OS version too low for fallback logic")
                 false
             }
         }
