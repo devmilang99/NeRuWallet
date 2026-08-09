@@ -20,7 +20,7 @@ Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first 
 harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture,
 now featuring **Hardware-Backed Multi-Signature Vaults**.
 
-[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Getting Started](#getting-started)
+[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Architecture](#architecture)
 
 ---
 
@@ -30,14 +30,16 @@ now featuring **Hardware-Backed Multi-Signature Vaults**.
 
 **NeRuWallet** is designed to demonstrate that elite security engineering and premium user
 experience are not mutually exclusive. Most mobile wallets prioritize ease of use at the cost of
-software-based vulnerabilities; NeRuWallet anchors every transaction in **Physical Hardware (HSM)**
-and high-performance **Rust code**, while delivering a modern, "Liquid UI" experience.
+software-based vulnerabilities; NeRuWallet anchors every transaction in **`Physical Hardware (HSM)`
+**
+and high-performance **`Rust code`**, while delivering a modern, "Liquid UI" experience.
 
-### 🏠 Offline-First & Atomic Sync
+### 🗄️ Offline-First & Atomic Sync
 
-NeRuWallet is built with an **Offline-First** philosophy. Using **Drift (SQLite)**, all transaction
+NeRuWallet is built with an **Offline-First** philosophy. Using **`Drift (SQLite)`**, all
+transaction
 data, AI memories, and user preferences are persisted locally with reactive stream updates. A custom
-`SyncService` handles **Atomic Synchronization** with Supabase, ensuring data consistency even
+**`SyncService`** handles **`Atomic Synchronization`** with Supabase, ensuring data consistency even
 across flaky network conditions.
 
 ---
@@ -49,18 +51,30 @@ is isolated and testable.
 
 ```mermaid
 graph TD
-    UI[Flutter UI Layer] --> BL[Business Logic - Riverpod]
-    BL --> SS[SecureSigningService]
-    BL --> MS[Multi-Sig Coordinator]
-    BL --> AS[AIService - Gemini]
-    MS --> SB[Supabase Realtime]
-    SS --> NS[Native Security Provider]
-    NS --> RS[Rust Core - ring]
-    NS --> HSM[Hardware HSM]
-    BL --> DB[Drift Local DB]
-    BL --> SB
-    MS --> RS
+    subgraph "Frontend Layer (Dart/Flutter)"
+        UI["📱 User Interface (Material 3)"]
+        BL["⚙️ Business Logic (Riverpod)"]
+    end
 
+    subgraph "Secure Core (Native/Rust)"
+        SC["🔒 SecureSigningService"]
+        RS["🦀 Rust Cryptography (ring)"]
+        HSM["🛡️ Hardware HSM (StrongBox/Enclave)"]
+    end
+
+    subgraph "Services & Storage"
+        SB["☁️ Supabase (Sync/Auth)"]
+        DB["🗄️ Drift (Local SQLite)"]
+        AI["🤖 Gemini AI Advisor"]
+    end
+
+    UI --> BL
+    BL --> SC
+    SC --> RS
+    RS --> HSM
+    BL --> SB
+    BL --> DB
+    BL --> AI
 ```
 
 ---
@@ -71,30 +85,29 @@ NeRuWallet implements a unique multi-layered signing pipeline. Private keys are 
 software and never touch the application's memory.
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Flutter as Flutter UI (Dart)
-    participant Rust as Rust Core (ring)
-    participant HSM as Hardware HSM (StrongBox/Secure Enclave)
-    
-    User->>Flutter: Initiates Transaction (e.g. Pay Bill)
-    Flutter->>Rust: Send Raw Data (via UniFFI)
-    Note over Rust: Normalization & SHA-256 Hashing
-    Rust->>Flutter: Return Hash
-    Flutter->>User: Request Biometric Auth
-    User-->>HSM: FaceID / Strong Biometrics
-    HSM->>HSM: Internal Validation & Signing
-    HSM-->>Flutter: Return ECDSA Signature (secp256r1)
-    Flutter->>Supabase: Submit Signed Payload
+graph LR
+    subgraph "Native Hardware Layer"
+    A[StrongBox 🤖]
+    B[Secure Enclave 🍎]
+    end
+    subgraph "Memory-Safe Layer"
+    C[Rust Core 🦀]
+    end
+    D[Flutter UI] -- Data --> C
+    C -- Hash --> D
+    D -- Biometrics --> A
+    D -- Biometrics --> B
 ```
 
 ### 🛡️ Hardware-Rooted Trust
 
-- **Android StrongBox**: Utilizes a dedicated security-certified chip (where available) to generate
+- **`[Android 🤖] StrongBox`**: Utilizes a dedicated security-certified chip (where available) to
+  generate
   non-exportable 256-bit EC keys.
-- **iOS Secure Enclave**: Leverages the hardware-isolated coprocessor for key generation and
+- **`[iOS 🍎] Secure Enclave`**: Leverages the hardware-isolated coprocessor for key generation and
   cryptographic operations.
-- **Biometric Crypto-Gating**: Signatures are physically locked. The hardware only authorizes a
+- **`[Security 🛡️] Biometric Crypto-Gating`**: Signatures are physically locked. The hardware only
+  authorizes a
   signature if a biometric challenge is successfully completed in the same session.
 
 ### 🦀 Rust Hashing & Verification Layer
@@ -103,11 +116,14 @@ To ensure the integrity of the data being signed, a custom **Rust module** handl
 cryptographic verification. By using the `ring` crate, we eliminate entire classes of memory-safety
 vulnerabilities.
 
-- **Signature Verification**: For Multi-Sig transactions, the Rust core validates ECDSA signatures
+- **`[Security 🛡️] Signature Verification`**: For Multi-Sig transactions, the Rust core validates
+  ECDSA signatures
   from peer devices before the local HSM authorizes a co-signature.
-- **High-Performance Hashing**: Transaction data is normalized and hashed using SHA-256 within the
+- **`[Security 🛡️] High-Performance Hashing`**: Transaction data is normalized and hashed using
+  SHA-256 within the
   Rust memory boundary via UniFFI.
-- **Automated Native Pipeline**: The Rust core is integrated directly into the Gradle/Xcode build
+- **`[Security 🛡️] Automated Native Pipeline`**: The Rust core is integrated directly into the
+  Gradle/Xcode build
   systems via a `build.rs` scaffolding generator, ensuring the FFI bridge is always
   version-synchronized with the native binaries.
 
@@ -115,126 +131,142 @@ vulnerabilities.
 
 NeRuWallet employs "Defense in Depth" to protect against sophisticated attacks:
 
-- **AOT Obfuscation**: Production builds use Flutter's `--obfuscate` flag to rename Dart symbols,
+- **`[Security 🛡️] AOT Obfuscation`**: Production builds use Flutter's `--obfuscate` flag to rename
+  Dart symbols,
   making decompilation significantly harder.
-- **R8/ProGuard Hardening**: Android binaries are further shrunk and obfuscated using custom
-  ProGuard
-  rules, targeting internal logic and removing log traces.
-- **Environment Integrity**:
-    - **Jailbreak/Root Detection**: Blocks execution on compromised devices to prevent runtime
+- **`[Android 🤖] R8/ProGuard Hardening`**: Android binaries are further shrunk and obfuscated using
+  custom
+  ProGuard rules, targeting internal logic and removing log traces.
+- **`[Security 🛡️] Environment Integrity`**:
+    - **`Jailbreak/Root Detection`**: Blocks execution on compromised devices to prevent runtime
       memory hooking (e.g., via Frida).
-    - **Emulator Protection**: Detects virtualized environments to prevent automated dynamic
+    - **`Emulator Protection`**: Detects virtualized environments to prevent automated dynamic
       analysis.
-- **Runtime Protection**:
-    - **Active Auth Watchdog**: Monitors the Supabase authentication stream in real-time. If a
-      session
-      is invalidated (e.g., user deleted via backend or token refresh failure), the app instantly
-      triggers a global lock-out and redirects to login, preventing "orphaned" sessions.
-    - **Screen Guard**: Prevents screenshots and screen recording on sensitive screens using
+- **`[Security 🛡️] Runtime Protection`**:
+    - **`Active Auth Watchdog`**: Monitors the Supabase authentication stream in real-time. If a
+      session is invalidated, the app instantly triggers a global lock-out.
+    - **`Screen Guard`**: Prevents screenshots and screen recording on sensitive screens using
       `FLAG_SECURE` (Android) and `isCaptured` detection (iOS).
-    - **SSL Pinning**: (Roadmap) Enforces cryptographic trust for connections to Supabase and Gemini
+    - **`SSL Pinning`**: (Roadmap) Enforces cryptographic trust for connections to Supabase and
+      Gemini
       APIs.
 
 ---
 
-## <a id="multi-sig"></a> 🤝 Hardware Multi-Sig Vaults
+## <a id="multi-sig"></a> `[Security 🛡️]` Hardware Multi-Sig Vaults
 
-NeRuWallet enables collaborative finance through **M-of-N Multi-Signature Wallets**. Unlike software
+NeRuWallet enables collaborative finance through **`M-of-N Multi-Signature Wallets`**. Unlike
+software
 multisigs, every participant's approval is anchored in their own device's hardware.
 
-1. **Identity Exchange**: Users share hardware-backed public keys (non-exportable) to form a vault.
-2. **Approval Workflow**: When a transaction is initiated, co-signers receive real-time
+1. **`Identity Exchange`**: Users share hardware-backed public keys (non-exportable) to form a
+   vault.
+2. **`Approval Workflow`**: When a transaction is initiated, co-signers receive real-time
    notifications via Supabase.
-3. **Biometric Authorization**: Each co-signer must pass a biometric challenge to unlock their
-   StrongBox/Secure Enclave and produce a valid signature.
-4. **Finalization**: Once the threshold is met, the transaction is cryptographically finalized and
+3. **`Biometric Authorization`**: Each co-signer must pass a biometric challenge to unlock their
+   **`StrongBox/Secure Enclave`** and produce a valid signature.
+4. **`Finalization`**: Once the threshold is met, the transaction is cryptographically finalized and
    broadcast.
 
 ```mermaid
-sequenceDiagram
-    participant P1 as Proposer (HSM 1)
-    participant SB as Supabase (Real-time)
-    participant P2 as Co-Signer (HSM 2)
-    participant Rust as Rust Core (ring)
-    
-    P1->>SB: Propose Multi-Sig Tx + Signature 1
-    SB-->>P2: Notification: Transaction Pending
-    P2->>P2: View Details & Biometric Auth
-    P2->>P2: HSM 2 signs Transaction Hash
-    P2->>SB: Submit Signature 2
-    SB->>Rust: Aggregated Signatures Verification
-    Note over Rust: Validates M-of-N Hardware Keys
-    Rust-->>SB: Success / Verification Proof
-    SB-->>P1: Transaction Finalized & Broadcast
+graph LR
+    subgraph "Device A (Proposer)"
+        P1["🔑 HSM Sign & Propose"]
+    end
+
+    subgraph "Secure Cloud"
+        SB["☁️ Supabase Coordinator"]
+    end
+
+    subgraph "Device B (Co-Signer)"
+        P2["🔑 Biometric Auth & Sign"]
+    end
+
+    subgraph "Final Verification"
+        RS["🦀 Rust Core Validation"]
+    end
+
+    P1 -- "New Transaction" --> SB
+    SB -- "Push Notification" --> P2
+    P2 -- "Hardware Signature" --> SB
+    SB -- "Collect Signatures" --> RS
+    RS -- "Cryptographic Proof" --> SB
 ```
 
 ---
 
-## <a id="neru-ai"></a> 🤖 Neru AI: The Intelligent Advisor
+## <a id="neru-ai"></a> `[AI 🤖]` Neru AI: The Intelligent Advisor
 
-NeRuWallet integrates **Gemini 3.5 Flash** to provide deep financial forensics. This isn't just a
+NeRuWallet integrates **`Gemini 3.5 Flash`** to provide deep financial forensics. This isn't just a
 chatbot; it's an autonomous financial agent.
 
-- **Prompt Engineering & JSON Constraints**: All AI interactions are governed by strict system
+- **`Prompt Engineering & JSON Constraints`**: All AI interactions are governed by strict system
   prompts that enforce JSON-only responses, ensuring deterministic integration with the app's UI.
-- **Autonomous Preference Management**: The AI can suggest and *automatically update* app
+- **`Autonomous Preference Management`**: The AI can suggest and *automatically update* app
   preferences (e.g., setting a monthly budget) through structured function calling.
-- **Gamified Insights**: To ensure data quality, AI analysis is unlocked only after a user reaches a
+- **`Gamified Insights`**: To ensure data quality, AI analysis is unlocked only after a user reaches
+  a
   transaction volume of **Rs. 10,000**, encouraging active financial management.
-- **Data Privacy Barrier**: Only aggregated statistics and masked metadata are sent to the AI,
+- **`Data Privacy Barrier`**: Only aggregated statistics and masked metadata are sent to the AI,
   maintaining a strict privacy boundary between your financial details and the LLM.
 
 ---
 
-## <a id="ux-philosophy"></a> ✨ The "Liquid UI" Strategy
+## <a id="ux-philosophy"></a> `[UX/UI ✨]` The "Liquid UI" Strategy
 
 The UI is built on a **Custom Design System** that extends Material 3 with a focus on motion and
 transparency.
 
-- **Design System**: Built around the **Outfit** typeface and a high-contrast palette of **Indigo (
-  Primary)** and **Emerald (Success)**.
-- **Glassmorphism**: Extensive use of `GlassDialog` and backdrop filters to create a layered, modern
+- **`Design System`**: Built around the **`Outfit`** typeface and a high-contrast palette of *
+  *`Indigo (Primary)`** and **`Emerald (Success)`**.
+- **`Glassmorphism`**: Extensive use of **`GlassDialog`** and backdrop filters to create a layered,
+  modern
   aesthetic that feels premium and light.
-- **Motion Design**:
-    - **Staggered Entrances**: Dashboard elements enter using `flutter_animate` with slight delays
+- **`Motion Design`**:
+    - **`Staggered Entrances`**: Dashboard elements enter using **`flutter_animate`** with slight
+      delays
       to create a fluid, organic feel.
-    - **Sliver Architecture**: Native-feeling scrolling experiences using `CustomScrollView` and
-      `SliverAppBar`.
-    - **Haptic Feedback**: Micro-interactions are reinforced with subtle vibrations to create a
+    - **`Sliver Architecture`**: Native-feeling scrolling experiences using **`CustomScrollView`**
+      and
+      **`SliverAppBar`**.
+    - **`Haptic Feedback`**: Micro-interactions are reinforced with subtle vibrations to create a
       tactile sense of security.
 
 ---
 
-## <a id="production-optimization"></a> 🛠️ Production Optimization & Code Quality
+## <a id="production-optimization"></a> `[Optimization 🛠️]` Production Optimization & Code Quality
 
 NeRuWallet is engineered for production-grade performance and maintainability.
 
-- **Clean Architecture**: Consistently follows a **Feature-First** structure, ensuring high
+- **`Clean Architecture`**: Consistently follows a **Feature-First** structure, ensuring high
   modularity and easy scalability.
-- **Redundancy-Free Codebase**: Recently optimized to remove legacy duplicate features (`exchange`,
-  `transactions`), reducing project noise and maintaining a single source of truth.
-- **Zero-Error Analysis**: The codebase passes `flutter analyze` with **0 fatal errors**, adhering
-  to strict linting rules (`analysis_options.yaml`) for clean, predictable code.
-- **Optimized Bundle Size**: Unused dependencies like `lottie` and `font_awesome_flutter` have been
+- **`Redundancy-Free Codebase`**: Recently optimized to remove legacy duplicate features, reducing
+  project noise and maintaining a single source of truth.
+- **`Zero-Error Analysis`**: The codebase passes `flutter analyze` with **0 fatal errors**, adhering
+  to strict linting rules (**`analysis_options.yaml`**) for clean, predictable code.
+- **`Optimized Bundle Size`**: Unused dependencies like `lottie` and `font_awesome_flutter` have
+  been
   stripped to ensure a lean binary size for the final APK/IPA.
-- **Automated Refactoring**: Leverages `dart fix` and `build_runner` to maintain consistent code
+- **`Automated Refactoring`**: Leverages **`dart fix`** and **`build_runner`** to maintain
+  consistent code
   style and up-to-date generated providers.
 
 ---
 
-## <a id="cicd"></a> 🚀 CI/CD & Engineering Excellence
+## <a id="cicd"></a> `[DevOps ⚙️]` CI/CD & Engineering Excellence
 
-NeRuWallet is backed by a robust **GitHub Actions** pipeline that ensures every commit meets
+NeRuWallet is backed by a robust **`GitHub Actions`** pipeline that ensures every commit meets
 high-quality standards across both Android and iOS.
 
-- **Automated Validation**: Every Pull Request and push to `main` triggers a pipeline that runs
-  `flutter analyze` and `flutter test` to prevent regressions.
-- **Code Generation**: Automated `build_runner` execution ensures that Riverpod providers and Drift
+- **`Automated Validation`**: Every Pull Request and push to `main` triggers a pipeline that runs
+  **`flutter analyze`** and **`flutter test`** to prevent regressions.
+- **`Code Generation`**: Automated **`build_runner`** execution ensures that Riverpod providers and
+  Drift
   database classes are always consistent in the build environment.
-- **Continuous Delivery**:
-    - **Android**: Automated release APK generation, uploaded as a GitHub Action artifact for
+- **`Continuous Delivery`**:
+    - **`Android 🤖`**: Automated release APK generation, uploaded as a GitHub Action artifact for
       instant testing.
-    - **iOS Validation**: Automated builds on macOS runners to ensure platform-specific
+    - **`iOS 🍎`**: Automated builds on macOS runners to ensure platform-specific
       compatibility and library linking (CocoaPods) are correct.
 
 ---
@@ -243,73 +275,89 @@ high-quality standards across both Android and iOS.
 
 ### 🏠 Core Experience
 
-|                 Splash                  |              Login              |                Dashboard                |               Profile               |
-|:---------------------------------------:|:-------------------------------:|:---------------------------------------:|:-----------------------------------:|
-| ![Splash](screenshots/splashscreen.png) | ![Login](screenshots/login.png) | ![Dashboard](screenshots/dashboard.png) | ![Profile](screenshots/profile.png) |
+|                        Splash                        |                     Login                     |                     Dashboard                     |                     Profile                     |
+|:----------------------------------------------------:|:---------------------------------------------:|:-------------------------------------------------:|:-----------------------------------------------:|
+| <img src="screenshots/splashscreen.png" width="225"> | <img src="screenshots/login.png" width="225"> | <img src="screenshots/dashboard.png" width="225"> | <img src="screenshots/profile.png" width="225"> |
 
 ### 🤖 Neru AI: Intelligence Advisor
 
-|            Initial            |           Analysis            |           Insights            |             Chat              |
-|:-----------------------------:|:-----------------------------:|:-----------------------------:|:-----------------------------:|
-| ![AI 1](screenshots/ai_1.png) | ![AI 2](screenshots/ai_2.png) | ![AI 3](screenshots/ai_3.png) | ![AI 4](screenshots/ai_4.png) |
+|                   Initial                    |                   Analysis                   |                   Insights                   |                     Chat                     |
+|:--------------------------------------------:|:--------------------------------------------:|:--------------------------------------------:|:--------------------------------------------:|
+| <img src="screenshots/ai_1.png" width="225"> | <img src="screenshots/ai_2.png" width="225"> | <img src="screenshots/ai_3.png" width="225"> | <img src="screenshots/ai_4.png" width="225"> |
 
 ### 💸 Secure Transaction Flow
 
-|                 Step 1                 |                 Step 2                 |                 Step 3                 |                 Step 4                 |
-|:--------------------------------------:|:--------------------------------------:|:--------------------------------------:|:--------------------------------------:|
-| ![Send 1](screenshots/sendMoney_1.png) | ![Send 2](screenshots/sendMoney_2.png) | ![Send 3](screenshots/sendMoney_3.png) | ![Send 4](screenshots/sendMoney_4.png) |
+|                       Step 1                        |                       Step 2                        |                       Step 3                        |                       Step 4                        |
+|:---------------------------------------------------:|:---------------------------------------------------:|:---------------------------------------------------:|:---------------------------------------------------:|
+| <img src="screenshots/sendMoney_1.png" width="225"> | <img src="screenshots/sendMoney_2.png" width="225"> | <img src="screenshots/sendMoney_3.png" width="225"> | <img src="screenshots/sendMoney_4.png" width="225"> |
 
 ### 📊 Utility & QR
 
-|               History               |            QR Scan            |            QR Code            |
-|:-----------------------------------:|:-----------------------------:|:-----------------------------:|
-| ![History](screenshots/history.png) | ![QR 1](screenshots/qr_1.png) | ![QR 2](screenshots/qr_2.png) |
+|                     History                     |                   QR Scan                    |                   QR Code                    |
+|:-----------------------------------------------:|:--------------------------------------------:|:--------------------------------------------:|
+| <img src="screenshots/history.png" width="225"> | <img src="screenshots/qr_1.png" width="225"> | <img src="screenshots/qr_2.png" width="225"> |
 
 ---
 
 ## <a id="why-this-stack"></a> 🤔 Why This Stack?
 
-The NeRuWallet architecture was meticulously selected to solve the "Fintech Trilemma": balancing *
-*Security**, **Performance**, and **User Experience**.
+The NeRuWallet architecture was meticulously selected to solve the "Fintech Trilemma":
+**Security**, **Performance**, and **User Experience**.
 
-- **Why Rust?**: We use Rust for the core cryptographic layer because it offers C-level performance
+- **`Why Rust?`**: We use Rust for the core cryptographic layer because it offers C-level
+  performance
   with mathematical memory safety. By handling sensitive hashing and signature verification in Rust,
   we eliminate entire categories of memory-corruption bugs that often plague native FFI bridges.
-- **Why Hardware HSMs?**: Storing private keys in software is a single point of failure. By
-  anchoring trust in **StrongBox** and **Secure Enclave**, we ensure that even a compromised
+- **`Why Hardware HSMs?`**: Storing private keys in software is a single point of failure. By
+  anchoring trust in **`StrongBox`** and **`Secure Enclave`**, we ensure that even a compromised
   operating system cannot extract the user's keys.
-- **Why Riverpod & Code Gen?**: To maintain a complex, multi-layered state (Rust FFI, Supabase
+- **`Why Riverpod & Code Gen?`**: To maintain a complex, multi-layered state (Rust FFI, Supabase
   Realtime, and Drift SQLite), we chose Riverpod. Its compile-time safety and declarative nature
   ensure that the app remains predictable and easy to test as new features are added.
-- **Why Offline-First?**: Financial apps must be reliable. Using Drift for local persistence ensures
+- **`Why Offline-First?`**: Financial apps must be reliable. Using Drift for local persistence
+  ensures
   that users can manage their assets in low-connectivity areas, with atomic sync handling the cloud
   reconciliation automatically.
-- **Why Gemini 3.5 Flash?**: We chose a "Flash" model to optimize for speed and cost while providing
+- **`Why Gemini 3.5 Flash?`**: We chose a "Flash" model to optimize for speed and cost while
+  providing
   deep financial forensics. By using strict JSON schema enforcement, the AI acts as a reliable
   internal service rather than just a conversational bot.
+- **`Why Dynamic Theme Selection?`**: Users can choose between multiple premium Material 3 themes
+  (Indigo, Midnight, Emerald, Rose) that adapt the entire application's visual language instantly.
 
 ---
 
 ## <a id="tech-stack"></a> 🛠 Tech Stack
 
-| Layer                 | Technology                     | Key Architectural Benefit                                    |
-|:----------------------|:-------------------------------|:-------------------------------------------------------------|
-| **Mobile Core**       | **Flutter 3.x**, **Riverpod**  | Reactive UI with modular code-generation.                    |
-| **Systems Core**      | **Rust (UniFFI)**              | Memory-safe, high-performance SHA-256 & ECDSA.               |
-| **Security Hardware** | **StrongBox / Secure Enclave** | Hardware-isolated, non-exportable private keys.              |
-| **Persistence**       | **Drift (SQLite)**             | **Offline-First** architecture with reactive stream updates. |
-| **Cloud/Sync**        | **Supabase**                   | Atomic sync with Row-Level Security (RLS).                   |
-| **Intelligence**      | **Gemini 3.5 Flash**           | Deterministic AI forensics via JSON tool-calling.            |
-| **Vision**            | **Google ML Kit**              | On-device OCR and Biometric Liveness detection.              |
+| Layer                 | Technology                    | Platform / Security Marker                          |
+|:----------------------|:------------------------------|:----------------------------------------------------|
+| **Mobile Core**       | **Flutter 3.x**, **Riverpod** | 📱 **Cross-Platform** Reactive State Engine         |
+| **Systems Core**      | **Rust (UniFFI)**             | 🦀 **Memory-Safe** SHA-256 & ECDSA Verification     |
+| **Security Hardware** | **StrongBox / Enclave**       | 🤖 **StrongBox** / 🍎 **Secure Enclave** (HSM)      |
+| **Persistence**       | **Drift (SQLite)**            | 🗄️ **Offline-First** Local Persistence             |
+| **Cloud/Sync**        | **Supabase**                  | ☁️ **Real-time** Atomic Synchronization             |
+| **Intelligence**      | **Gemini 3.5 Flash**          | 🤖 **AI Forensics** via structured tool-calling     |
+| **Vision**            | **Google ML Kit**             | 🛡️ **eKYC** & Face Liveness Recognition            |
+| **Design**            | **Material 3 Themes**         | 🎨 **Dynamic** UI (Indigo, Midnight, Emerald, Rose) |
 
 ---
 
 ## 🚀 Roadmap
 
 - [x] **Multi-Signature Wallets**: Shared hardware-backed accounts.
-- [ ] **eKYC Integration**: AI-powered biometric identity verification (Coming in next iteration).
+- [x] **eKYC Integration**: AI-powered biometric identity verification.
 - [ ] **NFC Tap-to-Pay**: Fully integrated contactless transaction pipeline.
 - [ ] **Wear OS Companion**: Real-time alerts and biometric verification from your wrist.
+
+---
+
+To get a local copy up and running, follow these simple steps:
+
+1. **Clone the repository**: `git clone https://github.com/devmilang99/NeRuWallet.git`
+2. **Install Flutter dependencies**: `flutter pub get`
+3. **Setup Environment**: Create a `.env` file in the root directory and add your `GEMINI_API_KEY`
+   and Supabase credentials.
+4. **Run the App**: `flutter run`
 
 ---
 
