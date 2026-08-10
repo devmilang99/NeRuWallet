@@ -85,14 +85,13 @@ dependencies {
 
 tasks.register<Exec>("generateUniFFIBindings") {
     workingDir = file("../../rust_signer")
-    // Assumes uniffi-bindgen is installed. On Windows Cargo installs it as uniffi-bindgen-cli.
-    val bindgenCommand = if (System.getProperty("os.name").lowercase().contains("windows")) {
-        "uniffi-bindgen-cli"
-    } else {
-        "uniffi-bindgen"
-    }
+    // Use the local uniffi-bindgen wrapper built from the crate
     commandLine(
-        bindgenCommand,
+        "cargo",
+        "run",
+        "--bin",
+        "uniffi-bindgen",
+        "--",
         "generate",
         "src/rust_signer.udl",
         "--language",

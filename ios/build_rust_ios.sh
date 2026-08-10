@@ -30,16 +30,10 @@ echo "✅ Universal library created at rust_signer/target/universal/libuniffi_${
 
 echo "✨ Generating Swift bindings..."
 
-# Determine bindgen command
-if command -v uniffi-bindgen &> /dev/null; then
-    BINDGEN="uniffi-bindgen"
-else
-    # Fallback to cargo run if bindgen is in the workspace
-    BINDGEN="cargo run --features uniffi/cli --bin uniffi-bindgen --"
-fi
+# Use the local uniffi-bindgen wrapper built from the crate
+BINDGEN="cargo run --bin uniffi-bindgen --"
 
 # Generate bindings
-# Note: This might need specific CLI flags depending on the uniffi-bindgen version
 $BINDGEN generate $UDL_FILE --language swift --out-dir $IOS_DIR
 
 echo "🚀 Done! Remember to add the generated files (rust_signer.swift, rust_signerFFI.h, rust_signerFFI.modulemap) to your Xcode project."

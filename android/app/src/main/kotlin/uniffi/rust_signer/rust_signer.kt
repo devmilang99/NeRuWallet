@@ -64,7 +64,7 @@ open class RustBuffer : Structure() {
     companion object {
         internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
             // Note: need to convert the size to a `Long` value to make this work with JVM.
-            UniffiLib.ffi_uniffi_rust_signer_rustbuffer_alloc(size.toLong(), status)
+            UniffiLib.INSTANCE.ffi_uniffi_rust_signer_rustbuffer_alloc(size.toLong(), status)
         }.also {
             if (it.data == null) {
                 throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
@@ -80,15 +80,49 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
-            UniffiLib.ffi_uniffi_rust_signer_rustbuffer_free(buf, status)
+            UniffiLib.INSTANCE.ffi_uniffi_rust_signer_rustbuffer_free(buf, status)
         }
     }
 
     @Suppress("TooGenericExceptionThrown")
     fun asByteBuffer() =
-        this.data?.getByteBuffer(0, this.len)?.also {
+        this.data?.getByteBuffer(0, this.len.toLong())?.also {
             it.order(ByteOrder.BIG_ENDIAN)
         }
+}
+
+/**
+ * The equivalent of the `*mut RustBuffer` type.
+ * Required for callbacks taking in an out pointer.
+ *
+ * Size is the sum of all values in the struct.
+ *
+ * @suppress
+ */
+class RustBufferByReference : ByReference(16) {
+    /**
+     * Set the pointed-to `RustBuffer` to the given value.
+     */
+    fun setValue(value: RustBuffer.ByValue) {
+        // NOTE: The offsets are as they are in the C-like struct.
+        val pointer = getPointer()
+        pointer.setLong(0, value.capacity)
+        pointer.setLong(8, value.len)
+        pointer.setPointer(16, value.data)
+    }
+
+    /**
+     * Get a `RustBuffer.ByValue` from this reference.
+     */
+    fun getValue(): RustBuffer.ByValue {
+        val pointer = getPointer()
+        val value = RustBuffer.ByValue()
+        value.writeField("capacity", pointer.getLong(0))
+        value.writeField("len", pointer.getLong(8))
+        value.writeField("data", pointer.getLong(16))
+
+        return value
+    }
 }
 
 // This is a helper for safely passing byte references into the rust code.
@@ -106,51 +140,6 @@ internal open class ForeignBytes : Structure() {
     var data: Pointer? = null
 
     class ByValue : ForeignBytes(), Structure.ByValue
-}
-
-// Converter for `&[u8]` / `[ByRef] bytes` AND `&mut [u8]` / `[ByMutRef] bytes`
-// arguments.
-//
-// Both take the identical zero-copy path: a direct `ByteBuffer`'s native
-// address is handed to Rust as a borrow for the duration of the (synchronous)
-// call. For `&mut [u8]` arguments Rust may WRITE through this pointer, and the
-// writes land directly in the caller's `ByteBuffer` — there is no read-only
-// direct-buffer distinction at the JNA layer, so callers that pass a buffer
-// they expect to stay unmodified must not use a `&mut [u8]` function.
-//
-// Only `lower` is valid — zero-copy byte buffers only flow foreign -> Rust,
-// and only in argument position. `lift`, `read`, `write`, and
-// `allocationSize` have no sound implementation here and all panic at
-// runtime. The `FfiConverter` interface is implemented so that the
-// compiler enforces the full method set (rather than relying on eyeball).
-//
-// The provided `ByteBuffer` MUST be direct — only direct buffers have a
-// stable native address that JNA can expose via `getDirectBufferPointer`.
-// The returned `ForeignBytes.ByValue` is only valid for the duration of
-// the FFI call; the Rust side treats it as a borrow.
-internal object FfiConverterByRefBytes : FfiConverter<java.nio.ByteBuffer, ForeignBytes.ByValue> {
-    override fun lower(value: java.nio.ByteBuffer): ForeignBytes.ByValue {
-        require(value.isDirect) { "UniFFI zero-copy &[u8] requires a direct ByteBuffer. Use ByteBuffer.allocateDirect()." }
-        val remaining = value.remaining()
-        val fb = ForeignBytes.ByValue()
-        fb.len = remaining
-        // Zero-length direct buffers: skip getDirectBufferPointer (platform-variable behavior)
-        // and pass null. The Rust side treats (null, 0) as &[].
-        fb.data = if (remaining == 0) null else com.sun.jna.Native.getDirectBufferPointer(value)
-        return fb
-    }
-
-    override fun lift(value: ForeignBytes.ByValue): java.nio.ByteBuffer =
-        error("ByRef bytes cannot be lifted: zero-copy &[u8] only flows foreign->Rust")
-
-    override fun read(buf: java.nio.ByteBuffer): java.nio.ByteBuffer =
-        error("ByRef bytes cannot be read from a buffer: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
-
-    override fun write(value: java.nio.ByteBuffer, buf: java.nio.ByteBuffer): Unit =
-        error("ByRef bytes cannot be written to a buffer: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
-
-    override fun allocationSize(value: java.nio.ByteBuffer): ULong =
-        error("ByRef bytes have no RustBuffer allocation size: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
 }
 
 /**
@@ -344,14 +333,9 @@ internal inline fun <T> uniffiTraitInterfaceCall(
 ) {
     try {
         writeReturn(makeCall())
-    } catch (e: kotlin.Throwable) {
-        val err = try {
-            e.stackTraceToString()
-        } catch (_: Throwable) {
-            ""
-        }
+    } catch (e: kotlin.Exception) {
         callStatus.code = UNIFFI_CALL_UNEXPECTED_ERROR
-        callStatus.error_buf = FfiConverterString.lower(err)
+        callStatus.error_buf = FfiConverterString.lower(e.toString())
     }
 }
 
@@ -363,51 +347,32 @@ internal inline fun <T, reified E : Throwable> uniffiTraitInterfaceCallWithError
 ) {
     try {
         writeReturn(makeCall())
-    } catch (e: kotlin.Throwable) {
+    } catch (e: kotlin.Exception) {
         if (e is E) {
             callStatus.code = UNIFFI_CALL_ERROR
             callStatus.error_buf = lowerError(e)
         } else {
-            val err = try {
-                e.stackTraceToString()
-            } catch (_: Throwable) {
-                ""
-            }
             callStatus.code = UNIFFI_CALL_UNEXPECTED_ERROR
-            callStatus.error_buf = FfiConverterString.lower(err)
+            callStatus.error_buf = FfiConverterString.lower(e.toString())
         }
     }
 }
-
-// Initial value and increment amount for handles.
-// These ensure that Kotlin-generated handles always have the lowest bit set
-private const val UNIFFI_HANDLEMAP_INITIAL = 1.toLong()
-private const val UNIFFI_HANDLEMAP_DELTA = 2.toLong()
 
 // Map handles to objects
 //
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
 internal class UniffiHandleMap<T : Any> {
     private val map = ConcurrentHashMap<Long, T>()
-
-    // Start
-    private val counter = java.util.concurrent.atomic.AtomicLong(UNIFFI_HANDLEMAP_INITIAL)
+    private val counter = java.util.concurrent.atomic.AtomicLong(0)
 
     val size: Int
         get() = map.size
 
     // Insert a new object into the handle map and get a handle for it
     fun insert(obj: T): Long {
-        val handle = counter.getAndAdd(UNIFFI_HANDLEMAP_DELTA)
+        val handle = counter.getAndAdd(1)
         map.put(handle, obj)
         return handle
-    }
-
-    // Clone a handle, creating a new one
-    fun clone(handle: Long): Long {
-        val obj =
-            map.get(handle) ?: throw InternalException("UniffiHandleMap.clone: Invalid handle")
-        return insert(obj)
     }
 
     // Get an object from the handle map
@@ -432,12 +397,18 @@ private fun findLibraryName(componentName: String): String {
     return "uniffi_rust_signer"
 }
 
+private inline fun <reified Lib : Library> loadIndirect(
+    componentName: String
+): Lib {
+    return Native.load<Lib>(findLibraryName(componentName), Lib::class.java)
+}
+
 // Define FFI callback types
 internal interface UniffiRustFutureContinuationCallback : com.sun.jna.Callback {
     fun callback(`data`: Long, `pollResult`: Byte)
 }
 
-internal interface UniffiForeignFutureDroppedCallback : com.sun.jna.Callback {
+internal interface UniffiForeignFutureFree : com.sun.jna.Callback {
     fun callback(`handle`: Long)
 }
 
@@ -445,22 +416,17 @@ internal interface UniffiCallbackInterfaceFree : com.sun.jna.Callback {
     fun callback(`handle`: Long)
 }
 
-internal interface UniffiCallbackInterfaceClone : com.sun.jna.Callback {
-    fun callback(`handle`: Long)
-            : Long
-}
-
 @Structure.FieldOrder("handle", "free")
-internal open class UniffiForeignFutureDroppedCallbackStruct(
+internal open class UniffiForeignFuture(
     @JvmField internal var `handle`: Long = 0.toLong(),
-    @JvmField internal var `free`: UniffiForeignFutureDroppedCallback? = null,
+    @JvmField internal var `free`: UniffiForeignFutureFree? = null,
 ) : Structure() {
     class UniffiByValue(
         `handle`: Long = 0.toLong(),
-        `free`: UniffiForeignFutureDroppedCallback? = null,
-    ) : UniffiForeignFutureDroppedCallbackStruct(`handle`, `free`), Structure.ByValue
+        `free`: UniffiForeignFutureFree? = null,
+    ) : UniffiForeignFuture(`handle`, `free`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureDroppedCallbackStruct) {
+    internal fun uniffiSetValue(other: UniffiForeignFuture) {
         `handle` = other.`handle`
         `free` = other.`free`
     }
@@ -468,16 +434,16 @@ internal open class UniffiForeignFutureDroppedCallbackStruct(
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultU8(
+internal open class UniffiForeignFutureStructU8(
     @JvmField internal var `returnValue`: Byte = 0.toByte(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultU8(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructU8(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultU8) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructU8) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -485,20 +451,20 @@ internal open class UniffiForeignFutureResultU8(
 }
 
 internal interface UniffiForeignFutureCompleteU8 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultU8.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructU8.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultI8(
+internal open class UniffiForeignFutureStructI8(
     @JvmField internal var `returnValue`: Byte = 0.toByte(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultI8(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructI8(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultI8) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructI8) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -506,20 +472,20 @@ internal open class UniffiForeignFutureResultI8(
 }
 
 internal interface UniffiForeignFutureCompleteI8 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultI8.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructI8.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultU16(
+internal open class UniffiForeignFutureStructU16(
     @JvmField internal var `returnValue`: Short = 0.toShort(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultU16(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructU16(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultU16) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructU16) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -527,20 +493,20 @@ internal open class UniffiForeignFutureResultU16(
 }
 
 internal interface UniffiForeignFutureCompleteU16 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultU16.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructU16.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultI16(
+internal open class UniffiForeignFutureStructI16(
     @JvmField internal var `returnValue`: Short = 0.toShort(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultI16(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructI16(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultI16) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructI16) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -548,20 +514,20 @@ internal open class UniffiForeignFutureResultI16(
 }
 
 internal interface UniffiForeignFutureCompleteI16 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultI16.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructI16.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultU32(
+internal open class UniffiForeignFutureStructU32(
     @JvmField internal var `returnValue`: Int = 0,
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultU32(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructU32(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultU32) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructU32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -569,20 +535,20 @@ internal open class UniffiForeignFutureResultU32(
 }
 
 internal interface UniffiForeignFutureCompleteU32 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultU32.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructU32.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultI32(
+internal open class UniffiForeignFutureStructI32(
     @JvmField internal var `returnValue`: Int = 0,
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultI32(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructI32(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultI32) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructI32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -590,20 +556,20 @@ internal open class UniffiForeignFutureResultI32(
 }
 
 internal interface UniffiForeignFutureCompleteI32 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultI32.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructI32.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultU64(
+internal open class UniffiForeignFutureStructU64(
     @JvmField internal var `returnValue`: Long = 0.toLong(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultU64(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructU64(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultU64) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructU64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -611,20 +577,20 @@ internal open class UniffiForeignFutureResultU64(
 }
 
 internal interface UniffiForeignFutureCompleteU64 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultU64.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructU64.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultI64(
+internal open class UniffiForeignFutureStructI64(
     @JvmField internal var `returnValue`: Long = 0.toLong(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultI64(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructI64(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultI64) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructI64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -632,20 +598,20 @@ internal open class UniffiForeignFutureResultI64(
 }
 
 internal interface UniffiForeignFutureCompleteI64 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultI64.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructI64.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultF32(
+internal open class UniffiForeignFutureStructF32(
     @JvmField internal var `returnValue`: Float = 0.0f,
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Float = 0.0f,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultF32(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructF32(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultF32) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructF32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -653,20 +619,20 @@ internal open class UniffiForeignFutureResultF32(
 }
 
 internal interface UniffiForeignFutureCompleteF32 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultF32.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructF32.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultF64(
+internal open class UniffiForeignFutureStructF64(
     @JvmField internal var `returnValue`: Double = 0.0,
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: Double = 0.0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultF64(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructF64(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultF64) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructF64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -674,20 +640,41 @@ internal open class UniffiForeignFutureResultF64(
 }
 
 internal interface UniffiForeignFutureCompleteF64 : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultF64.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructF64.UniffiByValue)
 }
 
 @Structure.FieldOrder("returnValue", "callStatus")
-internal open class UniffiForeignFutureResultRustBuffer(
+internal open class UniffiForeignFutureStructPointer(
+    @JvmField internal var `returnValue`: Pointer = Pointer.NULL,
+    @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
+) : Structure() {
+    class UniffiByValue(
+        `returnValue`: Pointer = Pointer.NULL,
+        `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
+    ) : UniffiForeignFutureStructPointer(`returnValue`, `callStatus`), Structure.ByValue
+
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructPointer) {
+        `returnValue` = other.`returnValue`
+        `callStatus` = other.`callStatus`
+    }
+
+}
+
+internal interface UniffiForeignFutureCompletePointer : com.sun.jna.Callback {
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructPointer.UniffiByValue)
+}
+
+@Structure.FieldOrder("returnValue", "callStatus")
+internal open class UniffiForeignFutureStructRustBuffer(
     @JvmField internal var `returnValue`: RustBuffer.ByValue = RustBuffer.ByValue(),
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `returnValue`: RustBuffer.ByValue = RustBuffer.ByValue(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultRustBuffer(`returnValue`, `callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructRustBuffer(`returnValue`, `callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultRustBuffer) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructRustBuffer) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
@@ -697,338 +684,330 @@ internal open class UniffiForeignFutureResultRustBuffer(
 internal interface UniffiForeignFutureCompleteRustBuffer : com.sun.jna.Callback {
     fun callback(
         `callbackData`: Long,
-        `result`: UniffiForeignFutureResultRustBuffer.UniffiByValue,
+        `result`: UniffiForeignFutureStructRustBuffer.UniffiByValue,
     )
 }
 
 @Structure.FieldOrder("callStatus")
-internal open class UniffiForeignFutureResultVoid(
+internal open class UniffiForeignFutureStructVoid(
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureResultVoid(`callStatus`), Structure.ByValue
+    ) : UniffiForeignFutureStructVoid(`callStatus`), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureResultVoid) {
+    internal fun uniffiSetValue(other: UniffiForeignFutureStructVoid) {
         `callStatus` = other.`callStatus`
     }
 
 }
 
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
-    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureResultVoid.UniffiByValue)
+    fun callback(`callbackData`: Long, `result`: UniffiForeignFutureStructVoid.UniffiByValue)
 }
+
 
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
-// For large crates we prevent `MethodTooLargeException` (see #2340)
-// N.B. the name of the extension is very misleading, since it is
-// rather `InterfaceTooLargeException`, caused by too many methods
-// in the interface for large crates.
-//
-// By splitting the otherwise huge interface into two parts
-// * UniffiLib (this)
-// * IntegrityCheckingUniffiLib
-// And all checksum methods are put into `IntegrityCheckingUniffiLib`
-// we allow for ~2x as many methods in the UniffiLib interface.
-//
-// Note: above all written when we used JNA's `loadIndirect` etc.
-// We now use JNA's "direct mapping" - unclear if same considerations apply exactly.
-internal object IntegrityCheckingUniffiLib {
-    init {
-        Native.register(
-            IntegrityCheckingUniffiLib::class.java,
-            findLibraryName(componentName = "rust_signer")
-        )
-        uniffiCheckContractApiVersion(this)
-        uniffiCheckApiChecksums(this)
+internal interface UniffiLib : Library {
+    companion object {
+        internal val INSTANCE: UniffiLib by lazy {
+            loadIndirect<UniffiLib>(componentName = "rust_signer")
+                .also { lib: UniffiLib ->
+                    uniffiCheckContractApiVersion(lib)
+                    uniffiCheckApiChecksums(lib)
+                }
+        }
+
+        // The Cleaner for the whole library
+        internal val CLEANER: UniffiCleaner by lazy {
+            UniffiCleaner.create()
+        }
     }
 
-    external fun uniffi_uniffi_rust_signer_checksum_func_process_transaction_data(
-    ): Int
+    fun uniffi_uniffi_rust_signer_fn_clone_rustsigner(
+        `ptr`: Pointer, uniffi_out_err: UniffiRustCallStatus,
+    ): Pointer
 
-    external fun uniffi_uniffi_rust_signer_checksum_func_verify_signature(
-    ): Int
-
-    external fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data(
-    ): Int
-
-    external fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature(
-    ): Int
-
-    external fun uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new(
-    ): Int
-
-    external fun ffi_uniffi_rust_signer_uniffi_contract_version(
-    ): Int
-
-
-}
-
-internal object UniffiLib {
-
-    // The Cleaner for the whole library
-    internal val CLEANER: UniffiCleaner by lazy {
-        UniffiCleaner.create()
-    }
-
-
-    init {
-        Native.register(UniffiLib::class.java, findLibraryName(componentName = "rust_signer"))
-        uniffiEnsureInitialized()
-
-    }
-
-    external fun uniffi_uniffi_rust_signer_fn_clone_rustsigner(
-        `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
-    ): Long
-
-    external fun uniffi_uniffi_rust_signer_fn_free_rustsigner(
-        `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
+    fun uniffi_uniffi_rust_signer_fn_free_rustsigner(
+        `ptr`: Pointer, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
-    external fun uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
+    fun uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
         uniffi_out_err: UniffiRustCallStatus,
-    ): Long
+    ): Pointer
 
-    external fun uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
-        `ptr`: Long, `data`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
+    fun uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
+        `ptr`: Pointer, `data`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
-        `ptr`: Long,
+    fun uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
+        `ptr`: Pointer,
         `publicKey`: RustBuffer.ByValue,
         `message`: RustBuffer.ByValue,
         `signature`: RustBuffer.ByValue,
         uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
+    fun uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
         `data`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun uniffi_uniffi_rust_signer_fn_func_verify_signature(
+    fun uniffi_uniffi_rust_signer_fn_func_verify_signature(
         `publicKey`: RustBuffer.ByValue,
         `message`: RustBuffer.ByValue,
         `signature`: RustBuffer.ByValue,
         uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun ffi_uniffi_rust_signer_rustbuffer_alloc(
+    fun ffi_uniffi_rust_signer_rustbuffer_alloc(
         `size`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_uniffi_rust_signer_rustbuffer_from_bytes(
+    fun ffi_uniffi_rust_signer_rustbuffer_from_bytes(
         `bytes`: ForeignBytes.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_uniffi_rust_signer_rustbuffer_free(
+    fun ffi_uniffi_rust_signer_rustbuffer_free(
         `buf`: RustBuffer.ByValue, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rustbuffer_reserve(
+    fun ffi_uniffi_rust_signer_rustbuffer_reserve(
         `buf`: RustBuffer.ByValue, `additional`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_u8(
+    fun ffi_uniffi_rust_signer_rust_future_poll_u8(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_u8(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_u8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_u8(
+    fun ffi_uniffi_rust_signer_rust_future_free_u8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_u8(
-        `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
-    ): Int
-
-    external fun ffi_uniffi_rust_signer_rust_future_poll_i8(
-        `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
-    ): Unit
-
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_i8(
-        `handle`: Long,
-    ): Unit
-
-    external fun ffi_uniffi_rust_signer_rust_future_free_i8(
-        `handle`: Long,
-    ): Unit
-
-    external fun ffi_uniffi_rust_signer_rust_future_complete_i8(
+    fun ffi_uniffi_rust_signer_rust_future_complete_u8(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Byte
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_u16(
+    fun ffi_uniffi_rust_signer_rust_future_poll_i8(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_u16(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_i8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_u16(
+    fun ffi_uniffi_rust_signer_rust_future_free_i8(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_u16(
+    fun ffi_uniffi_rust_signer_rust_future_complete_i8(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
-    ): Int
+    ): Byte
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_i16(
+    fun ffi_uniffi_rust_signer_rust_future_poll_u16(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_i16(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_u16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_i16(
+    fun ffi_uniffi_rust_signer_rust_future_free_u16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_i16(
+    fun ffi_uniffi_rust_signer_rust_future_complete_u16(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Short
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_u32(
+    fun ffi_uniffi_rust_signer_rust_future_poll_i16(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_u32(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_i16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_u32(
+    fun ffi_uniffi_rust_signer_rust_future_free_i16(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_u32(
+    fun ffi_uniffi_rust_signer_rust_future_complete_i16(
+        `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
+    ): Short
+
+    fun ffi_uniffi_rust_signer_rust_future_poll_u32(
+        `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_cancel_u32(
+        `handle`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_free_u32(
+        `handle`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_complete_u32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_i32(
+    fun ffi_uniffi_rust_signer_rust_future_poll_i32(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_i32(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_i32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_i32(
+    fun ffi_uniffi_rust_signer_rust_future_free_i32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_i32(
+    fun ffi_uniffi_rust_signer_rust_future_complete_i32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Int
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_u64(
+    fun ffi_uniffi_rust_signer_rust_future_poll_u64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_u64(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_u64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_u64(
+    fun ffi_uniffi_rust_signer_rust_future_free_u64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_u64(
+    fun ffi_uniffi_rust_signer_rust_future_complete_u64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_i64(
+    fun ffi_uniffi_rust_signer_rust_future_poll_i64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_i64(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_i64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_i64(
+    fun ffi_uniffi_rust_signer_rust_future_free_i64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_i64(
+    fun ffi_uniffi_rust_signer_rust_future_complete_i64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Long
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_f32(
+    fun ffi_uniffi_rust_signer_rust_future_poll_f32(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_f32(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_f32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_f32(
+    fun ffi_uniffi_rust_signer_rust_future_free_f32(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_f32(
+    fun ffi_uniffi_rust_signer_rust_future_complete_f32(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Float
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_f64(
+    fun ffi_uniffi_rust_signer_rust_future_poll_f64(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_f64(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_f64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_f64(
+    fun ffi_uniffi_rust_signer_rust_future_free_f64(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_f64(
+    fun ffi_uniffi_rust_signer_rust_future_complete_f64(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Double
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_rust_buffer(
+    fun ffi_uniffi_rust_signer_rust_future_poll_pointer(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_rust_buffer(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_pointer(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_rust_buffer(
+    fun ffi_uniffi_rust_signer_rust_future_free_pointer(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_rust_buffer(
+    fun ffi_uniffi_rust_signer_rust_future_complete_pointer(
+        `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
+    ): Pointer
+
+    fun ffi_uniffi_rust_signer_rust_future_poll_rust_buffer(
+        `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_cancel_rust_buffer(
+        `handle`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_free_rust_buffer(
+        `handle`: Long,
+    ): Unit
+
+    fun ffi_uniffi_rust_signer_rust_future_complete_rust_buffer(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
 
-    external fun ffi_uniffi_rust_signer_rust_future_poll_void(
+    fun ffi_uniffi_rust_signer_rust_future_poll_void(
         `handle`: Long, `callback`: UniffiRustFutureContinuationCallback, `callbackData`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_cancel_void(
+    fun ffi_uniffi_rust_signer_rust_future_cancel_void(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_free_void(
+    fun ffi_uniffi_rust_signer_rust_future_free_void(
         `handle`: Long,
     ): Unit
 
-    external fun ffi_uniffi_rust_signer_rust_future_complete_void(
+    fun ffi_uniffi_rust_signer_rust_future_complete_void(
         `handle`: Long, uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
+    fun uniffi_uniffi_rust_signer_checksum_func_process_transaction_data(
+    ): Short
+
+    fun uniffi_uniffi_rust_signer_checksum_func_verify_signature(
+    ): Short
+
+    fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data(
+    ): Short
+
+    fun uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature(
+    ): Short
+
+    fun uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new(
+    ): Short
+
+    fun ffi_uniffi_rust_signer_uniffi_contract_version(
+    ): Int
 
 }
 
-private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
+private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
     // Get the bindings contract version from our ComponentInterface
-    val bindings_contract_version = 31
+    val bindings_contract_version = 26
     // Get the scaffolding contract version by calling the into the dylib
     val scaffolding_contract_version = lib.ffi_uniffi_rust_signer_uniffi_contract_version()
     if (bindings_contract_version != scaffolding_contract_version) {
@@ -1037,32 +1016,22 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 
 @Suppress("UNUSED_PARAMETER")
-private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if ((lib.uniffi_uniffi_rust_signer_checksum_func_process_transaction_data() and 0xFFFF) != 33344) {
+private fun uniffiCheckApiChecksums(lib: UniffiLib) {
+    if (lib.uniffi_uniffi_rust_signer_checksum_func_process_transaction_data() != 50293.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_uniffi_rust_signer_checksum_func_verify_signature() and 0xFFFF) != 24354) {
+    if (lib.uniffi_uniffi_rust_signer_checksum_func_verify_signature() != 63707.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data() and 0xFFFF) != 53965) {
+    if (lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_process_transaction_data() != 53501.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature() and 0xFFFF) != 26130) {
+    if (lib.uniffi_uniffi_rust_signer_checksum_method_rustsigner_verify_signature() != 44248.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new() and 0xFFFF) != 41516) {
+    if (lib.uniffi_uniffi_rust_signer_checksum_constructor_rustsigner_new() != 11121.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-}
-
-/**
- * @suppress
- */
-public fun uniffiEnsureInitialized() {
-    IntegrityCheckingUniffiLib
-    // UniffiLib() initialized as objects are used, but we still need to explicitly
-    // reference it so initialization across crates works as expected.
-    UniffiLib
 }
 
 // Async support
@@ -1083,35 +1052,8 @@ interface Disposable {
 
     companion object {
         fun destroy(vararg args: Any?) {
-            for (arg in args) {
-                when (arg) {
-                    is Disposable -> arg.destroy()
-                    is ArrayList<*> -> {
-                        for (idx in arg.indices) {
-                            val element = arg[idx]
-                            if (element is Disposable) {
-                                element.destroy()
-                            }
-                        }
-                    }
-
-                    is Map<*, *> -> {
-                        for (element in arg.values) {
-                            if (element is Disposable) {
-                                element.destroy()
-                            }
-                        }
-                    }
-
-                    is Iterable<*> -> {
-                        for (element in arg) {
-                            if (element is Disposable) {
-                                element.destroy()
-                            }
-                        }
-                    }
-                }
-            }
+            args.filterIsInstance<Disposable>()
+                .forEach(Disposable::destroy)
         }
     }
 }
@@ -1132,97 +1074,17 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
     }
 
 /** 
- * Placeholder object used to signal that we're constructing an interface with a FFI handle.
- *
- * This is the first argument for interface constructors that input a raw handle. It exists is that
- * so we can avoid signature conflicts when an interface has a regular constructor than inputs a
- * Long.
- *
- * @suppress
- * */
-object UniffiWithHandle
-
-/** 
  * Used to instantiate an interface without an actual pointer, for fakes in tests, mostly.
  *
  * @suppress
  * */
-object NoHandle
-
-/**
- * The cleaner interface for Object finalization code to run.
- * This is the entry point to any implementation that we're using.
- *
- * The cleaner registers objects and returns cleanables, so now we are
- * defining a `UniffiCleaner` with a `UniffiClenaer.Cleanable` to abstract the
- * different implmentations available at compile time.
- *
- * @suppress
- */
-interface UniffiCleaner {
-    interface Cleanable {
-        fun clean()
-    }
-
-    fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable
-
-    companion object
-}
-
-// The fallback Jna cleaner, which is available for both Android, and the JVM.
-private class UniffiJnaCleaner : UniffiCleaner {
-    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
-
-    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
-        UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
-}
-
-private class UniffiJnaCleanable(
-    private val cleanable: com.sun.jna.internal.Cleaner.Cleanable,
-) : UniffiCleaner.Cleanable {
-    override fun clean() = cleanable.clean()
-}
-
-
-// We decide at uniffi binding generation time whether we were
-// using Android or not.
-// There are further runtime checks to chose the correct implementation
-// of the cleaner.
-private fun UniffiCleaner.Companion.create(): UniffiCleaner =
-    try {
-        // For safety's sake: if the library hasn't been run in android_cleaner = true
-        // mode, but is being run on Android, then we still need to think about
-        // Android API versions.
-        // So we check if java.lang.ref.Cleaner is there, and use that…
-        java.lang.Class.forName("java.lang.ref.Cleaner")
-        JavaLangRefCleaner()
-    } catch (e: ClassNotFoundException) {
-        // … otherwise, fallback to the JNA cleaner.
-        UniffiJnaCleaner()
-    }
-
-private class JavaLangRefCleaner : UniffiCleaner {
-    val cleaner = java.lang.ref.Cleaner.create()
-
-    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
-        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
-}
-
-private class JavaLangRefCleanable(
-    val cleanable: java.lang.ref.Cleaner.Cleanable
-) : UniffiCleaner.Cleanable {
-    override fun clean() = cleanable.clean()
-}
+object NoPointer
 
 /**
  * @suppress
  */
 public object FfiConverterUByte : FfiConverter<UByte, Byte> {
     override fun lift(value: Byte): UByte {
-        return value.toUByte()
-    }
-
-    fun lift(value: Int): UByte {
         return value.toUByte()
     }
 
@@ -1322,18 +1184,21 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
 }
 
 
-// This template implements a class for working with a Rust struct via a handle
+// This template implements a class for working with a Rust struct via a Pointer/Arc<T>
 // to the live Rust struct on the other side of the FFI.
+//
+// Each instance implements core operations for working with the Rust `Arc<T>` and the
+// Kotlin Pointer to work with the live Rust struct on the other side of the FFI.
 //
 // There's some subtlety here, because we have to be careful not to operate on a Rust
 // struct after it has been dropped, and because we must expose a public API for freeing
 // theq Kotlin wrapper object in lieu of reliable finalizers. The core requirements are:
 //
-//   * Each instance holds an opaque handle to the underlying Rust struct.
-//     Method calls need to read this handle from the object's state and pass it in to
+//   * Each instance holds an opaque pointer to the underlying Rust struct.
+//     Method calls need to read this pointer from the object's state and pass it in to
 //     the Rust FFI.
 //
-//   * When an instance is no longer needed, its handle should be passed to a
+//   * When an instance is no longer needed, its pointer should be passed to a
 //     special destructor function provided by the Rust FFI, which will drop the
 //     underlying Rust struct.
 //
@@ -1358,13 +1223,13 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
 //      2. the thread is shared across the whole library. This can be tuned by using `android_cleaner = true`,
 //         or `android = true` in the [`kotlin` section of the `uniffi.toml` file](https://mozilla.github.io/uniffi-rs/kotlin/configuration.html).
 //
-// If we try to implement this with mutual exclusion on access to the handle, there is the
+// If we try to implement this with mutual exclusion on access to the pointer, there is the
 // possibility of a race between a method call and a concurrent call to `destroy`:
 //
-//    * Thread A starts a method call, reads the value of the handle, but is interrupted
-//      before it can pass the handle over the FFI to Rust.
+//    * Thread A starts a method call, reads the value of the pointer, but is interrupted
+//      before it can pass the pointer over the FFI to Rust.
 //    * Thread B calls `destroy` and frees the underlying Rust struct.
-//    * Thread A resumes, passing the already-read handle value to Rust and triggering
+//    * Thread A resumes, passing the already-read pointer value to Rust and triggering
 //      a use-after-free.
 //
 // One possible solution would be to use a `ReadWriteLock`, with each method call taking
@@ -1417,6 +1282,70 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
 //
 
 
+/**
+ * The cleaner interface for Object finalization code to run.
+ * This is the entry point to any implementation that we're using.
+ *
+ * The cleaner registers objects and returns cleanables, so now we are
+ * defining a `UniffiCleaner` with a `UniffiClenaer.Cleanable` to abstract the
+ * different implmentations available at compile time.
+ *
+ * @suppress
+ */
+interface UniffiCleaner {
+    interface Cleanable {
+        fun clean()
+    }
+
+    fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable
+
+    companion object
+}
+
+// The fallback Jna cleaner, which is available for both Android, and the JVM.
+private class UniffiJnaCleaner : UniffiCleaner {
+    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class UniffiJnaCleanable(
+    private val cleanable: com.sun.jna.internal.Cleaner.Cleanable,
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
+
+// We decide at uniffi binding generation time whether we were
+// using Android or not.
+// There are further runtime checks to chose the correct implementation
+// of the cleaner.
+private fun UniffiCleaner.Companion.create(): UniffiCleaner =
+    try {
+        // For safety's sake: if the library hasn't been run in android_cleaner = true
+        // mode, but is being run on Android, then we still need to think about
+        // Android API versions.
+        // So we check if java.lang.ref.Cleaner is there, and use that…
+        java.lang.Class.forName("java.lang.ref.Cleaner")
+        JavaLangRefCleaner()
+    } catch (e: ClassNotFoundException) {
+        // … otherwise, fallback to the JNA cleaner.
+        UniffiJnaCleaner()
+    }
+
+private class JavaLangRefCleaner : UniffiCleaner {
+    val cleaner = java.lang.ref.Cleaner.create()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class JavaLangRefCleanable(
+    val cleanable: java.lang.ref.Cleaner.Cleanable
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
+
 public interface RustSignerInterface {
 
     fun `processTransactionData`(`data`: List<kotlin.UByte>): List<kotlin.UByte>
@@ -1432,49 +1361,36 @@ public interface RustSignerInterface {
 
 open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
 
-    @Suppress("UNUSED_PARAMETER")
-            /**
-             * @suppress
-             */
-    constructor(withHandle: UniffiWithHandle, handle: Long) {
-        this.handle = handle
-        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(handle))
+    constructor(pointer: Pointer) {
+        this.pointer = pointer
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
     }
 
     /**
-     * @suppress
-     *
      * This constructor can be used to instantiate a fake object. Only used for tests. Any
      * attempt to actually use an object constructed this way will fail as there is no
      * connected Rust object.
      */
     @Suppress("UNUSED_PARAMETER")
-    constructor(noHandle: NoHandle) {
-        this.handle = 0
-        this.cleanable = null
+    constructor(noPointer: NoPointer) {
+        this.pointer = null
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
     }
 
     constructor() :
             this(
-                UniffiWithHandle,
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
-
+                    UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_constructor_rustsigner_new(
                         _status
                     )
                 }
             )
 
-    protected val handle: Long
-    protected val cleanable: UniffiCleaner.Cleanable?
+    protected val pointer: Pointer?
+    protected val cleanable: UniffiCleaner.Cleanable
 
     private val wasDestroyed = AtomicBoolean(false)
     private val callCounter = AtomicLong(1)
-
-    /**
-     * Whether the current object has been destroyed and its reference is gone in the Rust side.
-     */
-    val uniffiIsDestroyed: Boolean get() = wasDestroyed.get()
 
     override fun destroy() {
         // Only allow a single call to this method.
@@ -1482,7 +1398,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
         if (this.wasDestroyed.compareAndSet(false, true)) {
             // This decrement always matches the initial count of 1 given at creation time.
             if (this.callCounter.decrementAndGet() == 0L) {
-                cleanable?.clean()
+                cleanable.clean()
             }
         }
     }
@@ -1492,7 +1408,7 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
         this.destroy()
     }
 
-    internal inline fun <R> callWithHandle(block: (handle: Long) -> R): R {
+    internal inline fun <R> callWithPointer(block: (ptr: Pointer) -> R): R {
         // Check and increment the call counter, to keep the object alive.
         // This needs a compare-and-set retry loop in case of concurrent updates.
         do {
@@ -1504,51 +1420,41 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
                 throw IllegalStateException("${this.javaClass.simpleName} call counter would overflow")
             }
         } while (!this.callCounter.compareAndSet(c, c + 1L))
-        // Now we can safely do the method call without the handle being freed concurrently.
+        // Now we can safely do the method call without the pointer being freed concurrently.
         try {
-            return block(this.uniffiCloneHandle())
+            return block(this.uniffiClonePointer())
         } finally {
             // This decrement always matches the increment we performed above.
             if (this.callCounter.decrementAndGet() == 0L) {
-                cleanable?.clean()
+                cleanable.clean()
             }
         }
     }
 
     // Use a static inner class instead of a closure so as not to accidentally
     // capture `this` as part of the cleanable's action.
-    private class UniffiCleanAction(private val handle: Long) : Runnable {
+    private class UniffiCleanAction(private val pointer: Pointer?) : Runnable {
         override fun run() {
-            if (handle == 0.toLong()) {
-                // Fake object created with `NoHandle`, don't try to free.
-                return;
-            }
-            uniffiRustCall { status ->
-                UniffiLib.uniffi_uniffi_rust_signer_fn_free_rustsigner(handle, status)
+            pointer?.let { ptr ->
+                uniffiRustCall { status ->
+                    UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_free_rustsigner(ptr, status)
+                }
             }
         }
     }
 
-    /**
-     * @suppress
-     */
-    fun uniffiCloneHandle(): Long {
-        if (handle == 0.toLong()) {
-            throw InternalException("uniffiCloneHandle() called on NoHandle object");
-        }
+    fun uniffiClonePointer(): Pointer {
         return uniffiRustCall() { status ->
-            UniffiLib.uniffi_uniffi_rust_signer_fn_clone_rustsigner(handle, status)
+            UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_clone_rustsigner(pointer!!, status)
         }
     }
 
     override fun `processTransactionData`(`data`: List<kotlin.UByte>): List<kotlin.UByte> {
         return FfiConverterSequenceUByte.lift(
-            callWithHandle {
+            callWithPointer {
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
-                        it,
-
-                        FfiConverterSequenceUByte.lower(`data`), _status
+                    UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_method_rustsigner_process_transaction_data(
+                        it, FfiConverterSequenceUByte.lower(`data`), _status
                     )
                 }
             }
@@ -1562,14 +1468,14 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
         `signature`: List<kotlin.UByte>
     ): kotlin.Boolean {
         return FfiConverterBoolean.lift(
-            callWithHandle {
+            callWithPointer {
                 uniffiRustCall() { _status ->
-                    UniffiLib.uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
+                    UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_method_rustsigner_verify_signature(
                         it,
-
                         FfiConverterSequenceUByte.lower(`publicKey`),
                         FfiConverterSequenceUByte.lower(`message`),
-                        FfiConverterSequenceUByte.lower(`signature`), _status
+                        FfiConverterSequenceUByte.lower(`signature`),
+                        _status
                     )
                 }
             }
@@ -1577,34 +1483,35 @@ open class RustSigner : Disposable, AutoCloseable, RustSignerInterface {
     }
 
 
-    /**
-     * @suppress
-     */
     companion object
 
 }
 
-
 /**
  * @suppress
  */
-public object FfiConverterTypeRustSigner : FfiConverter<RustSigner, Long> {
-    override fun lower(value: RustSigner): Long {
-        return value.uniffiCloneHandle()
+public object FfiConverterTypeRustSigner : FfiConverter<RustSigner, Pointer> {
+
+    override fun lower(value: RustSigner): Pointer {
+        return value.uniffiClonePointer()
     }
 
-    override fun lift(value: Long): RustSigner {
-        return RustSigner(UniffiWithHandle, value)
+    override fun lift(value: Pointer): RustSigner {
+        return RustSigner(value)
     }
 
     override fun read(buf: ByteBuffer): RustSigner {
-        return lift(buf.getLong())
+        // The Rust code always writes pointers as 8 bytes, and will
+        // fail to compile if they don't fit.
+        return lift(Pointer(buf.getLong()))
     }
 
     override fun allocationSize(value: RustSigner) = 8UL
 
     override fun write(value: RustSigner, buf: ByteBuffer) {
-        buf.putLong(lower(value))
+        // The Rust code always expects pointers written as 8 bytes,
+        // and will fail to compile if they don't fit.
+        buf.putLong(Pointer.nativeValue(lower(value)))
     }
 }
 
@@ -1637,9 +1544,7 @@ public object FfiConverterSequenceUByte : FfiConverterRustBuffer<List<kotlin.UBy
 fun `processTransactionData`(`data`: List<kotlin.UByte>): List<kotlin.UByte> {
     return FfiConverterSequenceUByte.lift(
         uniffiRustCall() { _status ->
-            UniffiLib.uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
-
-
+            UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_func_process_transaction_data(
                 FfiConverterSequenceUByte.lower(`data`), _status
             )
         }
@@ -1653,12 +1558,11 @@ fun `verifySignature`(
 ): kotlin.Boolean {
     return FfiConverterBoolean.lift(
         uniffiRustCall() { _status ->
-            UniffiLib.uniffi_uniffi_rust_signer_fn_func_verify_signature(
-
-
+            UniffiLib.INSTANCE.uniffi_uniffi_rust_signer_fn_func_verify_signature(
                 FfiConverterSequenceUByte.lower(`publicKey`),
                 FfiConverterSequenceUByte.lower(`message`),
-                FfiConverterSequenceUByte.lower(`signature`), _status
+                FfiConverterSequenceUByte.lower(`signature`),
+                _status
             )
         }
     )
