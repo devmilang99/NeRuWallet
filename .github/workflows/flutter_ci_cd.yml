@@ -62,7 +62,7 @@ jobs:
           targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, x86_64-linux-android
 
       - name: Install uniffi-bindgen
-        run: cargo install cargo-binstall && cargo binstall -y uniffi_bindgen --version 0.28.0
+        run: cargo install cargo-binstall && cargo binstall -y uniffi-bindgen --version 0.28.0
 
       - name: Build Rust library for iOS
         run: |
