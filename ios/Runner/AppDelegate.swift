@@ -69,8 +69,8 @@ import UIKit
                                        details: nil))
                     return
                 }
-                let processed = self?.rustSigner.processTransactionData(data: data.data)
-                result(FlutterStandardTypedData(bytes: processed ?? Data()))
+                let processed = self?.rustSigner.processTransactionData(data: [UInt8](data.data))
+                result(FlutterStandardTypedData(bytes: Data(processed ?? [])))
 
             case "verifyRustSignature":
                 guard let args = call.arguments as? [String: Any],
@@ -82,9 +82,9 @@ import UIKit
                                        details: nil))
                     return
                 }
-                let isValid = self?.rustSigner.verifySignature(publicKey: pubKey.data,
-                                                               message: msg.data,
-                                                               signature: sig.data)
+                let isValid = self?.rustSigner.verifySignature(publicKey: [UInt8](pubKey.data),
+                                                               message: [UInt8](msg.data),
+                                                               signature: [UInt8](sig.data))
                 result(isValid)
 
             default:
