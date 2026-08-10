@@ -284,6 +284,9 @@ high-quality standards across both Android and iOS.
       instant testing.
     - **`iOS 🍎`**: Automated builds on macOS runners to ensure platform-specific
       compatibility and library linking (CocoaPods) are correct.
+- **`Optimized Build Performance`**: Integrated multi-layer caching for **Flutter (Pub)**, *
+  *Android (Gradle)**, and **Rust (Cargo)** to significantly reduce CI cycle times and avoid
+  redundant dependency downloads.
 
 ---
 
@@ -389,7 +392,9 @@ To get a local copy up and running, follow these simple steps:
       `rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim`
 4. **Setup Environment**: Create a `.env` file in the root directory and add your `GEMINI_API_KEY`
    and Supabase credentials.
-5. **Run the App**: `flutter run`
+5. **iOS Specifics**: For Google & Apple Sign-In configuration, refer to
+   the [iOS Setup Guide](file:///D:/For Portfolio/NeRuWallet/iOS_SIGNIN_SETUP.md).
+6. **Run the App**: `flutter run`
 
 ---
 
