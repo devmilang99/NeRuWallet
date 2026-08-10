@@ -56,7 +56,7 @@
 		A1B2C3D51E8E89220040F4C2 /* rust_signer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = rust_signer.swift; sourceTree = "<group>"; };
 		A1B2C3D71E8E89220040F4C2 /* rust_signerFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rust_signerFFI.h; sourceTree = "<group>"; };
 		A1B2C3D81E8E89220040F4C2 /* rust_signerFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = rust_signerFFI.modulemap; sourceTree = "<group>"; };
-		A1B2C3D91E8E89220040F4C2 /* libuniffi_rust_signer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuniffi_rust_signer.a; path = ../../rust_signer/target/universal/libuniffi_rust_signer.a; sourceTree = "<group>"; };
+		A1B2C3D91E8E89220040F4C2 /* libuniffi_rust_signer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuniffi_rust_signer.a; path = ../rust_signer/target/universal/libuniffi_rust_signer.a; sourceTree = SOURCE_ROOT; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -367,6 +367,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -386,7 +390,11 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/../rust_signer/target/universal",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -397,7 +405,15 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_INCLUDE_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/Runner",
+					"$(SRCROOT)/Runner",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -501,6 +517,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -552,6 +572,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -573,7 +597,11 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/../rust_signer/target/universal",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -584,7 +612,15 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_INCLUDE_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/Runner",
+					"$(SRCROOT)/Runner",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -603,7 +639,11 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/../rust_signer/target/universal",
+					"$(SRCROOT)/../rust_signer/target/universal",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -614,7 +654,15 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_INCLUDE_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/Runner",
+					"$(SRCROOT)/Runner",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-luniffi_rust_signer",
 				);
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

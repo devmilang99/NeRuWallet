@@ -56,6 +56,19 @@ jobs:
       - name: Run build_runner
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, x86_64-linux-android
+
+      - name: Install uniffi-bindgen
+        run: cargo install uniffi_bindgen --version 0.28.0
+
+      - name: Build Rust library for iOS
+        run: |
+          chmod +x ios/build_rust_ios.sh
+          ./ios/build_rust_ios.sh
+
       - name: Run Tests
         run: flutter test
 
