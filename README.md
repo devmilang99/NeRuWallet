@@ -20,13 +20,15 @@ Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first 
 harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture,
 now featuring **Hardware-Backed Multi-Signature Vaults**.
 
-[Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Architecture](#architecture)
+[Architecture](#architecture) · [Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Get Started](#get-started)
 
 ---
 
 </div>
 
-## <a id="overview"></a> 📖 Project Philosophy
+<a id="overview"></a>
+
+## 📖 Project Philosophy
 
 **NeRuWallet** is designed to demonstrate that elite security engineering and premium user
 experience are not mutually exclusive. Most mobile wallets prioritize ease of use at the cost of
@@ -44,7 +46,9 @@ across flaky network conditions.
 
 ---
 
-## <a id="architecture"></a> 🏗️ Component Architecture
+<a id="architecture"></a>
+
+## 🏗️ Component Architecture
 
 NeRuWallet follows a **Feature-First Architecture**, ensuring that domain logic (AI, Payments, Auth)
 is isolated and testable.
@@ -79,7 +83,9 @@ graph TD
 
 ---
 
-## <a id="security-pipeline"></a> 🔒 The Secure Signing Pipeline (HSM + Rust)
+<a id="security-pipeline"></a>
+
+## 🔒 The Secure Signing Pipeline (HSM + Rust)
 
 NeRuWallet implements a unique multi-layered signing pipeline. Private keys are never generated in
 software and never touch the application's memory.
@@ -153,7 +159,9 @@ NeRuWallet employs "Defense in Depth" to protect against sophisticated attacks:
 
 ---
 
-## <a id="multi-sig"></a> `[Security 🛡️]` Hardware Multi-Sig Vaults
+<a id="multi-sig"></a>
+
+## `[Security 🛡️]` Hardware Multi-Sig Vaults
 
 NeRuWallet enables collaborative finance through **`M-of-N Multi-Signature Wallets`**. Unlike
 software
@@ -195,7 +203,9 @@ graph LR
 
 ---
 
-## <a id="neru-ai"></a> `[AI 🤖]` Neru AI: The Intelligent Advisor
+<a id="neru-ai"></a>
+
+## `[AI 🤖]` Neru AI: The Intelligent Advisor
 
 NeRuWallet integrates **`Gemini 3.5 Flash`** to provide deep financial forensics. This isn't just a
 chatbot; it's an autonomous financial agent.
@@ -212,7 +222,9 @@ chatbot; it's an autonomous financial agent.
 
 ---
 
-## <a id="ux-philosophy"></a> `[UX/UI ✨]` The "Liquid UI" Strategy
+<a id="ux-philosophy"></a>
+
+## `[UX/UI ✨]` The "Liquid UI" Strategy
 
 The UI is built on a **Custom Design System** that extends Material 3 with a focus on motion and
 transparency.
@@ -234,7 +246,9 @@ transparency.
 
 ---
 
-## <a id="production-optimization"></a> `[Optimization 🛠️]` Production Optimization & Code Quality
+<a id="production-optimization"></a>
+
+## `[Optimization 🛠️]` Production Optimization & Code Quality
 
 NeRuWallet is engineered for production-grade performance and maintainability.
 
@@ -253,7 +267,9 @@ NeRuWallet is engineered for production-grade performance and maintainability.
 
 ---
 
-## <a id="cicd"></a> `[DevOps ⚙️]` CI/CD & Engineering Excellence
+<a id="cicd"></a>
+
+## `[DevOps ⚙️]` CI/CD & Engineering Excellence
 
 NeRuWallet is backed by a robust **`GitHub Actions`** pipeline that ensures every commit meets
 high-quality standards across both Android and iOS.
@@ -271,7 +287,9 @@ high-quality standards across both Android and iOS.
 
 ---
 
-## <a id="screenshots"></a> 📸 Screenshots
+<a id="screenshots"></a>
+
+## 📸 Screenshots
 
 ### 🏠 Core Experience
 
@@ -299,7 +317,9 @@ high-quality standards across both Android and iOS.
 
 ---
 
-## <a id="why-this-stack"></a> 🤔 Why This Stack?
+<a id="why-this-stack"></a>
+
+## 🤔 Why This Stack?
 
 The NeRuWallet architecture was meticulously selected to solve the "Fintech Trilemma":
 **Security**, **Performance**, and **User Experience**.
@@ -327,7 +347,9 @@ The NeRuWallet architecture was meticulously selected to solve the "Fintech Tril
 
 ---
 
-## <a id="tech-stack"></a> 🛠 Tech Stack
+<a id="tech-stack"></a>
+
+## 🛠 Tech Stack
 
 | Layer                 | Technology                    | Platform / Security Marker                          |
 |:----------------------|:------------------------------|:----------------------------------------------------|
@@ -351,13 +373,47 @@ The NeRuWallet architecture was meticulously selected to solve the "Fintech Tril
 
 ---
 
+<a id="get-started"></a>
+
+## Get Started
+
 To get a local copy up and running, follow these simple steps:
 
 1. **Clone the repository**: `git clone https://github.com/devmilang99/NeRuWallet.git`
 2. **Install Flutter dependencies**: `flutter pub get`
-3. **Setup Environment**: Create a `.env` file in the root directory and add your `GEMINI_API_KEY`
+3. **Setup Rust Toolchain**:
+    - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+    - Add Android targets:
+      `rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`
+    - Add iOS targets (macOS only):
+      `rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim`
+4. **Setup Environment**: Create a `.env` file in the root directory and add your `GEMINI_API_KEY`
    and Supabase credentials.
-4. **Run the App**: `flutter run`
+5. **Run the App**: `flutter run`
+
+---
+
+## 🦀 Rust Core Development
+
+NeRuWallet uses a Rust-based cryptographic core for high-performance hashing and signature
+verification.
+
+### 🤖 Android Integration
+
+The Android build is fully automated via the `rust-android-gradle` plugin. When you run
+`flutter run` or `./gradlew assembleDebug`, the Rust library is compiled and bundled automatically.
+
+- **Source**: `rust_signer/`
+- **Output**: Bundled as `libuniffi_rust_signer.so` in the APK.
+
+### 🍎 iOS Integration
+
+iOS uses a static library and Swift bindings.
+
+1. Run the build script: `cd ios && ./build_rust_ios.sh`
+2. This generates `libuniffi_rust_signer.a` and Swift bindings in `ios/Runner/`.
+3. Open `Runner.xcworkspace` in Xcode and ensure the `.a` library is linked in **Frameworks,
+   Libraries, and Embedded Content**.
 
 ---
 

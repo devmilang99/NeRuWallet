@@ -34,10 +34,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       icon: Icons.bolt_rounded,
     ),
     OnboardingItem(
-      title: 'Merchant Ecosystem',
+      title: 'AI Financial Advisor',
       description:
-          'Integrate with local and international merchants with simple APIs and effortless bill payments.',
-      icon: Icons.account_balance_rounded,
+          'Get personalized financial insights and smart budgeting advice powered by advanced AI algorithms.',
+      icon: Icons.psychology_rounded,
     ),
   ];
 
