@@ -10,6 +10,8 @@ jobs:
   build:
     name: Build & Test
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -93,11 +95,22 @@ jobs:
         run: flutter build ios --no-codesign --release
 
       - name: Build Android APK
-        run: flutter build apk --debug
+        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Release
+          files: build/app/outputs/flutter-apk/app-release.apk
+          body: "This release contains the latest automated APK build from the main branch."
+          prerelease: false
+          make_latest: true
