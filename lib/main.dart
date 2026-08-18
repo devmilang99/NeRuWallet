@@ -16,10 +16,14 @@ import 'package:neruwallet/core/utils/app_router.dart';
 import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/core/widgets/global_error_screen.dart';
 import 'package:neruwallet/features/auth/data/services/auth_service.dart';
+import 'package:neruwallet/src/rust/frb_generated.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Rust library
+  await RustLib.init();
 
   // 1. Global Interception
   // For framework-level errors (e.g. build phase)

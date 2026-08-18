@@ -45,7 +45,6 @@ String _$themeControllerHash() => r'0e8280e43da35e591c53d286f6e3bf2670730cde';
 
 abstract class _$ThemeController extends $Notifier<ThemeMode> {
   ThemeMode build();
-
   @$mustCallSuper
   @override
   void runBuild() {

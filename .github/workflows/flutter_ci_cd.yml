@@ -29,6 +29,15 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Setup Android SDK
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, x86_64-linux-android
+
       - name: Cache Pub dependencies
         uses: actions/cache@v4
         with:
@@ -47,27 +56,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Create .env file
-        run: |
-          echo "SUPABASE_URL=https://dummy-project.supabase.co" > .env
-          echo "SUPABASE_ANON_KEY=dummy-anon-key" >> .env
-
-      - name: Install dependencies
-        run: |
-          flutter clean
-          flutter pub get
-
-      - name: Run build_runner
-        run: dart run build_runner build --delete-conflicting-outputs
-        timeout-minutes: 20
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, x86_64-linux-android
-
-      # Cache the Rust build (including the uniffi-bindgen bin target) so
-      # you don't rebuild it from scratch on every run.
       - name: Cache Cargo registry & target
         uses: actions/cache@v4
         with:
@@ -79,25 +67,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # NOTE: uniffi-bindgen is now built from YOUR crate via its local [[bin]]
-      # target (see Cargo.toml + the src/bin/uniffi-bindgen.rs wrapper), so it
-      # always matches the uniffi version pinned in your Cargo.lock.
-      # Your scripts now invoke it as:
-      #
-      #   cargo run --bin uniffi-bindgen -- generate ...
+      - name: Cache FRB Codegen
+        id: cache-frb-codegen
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/flutter_rust_bridge_codegen
+          key: ${{ runner.os }}-frb-codegen-2.12.0
 
-      - name: Build Rust library for iOS
+      - name: Install dependencies
         run: |
-          chmod +x ios/build_rust_ios.sh
-          ./ios/build_rust_ios.sh
+          flutter clean
+          flutter pub get
+
+      - name: Install FRB Codegen
+        if: steps.cache-frb-codegen.outputs.cache-hit != 'true'
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0
+
+      - name: Generate Bindings
+        run: |
+          mkdir -p lib/src/rust/
+          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
+
+      - name: Create .env file
+        run: |
+          echo "SUPABASE_URL=https://dummy-project.supabase.co" > .env
+          echo "SUPABASE_ANON_KEY=dummy-anon-key" >> .env
+
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
         timeout-minutes: 20
 
       - name: Run Tests
         run: flutter test
-
-      - name: Build iOS
-        run: flutter build ios --no-codesign --release
-        timeout-minutes: 30
 
       - name: Build Android APK
         run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols

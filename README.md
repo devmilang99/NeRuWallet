@@ -62,7 +62,7 @@ graph TD
 
     subgraph "Secure Core (Native/Rust)"
         SC["🔒 SecureSigningService"]
-        RS["🦀 Rust Cryptography (ring)"]
+        RS["🦀 Rust Cryptography (ring + FFI)"]
         HSM["🛡️ Hardware HSM (StrongBox/Enclave)"]
     end
 
@@ -93,8 +93,8 @@ software and never touch the application's memory.
 ```mermaid
 graph LR
     subgraph "Native Hardware Layer"
-    A[StrongBox 🤖]
-    B[Secure Enclave 🍎]
+    A[Android StrongBox 🤖]
+    B[iOS Secure Enclave 🍎]
     end
     subgraph "Memory-Safe Layer"
     C[Rust Core 🦀]
@@ -122,33 +122,31 @@ To ensure the integrity of the data being signed, a custom **Rust module** handl
 cryptographic verification. By using the `ring` crate, we eliminate entire classes of memory-safety
 vulnerabilities.
 
-- **`[Security 🛡️] Signature Verification`**: For Multi-Sig transactions, the Rust core validates
+- **`Signature Verification`**: For Multi-Sig transactions, the Rust core validates
   ECDSA signatures
   from peer devices before the local HSM authorizes a co-signature.
-- **`[Security 🛡️] High-Performance Hashing`**: Transaction data is normalized and hashed using
-  SHA-256 within the
-  Rust memory boundary via UniFFI.
-- **`[Security 🛡️] Automated Native Pipeline`**: The Rust core is integrated directly into the
-  Gradle/Xcode build
-  systems via a `build.rs` scaffolding generator, ensuring the FFI bridge is always
-  version-synchronized with the native binaries.
+- **`High-Performance Hashing`**: Transaction data is normalized and hashed using
+  SHA-256 within the Rust memory boundary via direct FFI (**flutter_rust_bridge**).
+- **`Direct FFI Pipeline`**: The Rust core is integrated using high-performance
+  **direct FFI bindings**, bypassing the overhead of traditional platform channels for
+  cryptographic operations.
 
 ### 🛡️ Hardening & Anti-Reverse Engineering
 
 NeRuWallet employs "Defense in Depth" to protect against sophisticated attacks:
 
-- **`[Security 🛡️] AOT Obfuscation`**: Production builds use Flutter's `--obfuscate` flag to rename
+- **` AOT Obfuscation`**: Production builds use Flutter's `--obfuscate` flag to rename
   Dart symbols,
   making decompilation significantly harder.
-- **`[Android 🤖] R8/ProGuard Hardening`**: Android binaries are further shrunk and obfuscated using
+- **` R8/ProGuard Hardening`**: Android binaries are further shrunk and obfuscated using
   custom
   ProGuard rules, targeting internal logic and removing log traces.
-- **`[Security 🛡️] Environment Integrity`**:
+- **` Environment Integrity`**:
     - **`Jailbreak/Root Detection`**: Blocks execution on compromised devices to prevent runtime
       memory hooking (e.g., via Frida).
     - **`Emulator Protection`**: Detects virtualized environments to prevent automated dynamic
       analysis.
-- **`[Security 🛡️] Runtime Protection`**:
+- **` Runtime Protection`**:
     - **`Active Auth Watchdog`**: Monitors the Supabase authentication stream in real-time. If a
       session is invalidated, the app instantly triggers a global lock-out.
     - **`Screen Guard`**: Prevents screenshots and screen recording on sensitive screens using
@@ -357,7 +355,7 @@ The NeRuWallet architecture was meticulously selected to solve the "Fintech Tril
 | Layer                 | Technology                    | Platform / Security Marker                          |
 |:----------------------|:------------------------------|:----------------------------------------------------|
 | **Mobile Core**       | **Flutter 3.x**, **Riverpod** | 📱 **Cross-Platform** Reactive State Engine         |
-| **Systems Core**      | **Rust (UniFFI)**             | 🦀 **Memory-Safe** SHA-256 & ECDSA Verification     |
+| **Systems Core**      | **Rust (Direct FFI)**         | 🦀 **Memory-Safe** SHA-256 & ECDSA Verification     |
 | **Security Hardware** | **StrongBox / Enclave**       | 🤖 **StrongBox** / 🍎 **Secure Enclave** (HSM)      |
 | **Persistence**       | **Drift (SQLite)**            | 🗄️ **Offline-First** Local Persistence             |
 | **Cloud/Sync**        | **Supabase**                  | ☁️ **Real-time** Atomic Synchronization             |
@@ -386,6 +384,7 @@ To get a local copy up and running, follow these simple steps:
 2. **Install Flutter dependencies**: `flutter pub get`
 3. **Setup Rust Toolchain**:
     - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+    - Install FRB Codegen: `cargo install flutter_rust_bridge_codegen`
     - Add Android targets:
       `rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`
     - Add iOS targets (macOS only):
@@ -401,24 +400,41 @@ To get a local copy up and running, follow these simple steps:
 ## 🦀 Rust Core Development
 
 NeRuWallet uses a Rust-based cryptographic core for high-performance hashing and signature
-verification.
+verification, powered by **`flutter_rust_bridge`**.
+
+### 🛠️ Codegen
+
+To update the bindings after modifying Rust code:
+
+```bash
+flutter_rust_bridge_codegen generate
+```
 
 ### 🤖 Android Integration
 
-The Android build is fully automated via the `rust-android-gradle` plugin. When you run
-`flutter run` or `./gradlew assembleDebug`, the Rust library is compiled and bundled automatically.
+The Android build is integrated via the Rust toolchain. When you run `flutter run`, the Rust
+library is compiled and linked directly to the application.
 
 - **Source**: `rust_signer/`
-- **Output**: Bundled as `libuniffi_rust_signer.so` in the APK.
+- **Output**: Direct FFI bindings in `lib/src/rust/`
 
-### 🍎 iOS Integration
+### 🍎 iOS Integration (macOS Only)
 
-iOS uses a static library and Swift bindings.
+iOS leverages direct C-FFI linking.
 
-1. Run the build script: `cd ios && ./build_rust_ios.sh`
-2. This generates `libuniffi_rust_signer.a` and Swift bindings in `ios/Runner/`.
-3. Open `Runner.xcworkspace` in Xcode and ensure the `.a` library is linked in **Frameworks,
-   Libraries, and Embedded Content**.
+1. Ensure you have the Rust iOS targets installed.
+2. The bindings are generated into `lib/src/rust/`.
+3. **Manual Build**: If you need to rebuild the static library for iOS manually, run the following
+   commands from the project root on a **macOS machine**:
+   ```bash
+   chmod +x ios/build_rust_ios.sh
+   ./ios/build_rust_ios.sh
+   ```
+4. Static libraries are linked during the Flutter build process (`flutter build ios`).
+
+> [!NOTE]
+> The `chmod` and `.sh` commands are Unix-specific and will only work on macOS or Linux. Android
+> development on Windows is fully automated via Gradle and does not require these steps.
 
 ---
 

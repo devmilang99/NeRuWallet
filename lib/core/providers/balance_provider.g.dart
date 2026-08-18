@@ -44,7 +44,6 @@ String _$balanceHash() => r'34e1455c0f0614a565c8ac7fecadf27efb8c10b0';
 
 abstract class _$Balance extends $Notifier<BalanceState> {
   BalanceState build();
-
   @$mustCallSuper
   @override
   void runBuild() {

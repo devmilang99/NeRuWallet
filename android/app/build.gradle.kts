@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.neruwallet"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -27,7 +27,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
@@ -84,39 +84,15 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.biometric:biometric:1.1.0")
-    implementation("net.java.dev.jna:jna:5.14.0@aar")
-}
-
-tasks.register<Exec>("generateUniFFIBindings") {
-    workingDir = file("../../rust_signer")
-    // Use the local uniffi-bindgen wrapper built from the crate
-    commandLine(
-        "cargo",
-        "run",
-        "--bin",
-        "uniffi-bindgen",
-        "--",
-        "generate",
-        "src/rust_signer.udl",
-        "--language",
-        "kotlin",
-        "--out-dir",
-        "${projectDir}/src/main/kotlin"
-    )
-}
-
-afterEvaluate {
-    tasks.named("preBuild") {
-        dependsOn("generateUniFFIBindings")
-    }
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
 }
 
 cargo {
     module = "../../rust_signer"
-    libname = "uniffi_rust_signer"
+    libname = "rust_signer"
     targets = listOf("arm", "arm64", "x86", "x86_64")
 }
-

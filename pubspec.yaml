@@ -51,6 +51,7 @@ dependencies:
   flutter_secure_storage: ^11.0.0
   sign_in_with_apple: ^8.1.0
   flutter_dotenv: ^6.0.1
+  flutter_rust_bridge: ^2.0.0
   
   # Mobile and QR Scanner
   device_info_plus: ^13.2.0

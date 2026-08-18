@@ -11,13 +11,10 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executor
-// Import the generated Rust bindings (will be available after build)
-import uniffi.rust_signer.RustSigner
 
 class MainActivity : FlutterFragmentActivity() {
     private val CHANNEL = "com.example.neruwallet/security"
     private lateinit var securityProvider: SecurityProvider
-    private val rustSigner: RustSigner by lazy { RustSigner() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,61 +72,7 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(null)
                 }
 
-                // Rust-backed cryptographic operations
-                "processTransactionData" -> {
-                    val data = call.argument<ByteArray>("data")
-                    if (data != null) {
-                        Log.d(
-                            "RustSigner",
-                            "Kotlin: Initiating Rust hashing for ${data.size} bytes"
-                        )
-                        try {
-                            val startTime = System.currentTimeMillis()
-                            val processed =
-                                rustSigner.processTransactionData(data.map { it.toUByte() })
-                            val endTime = System.currentTimeMillis()
-                            Log.d(
-                                "RustSigner",
-                                "Kotlin: Rust hashing completed in ${endTime - startTime}ms"
-                            )
-                            result.success(processed.map { it.toByte() }.toByteArray())
-                        } catch (e: Exception) {
-                            Log.e("RustSigner", "Kotlin: Rust hashing failed: ${e.message}")
-                            result.error("RUST_ERROR", e.message, null)
-                        }
-                    } else {
-                        result.error("INVALID_ARGUMENT", "Data is null", null)
-                    }
-                }
-
-                "verifyRustSignature" -> {
-                    val pubKey = call.argument<ByteArray>("publicKey")
-                    val msg = call.argument<ByteArray>("message")
-                    val sig = call.argument<ByteArray>("signature")
-                    if (pubKey != null && msg != null && sig != null) {
-                        Log.d("RustSigner", "Kotlin: Initiating Rust signature verification")
-                        try {
-                            val startTime = System.currentTimeMillis()
-                            val isValid = rustSigner.verifySignature(
-                                pubKey.map { it.toUByte() },
-                                msg.map { it.toUByte() },
-                                sig.map { it.toUByte() }
-                            )
-                            val endTime = System.currentTimeMillis()
-                            Log.d(
-                                "RustSigner",
-                                "Kotlin: Rust verification completed in ${endTime - startTime}ms. Result: $isValid"
-                            )
-                            result.success(isValid)
-                        } catch (e: Exception) {
-                            Log.e("RustSigner", "Kotlin: Rust verification failed: ${e.message}")
-                            result.error("RUST_ERROR", e.message, null)
-                        }
-                    } else {
-                        result.error("INVALID_ARGUMENT", "Missing arguments for verification", null)
-                    }
-                }
-
+                // Rust operations are now handled by flutter_rust_bridge directly
                 else -> {
                     result.notImplemented()
                 }
@@ -168,7 +111,6 @@ class MainActivity : FlutterFragmentActivity() {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    // Authentication failed, but user can try again (e.g. wrong finger)
                 }
             })
 
@@ -190,4 +132,3 @@ class MainActivity : FlutterFragmentActivity() {
         )
     }
 }
-

@@ -36,7 +36,6 @@ String _$kycStateHash() => r'f77925dad39fba871c88d83d7644793865f5e56e';
 
 abstract class _$KycState extends $AsyncNotifier<bool> {
   FutureOr<bool> build();
-
   @$mustCallSuper
   @override
   void runBuild() {

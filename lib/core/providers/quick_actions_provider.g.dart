@@ -45,7 +45,6 @@ String _$quickActionsHash() => r'36eb070452ca489687a7cbcc2ecdfa179e70dc48';
 
 abstract class _$QuickActions extends $Notifier<List<QuickActionModel>> {
   List<QuickActionModel> build();
-
   @$mustCallSuper
   @override
   void runBuild() {

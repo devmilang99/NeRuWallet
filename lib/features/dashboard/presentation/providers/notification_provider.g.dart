@@ -45,7 +45,6 @@ String _$notificationsHash() => r'0bf8f3fafa916640ad94ac3e10235099de9fe3b9';
 
 abstract class _$Notifications extends $Notifier<List<NotificationItem>> {
   List<NotificationItem> build();
-
   @$mustCallSuper
   @override
   void runBuild() {

@@ -5,16 +5,9 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
-name = "uniffi_rust_signer"
+name = "rust_signer"
 
 [dependencies]
-uniffi = { version = "0.28", features = ["tokio", "cli"] }
+flutter_rust_bridge = "=2.12.0"
 ring = "0.17"
 anyhow = "1.0"
-
-[[bin]]
-name = "uniffi-bindgen"
-path = "src/bin/uniffi-bindgen.rs"
-
-[build-dependencies]
-uniffi = { version = "0.28", features = ["build"] }

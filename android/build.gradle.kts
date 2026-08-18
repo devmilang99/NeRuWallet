@@ -25,6 +25,40 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Force SDK versions to 37 to support modern plugins while targeting SDK 35
+subprojects {
+    val applySdkFix = {
+        if (project.extensions.findByName("android") != null) {
+            val android = project.extensions.getByName("android")
+            try {
+                // Set compileSdk
+                android.javaClass.getMethod("setCompileSdk", Int::class.javaPrimitiveType)
+                    .invoke(android, 37)
+
+                // Set targetSdk in defaultConfig
+                val defaultConfig = android.javaClass.getMethod("getDefaultConfig").invoke(android)
+                defaultConfig.javaClass.getMethod("setTargetSdk", Int::class.javaPrimitiveType)
+                    .invoke(defaultConfig, 35)
+            } catch (e: Exception) {
+                // If setCompileSdk/setTargetSdk doesn't exist (older AGP), try older methods
+                try {
+                    android.javaClass.getMethod(
+                        "setCompileSdkVersion",
+                        Int::class.javaPrimitiveType
+                    )
+                        .invoke(android, 37)
+                } catch (e2: Exception) {
+                }
+            }
+        }
+    }
+    if (project.state.executed) {
+        applySdkFix()
+    } else {
+        project.afterEvaluate { applySdkFix() }
+    }
+}
+
 // Fix for plugins missing 'namespace' in AGP 8.0+
 subprojects {
     val applyNamespaceFix = {

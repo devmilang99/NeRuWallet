@@ -1,0 +1,5 @@
+rust_input: crate::api
+rust_root: rust_signer
+dart_output: lib/src/rust/
+c_output: ios/Runner/frb.h
+# rust_output is automatically inferred or put in rust_root/src/fr_generated.rs

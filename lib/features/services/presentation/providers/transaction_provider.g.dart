@@ -45,7 +45,6 @@ String _$transactionHash() => r'00c55bbc98da7027acb9938c4244354714768437';
 
 abstract class _$Transaction extends $Notifier<TransactionState> {
   TransactionState build();
-
   @$mustCallSuper
   @override
   void runBuild() {
