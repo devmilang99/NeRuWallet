@@ -11,7 +11,7 @@ class NotificationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final notifications = ref.watch(notificationProvider);
+    final notifications = ref.watch(notificationsProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -40,7 +40,7 @@ class NotificationScreen extends ConsumerWidget {
           if (notifications.isNotEmpty)
             TextButton(
               onPressed: () =>
-                  ref.read(notificationProvider.notifier).markAllAsRead(),
+                  ref.read(notificationsProvider.notifier).markAllAsRead(),
               child: const Text(
                 'Mark all as read',
                 style: TextStyle(fontSize: 12),
@@ -70,13 +70,13 @@ class NotificationScreen extends ConsumerWidget {
                       ),
                       GestureDetector(
                         onTap: () =>
-                            ref.read(notificationProvider.notifier).clearAll(),
+                            ref.read(notificationsProvider.notifier).clearAll(),
                         child: Text(
                           'Clear All',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.errorColor.withOpacity(0.8),
+                            color: AppTheme.errorColor.withValues(alpha: 0.8),
                           ),
                         ),
                       ),
@@ -95,13 +95,13 @@ class NotificationScreen extends ConsumerWidget {
                         key: Key(item.id),
                         direction: DismissDirection.endToStart,
                         onDismissed: (_) => ref
-                            .read(notificationProvider.notifier)
+                            .read(notificationsProvider.notifier)
                             .removeNotification(item.id),
                         background: Container(
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorColor.withOpacity(0.1),
+                            color: AppTheme.errorColor.withValues(alpha: 0.1),
                             borderRadius: AppTheme.radiusMedium,
                           ),
                           child: const Icon(
@@ -135,7 +135,7 @@ class NotificationScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         if (item.isUnread) {
-          ref.read(notificationProvider.notifier).markAsRead(item.id);
+          ref.read(notificationsProvider.notifier).markAsRead(item.id);
         }
       },
       child: Container(
@@ -145,14 +145,14 @@ class NotificationScreen extends ConsumerWidget {
           borderRadius: AppTheme.radiusMedium,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
           border: item.isUnread
               ? Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   width: 1.5,
                 )
               : Border.all(color: Colors.transparent, width: 1.5),
@@ -163,7 +163,7 @@ class NotificationScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: item.color.withOpacity(0.1),
+                color: item.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(item.icon, color: item.color, size: 20),
@@ -242,13 +242,13 @@ class NotificationScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.05),
+              color: AppTheme.primaryColor.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_none_rounded,
               size: 60,
-              color: AppTheme.primaryColor.withOpacity(0.3),
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
             ),
           ),
           const SizedBox(height: 24),

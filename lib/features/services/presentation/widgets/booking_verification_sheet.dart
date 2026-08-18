@@ -74,7 +74,7 @@ class BookingVerificationSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.fact_check_rounded, size: 40, color: color),
@@ -106,7 +106,7 @@ class BookingVerificationSheet extends StatelessWidget {
                     borderRadius: AppTheme.radiusLarge,
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.05)
+                          ? Colors.white.withValues(alpha: 0.05)
                           : Colors.grey[200]!,
                     ),
                   ),
@@ -171,9 +171,9 @@ class BookingVerificationSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.05),
+                    color: color.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
-                    border: Border.all(color: color.withOpacity(0.1)),
+                    border: Border.all(color: color.withValues(alpha: 0.1)),
                   ),
                   child: Column(
                     children: [
@@ -241,7 +241,7 @@ class BookingVerificationSheet extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 56),
                             side: BorderSide(
-                              color: Colors.redAccent.withOpacity(0.5),
+                              color: Colors.redAccent.withValues(alpha: 0.5),
                             ),
                             foregroundColor: Colors.redAccent,
                             shape: RoundedRectangleBorder(

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'balance_provider.dart';
+part of 'theme_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,51 +9,52 @@ part of 'balance_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(Balance)
-final balanceProvider = BalanceProvider._();
+@ProviderFor(ThemeController)
+final themeControllerProvider = ThemeControllerProvider._();
 
-final class BalanceProvider extends $NotifierProvider<Balance, BalanceState> {
-  BalanceProvider._()
+final class ThemeControllerProvider
+    extends $NotifierProvider<ThemeController, ThemeMode> {
+  ThemeControllerProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'balanceProvider',
+        name: r'themeControllerProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$balanceHash();
+  String debugGetCreateSourceHash() => _$themeControllerHash();
 
   @$internal
   @override
-  Balance create() => Balance();
+  ThemeController create() => ThemeController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(BalanceState value) {
+  Override overrideWithValue(ThemeMode value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<BalanceState>(value),
+      providerOverride: $SyncValueProvider<ThemeMode>(value),
     );
   }
 }
 
-String _$balanceHash() => r'34e1455c0f0614a565c8ac7fecadf27efb8c10b0';
+String _$themeControllerHash() => r'0e8280e43da35e591c53d286f6e3bf2670730cde';
 
-abstract class _$Balance extends $Notifier<BalanceState> {
-  BalanceState build();
+abstract class _$ThemeController extends $Notifier<ThemeMode> {
+  ThemeMode build();
 
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<BalanceState, BalanceState>;
+    final ref = this.ref as $Ref<ThemeMode, ThemeMode>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<BalanceState, BalanceState>,
-              BalanceState,
+              AnyNotifier<ThemeMode, ThemeMode>,
+              ThemeMode,
               Object?,
               Object?
             >;

@@ -62,7 +62,7 @@ class PendingApprovalsScreen extends ConsumerWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
         ),
       ),
       child: Column(
@@ -71,7 +71,7 @@ class PendingApprovalsScreen extends ConsumerWidget {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                 child: Text(
                   requestedBy[0],
                   style: const TextStyle(color: AppTheme.primaryColor),
@@ -101,7 +101,7 @@ class PendingApprovalsScreen extends ConsumerWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.warningColor.withOpacity(0.1),
+                  color: AppTheme.warningColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(

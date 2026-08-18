@@ -216,7 +216,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -286,7 +286,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.errorColor.withOpacity(0.1),
+                          color: AppTheme.errorColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Row(
@@ -320,7 +320,7 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
                         borderRadius: AppTheme.radiusLarge,
                       ),
                       elevation: 8,
-                      shadowColor: AppTheme.primaryColor.withOpacity(0.3),
+                      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
                     ),
                     child: Text(
                       _step == 2 ? 'Finish Setup' : 'Continue',
@@ -427,8 +427,8 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: isDark
-            ? AppTheme.surfaceDark.withOpacity(0.5)
-            : Colors.white.withOpacity(0.8),
+            ? AppTheme.surfaceDark.withValues(alpha: 0.5)
+            : Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isWrong
@@ -436,14 +436,14 @@ class _RegistrationPinScreenState extends ConsumerState<RegistrationPinScreen> {
               : (isFocused
                     ? AppTheme.primaryColor
                     : (isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.05))),
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.05))),
           width: 2,
         ),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),

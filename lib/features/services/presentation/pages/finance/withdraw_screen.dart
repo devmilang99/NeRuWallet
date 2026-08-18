@@ -154,9 +154,11 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: AppTheme.radiusMedium,
-                  border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -249,7 +251,9 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                       boxShadow: [
                         if (selected)
                           BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(0.15),
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.15,
+                            ),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -260,7 +264,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: _methods[i]['color'].withOpacity(0.1),
+                            color: _methods[i]['color'].withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -307,12 +311,12 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.05),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Column(

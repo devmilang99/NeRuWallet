@@ -255,13 +255,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
             color: isDark
-                ? AppTheme.surfaceDark.withOpacity(0.8)
-                : Colors.white.withOpacity(0.9),
+                ? AppTheme.surfaceDark.withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.9),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(
-                  isDark ? 0.2 : 0.1,
+                color: AppTheme.primaryColor.withValues(
+                  alpha: isDark ? 0.2 : 0.1,
                 ),
                 blurRadius: 40,
                 offset: const Offset(0, 20),

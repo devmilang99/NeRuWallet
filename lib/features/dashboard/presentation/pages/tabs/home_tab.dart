@@ -131,7 +131,7 @@ class HomeTab extends StatelessWidget {
                             Icons.history_rounded,
                             size: 40,
                             color: (isDark ? Colors.white : Colors.black)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -183,7 +183,7 @@ class HomeTab extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFF59E0B).withOpacity(0.9),
+            const Color(0xFFF59E0B).withValues(alpha: 0.9),
             const Color(0xFFD97706),
           ],
           begin: Alignment.topLeft,
@@ -192,7 +192,7 @@ class HomeTab extends StatelessWidget {
         borderRadius: AppTheme.radiusLarge,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF59E0B).withOpacity(0.3),
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),

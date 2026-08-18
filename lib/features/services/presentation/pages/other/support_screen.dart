@@ -68,8 +68,8 @@ class SupportScreen extends StatelessWidget {
         borderRadius: AppTheme.radiusLarge,
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -77,7 +77,7 @@ class SupportScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: AppTheme.radiusMedium,
             ),
             child: Icon(icon, color: color),
@@ -113,7 +113,9 @@ class SupportScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark.withOpacity(0.5) : Colors.white70,
+        color: isDark
+            ? AppTheme.surfaceDark.withValues(alpha: 0.5)
+            : Colors.white70,
         borderRadius: AppTheme.radiusMedium,
       ),
       child: Row(

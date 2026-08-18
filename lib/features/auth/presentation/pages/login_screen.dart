@@ -186,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     (isDark
                             ? AppTheme.backgroundDark
                             : AppTheme.backgroundColor)
-                        .withOpacity(0.8),
+                        .withValues(alpha: 0.8),
                     isDark ? AppTheme.backgroundDark : AppTheme.backgroundColor,
                   ],
                 ),
@@ -247,19 +247,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.all(28),
                                   decoration: BoxDecoration(
                                     color: isDark
-                                        ? AppTheme.surfaceDark.withOpacity(0.7)
-                                        : Colors.white.withOpacity(0.9),
+                                        ? AppTheme.surfaceDark.withValues(
+                                            alpha: 0.7,
+                                          )
+                                        : Colors.white.withValues(alpha: 0.9),
                                     borderRadius: AppTheme.radiusLarge,
                                     border: Border.all(
                                       color: isDark
-                                          ? Colors.white.withOpacity(0.08)
+                                          ? Colors.white.withValues(alpha: 0.08)
                                           : Colors.white,
                                       width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(
-                                          isDark ? 0.3 : 0.08,
+                                        color: Colors.black.withValues(
+                                          alpha: isDark ? 0.3 : 0.08,
                                         ),
                                         blurRadius: 40,
                                         offset: const Offset(0, 20),
@@ -355,7 +357,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           ),
                                           elevation: 8,
                                           shadowColor: AppTheme.primaryColor
-                                              .withOpacity(0.3),
+                                              .withValues(alpha: 0.3),
                                         ),
                                         child: const Text(
                                           'Sign In',
@@ -400,7 +402,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                     border: Border.all(
                                                       color: AppTheme
                                                           .primaryColor
-                                                          .withOpacity(0.2),
+                                                          .withValues(
+                                                            alpha: 0.2,
+                                                          ),
                                                     ),
                                                   ),
                                                   child: const Icon(
@@ -498,12 +502,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         backgroundColor: isDark
-            ? AppTheme.surfaceDark.withOpacity(0.4)
-            : Colors.white.withOpacity(0.6),
+            ? AppTheme.surfaceDark.withValues(alpha: 0.4)
+            : Colors.white.withValues(alpha: 0.6),
         side: BorderSide(
           color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.05),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: Row(

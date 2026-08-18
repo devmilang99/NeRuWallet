@@ -366,7 +366,7 @@ class _ChangePinProfileScreenState
             ? [
                 BoxShadow(
                   color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),

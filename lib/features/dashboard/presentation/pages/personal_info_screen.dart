@@ -22,7 +22,7 @@ class PersonalInformationScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -125,7 +125,7 @@ class PersonalInformationScreen extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusMedium,
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
@@ -133,7 +133,7 @@ class PersonalInformationScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppTheme.primaryColor, size: 20),
@@ -164,7 +164,7 @@ class PersonalInformationScreen extends StatelessWidget {
           Icon(
             Icons.lock_outline_rounded,
             size: 14,
-            color: Colors.grey.withOpacity(0.5),
+            color: Colors.grey.withValues(alpha: 0.5),
           ),
         ],
       ),

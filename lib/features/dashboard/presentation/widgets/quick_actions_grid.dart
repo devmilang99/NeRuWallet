@@ -37,7 +37,7 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
           borderRadius: AppTheme.radiusLarge,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
               blurRadius: 30,
               offset: const Offset(0, 15),
             ),
@@ -182,7 +182,10 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             border: _isAdjusting
-                ? Border.all(color: action.color.withOpacity(0.3), width: 1.5)
+                ? Border.all(
+                    color: action.color.withValues(alpha: 0.3),
+                    width: 1.5,
+                  )
                 : null,
             borderRadius: AppTheme.radiusMedium,
           ),
@@ -192,7 +195,7 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: action.color.withOpacity(0.08),
+                  color: action.color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(action.icon, color: action.color, size: 20),

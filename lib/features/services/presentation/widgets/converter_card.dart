@@ -81,7 +81,7 @@ class _ConverterCardState extends State<ConverterCard> {
         borderRadius: AppTheme.radiusLarge,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -184,7 +184,7 @@ class _ConverterCardState extends State<ConverterCard> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
+                      ? Colors.white.withValues(alpha: 0.05)
                       : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),

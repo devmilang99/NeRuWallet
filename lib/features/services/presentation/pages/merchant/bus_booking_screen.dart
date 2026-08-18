@@ -266,7 +266,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
+                      ? Colors.white.withValues(alpha: 0.05)
                       : Colors.grey[200],
                   borderRadius: AppTheme.radiusLarge,
                 ),
@@ -342,7 +342,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: providerColor.withOpacity(0.2),
+                              color: providerColor.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -493,7 +493,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
                         color: isSelected
                             ? providerColor
                             : (isDark
-                                  ? Colors.white.withOpacity(0.05)
+                                  ? Colors.white.withValues(alpha: 0.05)
                                   : Colors.grey[100]),
                         borderRadius: AppTheme.radiusMedium,
                         border: Border.all(
@@ -532,7 +532,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
                     borderRadius: AppTheme.radiusLarge,
                   ),
                   elevation: 8,
-                  shadowColor: providerColor.withOpacity(0.4),
+                  shadowColor: providerColor.withValues(alpha: 0.4),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -587,13 +587,13 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark ? Colors.white.withOpacity(0.1) : Colors.white)
+                ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white)
                 : Colors.transparent,
             borderRadius: AppTheme.radiusLarge,
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                     ),
                   ]
@@ -631,7 +631,7 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 20, color: color),
@@ -677,10 +677,15 @@ class _BusBookingScreenState extends ConsumerState<BusBookingScreen> {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusLarge,
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]!,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey[200]!,
         ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+          ),
         ],
       ),
       child: Column(

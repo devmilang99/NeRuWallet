@@ -29,7 +29,7 @@ class ExchangeRateScreen extends StatelessWidget {
           icon: const Icon(Icons.notifications_active_outlined, size: 18),
           label: const Text('Set Rate Alert'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0EA5E9).withOpacity(0.1),
+            backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
             foregroundColor: const Color(0xFF0EA5E9),
             elevation: 0,
             shape: RoundedRectangleBorder(

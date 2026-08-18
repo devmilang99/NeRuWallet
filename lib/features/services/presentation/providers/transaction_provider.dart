@@ -1,4 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'transaction_provider.g.dart';
 
 class TransactionState {
   final bool isLoading;
@@ -20,8 +22,10 @@ class TransactionState {
   }
 }
 
-class TransactionNotifier extends StateNotifier<TransactionState> {
-  TransactionNotifier() : super(TransactionState());
+@riverpod
+class Transaction extends _$Transaction {
+  @override
+  TransactionState build() => TransactionState();
 
   Future<void> processTransaction({
     required String type,
@@ -38,8 +42,3 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     state = state.copyWith(isLoading: false, isSuccess: true);
   }
 }
-
-final transactionProvider =
-    StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
-      return TransactionNotifier();
-    });

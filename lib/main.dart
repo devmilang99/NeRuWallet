@@ -108,7 +108,7 @@ class NeRuWalletApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeControllerProvider);
     final router = ref.watch(appRouterProvider);
     final messengerKey = ref.watch(scaffoldMessengerKeyProvider);
 

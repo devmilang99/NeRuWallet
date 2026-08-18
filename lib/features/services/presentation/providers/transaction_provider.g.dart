@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'balance_provider.dart';
+part of 'transaction_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,51 +9,52 @@ part of 'balance_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(Balance)
-final balanceProvider = BalanceProvider._();
+@ProviderFor(Transaction)
+final transactionProvider = TransactionProvider._();
 
-final class BalanceProvider extends $NotifierProvider<Balance, BalanceState> {
-  BalanceProvider._()
+final class TransactionProvider
+    extends $NotifierProvider<Transaction, TransactionState> {
+  TransactionProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'balanceProvider',
+        name: r'transactionProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$balanceHash();
+  String debugGetCreateSourceHash() => _$transactionHash();
 
   @$internal
   @override
-  Balance create() => Balance();
+  Transaction create() => Transaction();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(BalanceState value) {
+  Override overrideWithValue(TransactionState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<BalanceState>(value),
+      providerOverride: $SyncValueProvider<TransactionState>(value),
     );
   }
 }
 
-String _$balanceHash() => r'34e1455c0f0614a565c8ac7fecadf27efb8c10b0';
+String _$transactionHash() => r'00c55bbc98da7027acb9938c4244354714768437';
 
-abstract class _$Balance extends $Notifier<BalanceState> {
-  BalanceState build();
+abstract class _$Transaction extends $Notifier<TransactionState> {
+  TransactionState build();
 
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<BalanceState, BalanceState>;
+    final ref = this.ref as $Ref<TransactionState, TransactionState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<BalanceState, BalanceState>,
-              BalanceState,
+              AnyNotifier<TransactionState, TransactionState>,
+              TransactionState,
               Object?,
               Object?
             >;

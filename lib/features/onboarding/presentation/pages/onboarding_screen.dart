@@ -185,9 +185,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         Container(
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+            border: Border.all(
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
           ),
           child: Icon(item.icon, size: 100, color: AppTheme.primaryColor)
               .animate(onPlay: (controller) => controller.repeat(reverse: true))

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'notification_provider.g.dart';
 
 class NotificationItem {
   final String id;
@@ -34,14 +36,17 @@ class NotificationItem {
   }
 }
 
-class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
-  NotificationNotifier() : super(_initialNotifications);
+@riverpod
+class Notifications extends _$Notifications {
+  @override
+  List<NotificationItem> build() => _initialNotifications;
 
   static final List<NotificationItem> _initialNotifications = [
     NotificationItem(
       id: '1',
       title: 'Welcome to NeRuWallet!',
-      message: 'Thank you for joining. Start exploring our premium features today.',
+      message:
+          'Thank you for joining. Start exploring our premium features today.',
       time: '2 hours ago',
       icon: Icons.celebration_rounded,
       color: AppTheme.primaryColor,
@@ -49,7 +54,8 @@ class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
     NotificationItem(
       id: '2',
       title: 'Cashback Received',
-      message: 'You received Rs. 25.00 cashback for your recent utility bill payment.',
+      message:
+          'You received Rs. 25.00 cashback for your recent utility bill payment.',
       time: '5 hours ago',
       icon: Icons.account_balance_wallet_rounded,
       color: AppTheme.successColor,
@@ -57,7 +63,8 @@ class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
     NotificationItem(
       id: '3',
       title: 'Security Alert',
-      message: "A new login was detected from a new device. If this wasn't you, please change your PIN.",
+      message:
+          "A new login was detected from a new device. If this wasn't you, please change your PIN.",
       time: 'Yesterday',
       icon: Icons.security_rounded,
       color: AppTheme.warningColor,
@@ -68,7 +75,7 @@ class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
   void markAsRead(String id) {
     state = [
       for (final n in state)
-        if (n.id == id) n.copyWith(isUnread: false) else n
+        if (n.id == id) n.copyWith(isUnread: false) else n,
     ];
   }
 
@@ -85,10 +92,7 @@ class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
   }
 }
 
-final notificationProvider = StateNotifierProvider<NotificationNotifier, List<NotificationItem>>((ref) {
-  return NotificationNotifier();
-});
-
-final unreadNotificationCountProvider = Provider<int>((ref) {
-  return ref.watch(notificationProvider).where((n) => n.isUnread).length;
-});
+@riverpod
+int unreadNotificationCount(Ref ref) {
+  return ref.watch(notificationsProvider).where((n) => n.isUnread).length;
+}

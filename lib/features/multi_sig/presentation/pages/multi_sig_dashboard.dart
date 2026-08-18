@@ -29,7 +29,7 @@ class MultiSigDashboard extends ConsumerWidget {
                   width: 300,
                   height: 300,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -95,7 +95,7 @@ class MultiSigDashboard extends ConsumerWidget {
             Icon(
               Icons.account_balance_wallet_outlined,
               size: 64,
-              color: AppTheme.textSecondaryColor.withOpacity(0.3),
+              color: AppTheme.textSecondaryColor.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -124,7 +124,7 @@ class MultiSigDashboard extends ConsumerWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
         ),
       ),
       child: Row(
@@ -132,7 +132,7 @@ class MultiSigDashboard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(

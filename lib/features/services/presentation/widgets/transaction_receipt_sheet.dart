@@ -166,14 +166,14 @@ class TransactionReceiptSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 color:
                     (isSuccess ? AppTheme.successColor : AppTheme.primaryColor)
-                        .withOpacity(0.05),
+                        .withValues(alpha: 0.05),
                 borderRadius: AppTheme.radiusLarge,
                 border: Border.all(
                   color:
                       (isSuccess
                               ? AppTheme.successColor
                               : AppTheme.primaryColor)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                 ),
               ),
               child: Row(

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/dashboard/data/models/quick_action_model.dart';
 
-class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
-  final PreferenceService _prefService;
+part 'quick_actions_provider.g.dart';
 
-  QuickActionsNotifier(this._prefService) : super(_defaultActions) {
+@riverpod
+class QuickActions extends _$QuickActions {
+  @override
+  List<QuickActionModel> build() {
     _loadSelectedActions();
+    return _defaultActions;
   }
 
   static const List<QuickActionModel> allAvailableActions = [
@@ -73,8 +76,6 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
       color: Color(0xFFF59E0B),
       category: 'Merchant',
     ),
-    // QuickActionModel(label: 'Food', icon: Icons.restaurant_rounded, color: Color(0xFFEC4899), category: 'Merchant'),
-    // QuickActionModel(label: 'Shopping', icon: Icons.shopping_bag_rounded, color: Color(0xFF8B5CF6), category: 'Merchant'),
   ];
 
   static const List<QuickActionModel> _defaultActions = [
@@ -105,7 +106,8 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
   ];
 
   Future<void> _loadSelectedActions() async {
-    final actionLabels = await _prefService.getStringList(
+    final prefService = ref.read(preferenceServiceProvider);
+    final actionLabels = await prefService.getStringList(
       'selected_quick_actions',
     );
     if (actionLabels != null && actionLabels.isNotEmpty) {
@@ -122,7 +124,6 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
           loaded.add(action);
         }
       }
-      // Ensure we don't load more than 8
       state = loaded.take(8).toList();
     }
   }
@@ -146,7 +147,6 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
       }
     } else {
       if (state.length < 8) {
-        // Updated limit to 8
         state = [...state, action];
       }
     }
@@ -154,7 +154,8 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
   }
 
   Future<void> _saveSelectedActions() async {
-    await _prefService.setStringList(
+    final prefService = ref.read(preferenceServiceProvider);
+    await prefService.setStringList(
       'selected_quick_actions',
       state.map((a) => a.label).toList(),
     );
@@ -164,8 +165,3 @@ class QuickActionsNotifier extends StateNotifier<List<QuickActionModel>> {
     return state.any((a) => a.label == action.label);
   }
 }
-
-final quickActionsProvider =
-    StateNotifierProvider<QuickActionsNotifier, List<QuickActionModel>>((ref) {
-      return QuickActionsNotifier(ref.watch(preferenceServiceProvider));
-    });

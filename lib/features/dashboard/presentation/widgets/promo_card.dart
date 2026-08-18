@@ -76,7 +76,7 @@ class _PromoCardState extends ConsumerState<PromoCard> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -111,7 +111,7 @@ class _PromoCardState extends ConsumerState<PromoCard> {
                       ),
                       decoration: BoxDecoration(
                         color: _isClaimed
-                            ? Colors.white.withOpacity(0.3)
+                            ? Colors.white.withValues(alpha: 0.3)
                             : Colors.white,
                         borderRadius: AppTheme.radiusFull,
                       ),

@@ -309,12 +309,12 @@ class _BillPaymentScreenState extends ConsumerState<BillPaymentScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.05),
+                    color: widget.color.withValues(alpha: 0.05),
                     borderRadius: AppTheme.radiusLarge,
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Column(

@@ -49,12 +49,14 @@ class FoodDeliveryScreen extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFFEC4899).withOpacity(0.1),
-                const Color(0xFFEC4899).withOpacity(0.05),
+                const Color(0xFFEC4899).withValues(alpha: 0.1),
+                const Color(0xFFEC4899).withValues(alpha: 0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFEC4899).withOpacity(0.3)),
+            border: Border.all(
+              color: const Color(0xFFEC4899).withValues(alpha: 0.3),
+            ),
           ),
           child: Material(
             color: Colors.transparent,
@@ -76,7 +78,7 @@ class FoodDeliveryScreen extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEC4899).withOpacity(0.15),
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Icon(

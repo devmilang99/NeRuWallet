@@ -163,7 +163,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -244,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   minHeight: 8,
                   backgroundColor: isDark
                       ? Colors.white10
-                      : Colors.black.withOpacity(0.05),
+                      : Colors.black.withValues(alpha: 0.05),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     isExceeded ? AppTheme.errorColor : AppTheme.primaryColor,
                   ),
@@ -444,7 +444,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
+          color: AppTheme.primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: AppTheme.primaryColor, size: 22),
@@ -464,7 +464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       height: 1,
       indent: 72,
       endIndent: 20,
-      color: isDark ? Colors.white12 : Colors.black.withOpacity(0.03),
+      color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.03),
     );
   }
 

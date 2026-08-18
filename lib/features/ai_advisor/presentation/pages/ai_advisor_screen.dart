@@ -224,7 +224,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               color: const Color(0xFF161B22),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: const Color(0xFF10B981).withOpacity(0.2),
+                color: const Color(0xFF10B981).withValues(alpha: 0.2),
               ),
             ),
             child: const Row(
@@ -400,9 +400,9 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.2)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -447,7 +447,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withOpacity(0.1),
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -533,7 +533,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF161B22),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +582,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isUser
-                ? const Color(0xFF10B981).withOpacity(0.15)
+                ? const Color(0xFF10B981).withValues(alpha: 0.15)
                 : const Color(0xFF161B22),
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(20),
@@ -592,8 +592,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
             ),
             border: Border.all(
               color: isUser
-                  ? const Color(0xFF10B981).withOpacity(0.3)
-                  : Colors.white.withOpacity(0.05),
+                  ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                  : Colors.white.withValues(alpha: 0.05),
             ),
           ),
           child: Column(
@@ -626,7 +626,9 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
               Text(
                 content,
                 style: TextStyle(
-                  color: isUser ? Colors.white : Colors.white.withOpacity(0.9),
+                  color: isUser
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.9),
                   fontSize: 15,
                   height: 1.5,
                 ),
@@ -692,7 +694,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         color: const Color(0xFF0D1117),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -709,7 +711,9 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF161B22),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.1)),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+          ),
         ),
         child: Row(
           children: [
@@ -739,7 +743,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withOpacity(0.3),
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -835,7 +839,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.red.withOpacity(0.1)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,7 +907,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -975,7 +979,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -1014,7 +1018,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.1)),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1036,7 +1040,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           Text(
             content,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
               height: 1.5,
             ),
@@ -1080,7 +1084,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                     child: Text(
                       s.toString(),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 13,
                       ),
                     ),
@@ -1189,7 +1193,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF161B22),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1225,7 +1229,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 gridData: FlGridData(
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     strokeWidth: 1,
                   ),
                 ),
@@ -1316,8 +1320,8 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.2),
-                          const Color(0xFFD946EF).withOpacity(0.0),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                          const Color(0xFFD946EF).withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -1328,7 +1332,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (spot) => const Color(0xFF1F2937),
-                    tooltipRoundedRadius: 12,
+                    tooltipBorderRadius: BorderRadius.circular(12),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final date = pointDates[spot.x.toInt()];

@@ -60,9 +60,9 @@ class DashboardHeader extends ConsumerWidget {
                 context,
                 isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
                 () {
-                  ref.read(themeProvider.notifier).state = isDark
-                      ? ThemeMode.light
-                      : ThemeMode.dark;
+                  ref
+                      .read(themeControllerProvider.notifier)
+                      .setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
                 },
               ),
               const SizedBox(width: 8),
@@ -121,7 +121,7 @@ class DashboardHeader extends ConsumerWidget {
                 onTap: onProfileTap,
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                   child: Text(
                     userName.split(' ').map((e) => e[0]).take(2).join(),
                     style: const TextStyle(
@@ -153,7 +153,7 @@ class DashboardHeader extends ConsumerWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

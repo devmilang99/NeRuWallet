@@ -6,22 +6,52 @@ part of 'preference_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$preferenceServiceHash() => r'de2cb7a9845b44ab20008511e1407c107084ba24';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [preferenceService].
 @ProviderFor(preferenceService)
-final preferenceServiceProvider = Provider<PreferenceService>.internal(
-  preferenceService,
-  name: r'preferenceServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$preferenceServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final preferenceServiceProvider = PreferenceServiceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef PreferenceServiceRef = ProviderRef<PreferenceService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class PreferenceServiceProvider
+    extends
+        $FunctionalProvider<
+          PreferenceService,
+          PreferenceService,
+          PreferenceService
+        >
+    with $Provider<PreferenceService> {
+  PreferenceServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'preferenceServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$preferenceServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<PreferenceService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  PreferenceService create(Ref ref) {
+    return preferenceService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PreferenceService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PreferenceService>(value),
+    );
+  }
+}
+
+String _$preferenceServiceHash() => r'de2cb7a9845b44ab20008511e1407c107084ba24';

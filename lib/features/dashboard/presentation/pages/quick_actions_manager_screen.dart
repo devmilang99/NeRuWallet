@@ -30,7 +30,7 @@ class _QuickActionsManagerScreenState
   @override
   Widget build(BuildContext context) {
     final selectedActions = ref.watch(quickActionsProvider);
-    const allActions = QuickActionsNotifier.allAvailableActions;
+    const allActions = QuickActions.allAvailableActions;
     final isDark = widget.isDark;
 
     // Filter and group actions efficiently (only rebuild on search change)
@@ -175,8 +175,8 @@ class _QuickActionsManagerScreenState
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: action.color.withOpacity(
-                            isSelected ? 0.2 : 0.1,
+                          color: action.color.withValues(
+                            alpha: isSelected ? 0.2 : 0.1,
                           ),
                           borderRadius: BorderRadius.circular(18),
                           border: isSelected

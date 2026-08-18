@@ -106,7 +106,7 @@ class HelpSupportScreen extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusMedium,
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
@@ -114,7 +114,7 @@ class HelpSupportScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -155,7 +155,7 @@ class HelpSupportScreen extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusMedium,
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: Column(

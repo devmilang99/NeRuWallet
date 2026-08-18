@@ -166,7 +166,7 @@ Widget _buildBoardingPass(
       borderRadius: BorderRadius.circular(32),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
           blurRadius: 40,
           offset: const Offset(0, 20),
         ),
@@ -321,7 +321,7 @@ Widget _buildBoardingPass(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.white.withOpacity(0.05)
+                        ? Colors.white.withValues(alpha: 0.05)
                         : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
@@ -427,10 +427,12 @@ Widget _buildInfoColumn(
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(
-      color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey[50],
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]!,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.grey[200]!,
       ),
     ),
     child: Column(
@@ -471,7 +473,7 @@ Widget _buildTopIconButton({
     child: Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: Colors.white, size: 20),

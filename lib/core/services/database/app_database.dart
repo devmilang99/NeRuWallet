@@ -159,7 +159,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(aiMemories);
       }
       if (from < 3) {
-        await m.issueCustomQuery(
+        await customStatement(
           'ALTER TABLE transactions ADD COLUMN transaction_type TEXT',
         );
       }
@@ -167,10 +167,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(multiSigGroups);
         await m.createTable(multiSigMembers);
         await m.createTable(pendingSignatures);
-        await m.issueCustomQuery(
+        await customStatement(
           'ALTER TABLE transactions ADD COLUMN group_id TEXT',
         );
-        await m.issueCustomQuery(
+        await customStatement(
           "ALTER TABLE transactions ADD COLUMN status TEXT DEFAULT 'completed'",
         );
       }

@@ -36,11 +36,13 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
   Future<void> _pickContact() async {
     try {
       // Request permission first
-      final granted = await FlutterContacts.requestPermission();
+      final granted = await FlutterContacts.permissions.request(
+        PermissionType.read,
+      );
 
-      if (granted == true) {
+      if (granted == PermissionStatus.granted) {
         try {
-          final contact = await FlutterContacts.openExternalPick();
+          final contact = await FlutterContacts.native.showPicker();
           if (contact != null && contact.phones.isNotEmpty) {
             _setPhone(contact.phones.first.number);
             return;
@@ -76,7 +78,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
 
   Future<void> _showInternalContactPicker() async {
     GlassDialog.showLoading(context, message: 'Loading Contacts...');
-    final contacts = await FlutterContacts.getContacts(withProperties: true);
+    final contacts = await FlutterContacts.getAll(
+      properties: {ContactProperty.phone},
+    );
     if (!mounted) return;
     Navigator.pop(context); // Close loading
 
@@ -126,8 +130,14 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
                   final c = contacts[i];
                   if (c.phones.isEmpty) return const SizedBox.shrink();
                   return ListTile(
-                    leading: CircleAvatar(child: Text(c.displayName[0])),
-                    title: Text(c.displayName),
+                    leading: CircleAvatar(
+                      child: Text(
+                        (c.displayName ?? '').isNotEmpty
+                            ? c.displayName![0]
+                            : '?',
+                      ),
+                    ),
+                    title: Text(c.displayName ?? 'No Name'),
                     subtitle: Text(c.phones.first.number),
                     onTap: () {
                       _setPhone(c.phones.first.number);
@@ -372,9 +382,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.05),
+        color: AppTheme.primaryColor.withValues(alpha: 0.05),
         borderRadius: AppTheme.radiusMedium,
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
       ),
       child: const Row(
         children: [

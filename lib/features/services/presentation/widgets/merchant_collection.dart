@@ -47,7 +47,7 @@ class MerchantCollection extends StatelessWidget {
                   borderRadius: AppTheme.radiusLarge,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -60,7 +60,7 @@ class MerchantCollection extends StatelessWidget {
                       height: 100,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: m['color'].withOpacity(0.1),
+                        color: m['color'].withValues(alpha: 0.1),
                         borderRadius: AppTheme.radiusMedium,
                       ),
                       child: Icon(m['icon'], color: m['color'], size: 40),

@@ -298,7 +298,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                 width: 60,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: _steps.isEmpty
@@ -348,7 +348,7 @@ class _PermissionScreenState extends State<PermissionScreen>
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: step.color.withOpacity(0.1),
+              color: step.color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(step.icon, size: 100, color: step.color)
@@ -412,9 +412,9 @@ class _PermissionScreenState extends State<PermissionScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -450,7 +450,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                   borderRadius: AppTheme.radiusLarge,
                 ),
                 elevation: 4,
-                shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
               child: _isRequesting
                   ? const SizedBox(

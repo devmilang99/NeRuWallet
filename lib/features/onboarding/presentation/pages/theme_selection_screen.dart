@@ -18,7 +18,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedThemeMode = ref.watch(themeProvider);
+    final selectedThemeMode = ref.watch(themeControllerProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -103,7 +103,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
 
     return GestureDetector(
       onTap: () {
-        ref.read(themeProvider.notifier).state = mode;
+        ref.read(themeControllerProvider.notifier).setThemeMode(mode);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -111,10 +111,10 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withOpacity(0.15)
+              ? AppTheme.primaryColor.withValues(alpha: 0.15)
               : (isDark
-                    ? AppTheme.surfaceDark.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.8)),
+                    ? AppTheme.surfaceDark.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.8)),
           borderRadius: AppTheme.radiusLarge,
           border: Border.all(
             color: isSelected ? AppTheme.primaryColor : Colors.transparent,
@@ -123,7 +123,7 @@ class _ThemeSelectionScreenState extends ConsumerState<ThemeSelectionScreen> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.3),
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),

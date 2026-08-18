@@ -261,7 +261,7 @@ class _PassengerDetailsScreenState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: AppTheme.radiusSmall,
               ),
               child: const Icon(Icons.group_rounded, color: color, size: 20),
