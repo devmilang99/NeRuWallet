@@ -6,22 +6,44 @@ part of 'spending_limit_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$spendingLimitHash() => r'645256bf5a5cd86e3220cea58c17159a1caaaf88';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [spendingLimit].
 @ProviderFor(spendingLimit)
-final spendingLimitProvider = AutoDisposeFutureProvider<SpendingLimit>.internal(
-  spendingLimit,
-  name: r'spendingLimitProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$spendingLimitHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const spendingLimitProvider = SpendingLimitProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SpendingLimitRef = AutoDisposeFutureProviderRef<SpendingLimit>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class SpendingLimitProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SpendingLimit>,
+          SpendingLimit,
+          FutureOr<SpendingLimit>
+        >
+    with $FutureModifier<SpendingLimit>, $FutureProvider<SpendingLimit> {
+  const SpendingLimitProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'spendingLimitProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$spendingLimitHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SpendingLimit> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SpendingLimit> create(Ref ref) {
+    return spendingLimit(ref);
+  }
+}
+
+String _$spendingLimitHash() => r'645256bf5a5cd86e3220cea58c17159a1caaaf88';

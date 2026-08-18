@@ -6,21 +6,50 @@ part of 'kyc_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(KycState)
+const kycStateProvider = KycStateProvider._();
+
+final class KycStateProvider extends $AsyncNotifierProvider<KycState, bool> {
+  const KycStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'kycStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$kycStateHash();
+
+  @$internal
+  @override
+  KycState create() => KycState();
+}
+
 String _$kycStateHash() => r'f77925dad39fba871c88d83d7644793865f5e56e';
 
-/// See also [KycState].
-@ProviderFor(KycState)
-final kycStateProvider =
-    AutoDisposeAsyncNotifierProvider<KycState, bool>.internal(
-      KycState.new,
-      name: r'kycStateProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$kycStateHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+abstract class _$KycState extends $AsyncNotifier<bool> {
+  FutureOr<bool> build();
 
-typedef _$KycState = AutoDisposeAsyncNotifier<bool>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
