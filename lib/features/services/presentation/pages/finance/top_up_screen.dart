@@ -546,7 +546,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: Colors.orange.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.orange),
                       ),
@@ -794,8 +794,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppTheme.surfaceDark.withValues(alpha: 0.5)
-                        : Colors.grey.withValues(alpha: 0.1),
+                        ? AppTheme.surfaceDark.withOpacity(0.5)
+                        : Colors.grey.withOpacity(0.1),
                     borderRadius: AppTheme.radiusMedium,
                   ),
                   child: const Text(
@@ -816,9 +816,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: AppTheme.primaryColor.withValues(
-                        alpha: 0.1,
-                      ),
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                       child: Icon(
                         _methods[i]['icon'],
                         color: AppTheme.primaryColor,
@@ -876,10 +874,10 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                          color: AppTheme.primaryColor.withOpacity(0.2),
                         ),
                       ),
                       child: Text(
@@ -913,12 +911,12 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                    color: AppTheme.primaryColor.withOpacity(0.05),
                     borderRadius: AppTheme.radiusLarge,
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.1),
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.1),
                     ),
                   ),
                   child: Column(
@@ -1009,8 +1007,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -1024,8 +1022,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -1041,8 +1039,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -1056,8 +1054,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
         ],
@@ -1075,8 +1073,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -1090,8 +1088,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -1110,8 +1108,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                     suffixIcon: const Icon(Icons.lock, size: 18),
                     filled: true,
                     fillColor: isDark
-                        ? Colors.grey.withValues(alpha: 0.1)
-                        : Colors.grey.withValues(alpha: 0.05),
+                        ? Colors.grey.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -1132,8 +1130,8 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
               suffixIcon: const Icon(Icons.lock, size: 18),
               filled: true,
               fillColor: isDark
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  ? Colors.grey.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.05),
             ),
           ),
         ],
@@ -1324,15 +1322,15 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withValues(alpha: 0.15)
+              ? AppTheme.primaryColor.withOpacity(0.15)
               : (isDark ? AppTheme.surfaceDark : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primaryColor
                 : (isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05)),
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05)),
             width: isSelected ? 2 : 1,
           ),
         ),

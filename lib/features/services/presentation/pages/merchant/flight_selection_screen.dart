@@ -218,7 +218,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             borderRadius: AppTheme.radiusLarge,
           ),
           child: Row(
@@ -323,7 +323,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: color.withValues(alpha: 0.1),
+                                          color: color.withOpacity(0.1),
                                           borderRadius: AppTheme.radiusSmall,
                                         ),
                                         child: const Icon(
@@ -403,7 +403,7 @@ class _FlightSelectionScreenState extends State<FlightSelectionScreen> {
                                     Icon(
                                       Icons.flight_takeoff_rounded,
                                       size: 14,
-                                      color: color.withValues(alpha: 0.5),
+                                      color: color.withOpacity(0.5),
                                     ),
                                   ],
                                 ),

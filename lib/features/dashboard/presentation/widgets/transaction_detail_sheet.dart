@@ -64,7 +64,7 @@ class TransactionDetailSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
+                  color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(iconData, color: iconColor, size: 32),
@@ -103,7 +103,7 @@ class TransactionDetailSheet extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppTheme.surfaceDark.withValues(alpha: 0.5)
+                  ? AppTheme.surfaceDark.withOpacity(0.5)
                   : AppTheme.backgroundColor,
               borderRadius: AppTheme.radiusLarge,
             ),
@@ -252,7 +252,7 @@ class TransactionDetailSheet extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
         ),
         borderRadius: AppTheme.radiusMedium,
       ),
@@ -285,8 +285,8 @@ class TransactionDetailSheet extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.02),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.02),
         borderRadius: AppTheme.radiusMedium,
       ),
       child: Column(

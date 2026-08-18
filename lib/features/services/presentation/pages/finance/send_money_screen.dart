@@ -372,9 +372,9 @@ class _SendMoneyScreenState extends ConsumerState<SendMoneyScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        color: AppTheme.primaryColor.withOpacity(0.05),
         borderRadius: AppTheme.radiusMedium,
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.1)),
       ),
       child: const Row(
         children: [

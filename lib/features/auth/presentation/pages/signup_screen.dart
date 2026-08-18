@@ -106,7 +106,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     (isDark
                             ? AppTheme.backgroundDark
                             : AppTheme.backgroundColor)
-                        .withValues(alpha: 0.8),
+                        .withOpacity(0.8),
                     isDark ? AppTheme.backgroundDark : AppTheme.backgroundColor,
                   ],
                 ),
@@ -136,7 +136,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             icon: const Icon(Icons.arrow_back_ios_new_rounded),
                             style: IconButton.styleFrom(
                               backgroundColor: isDark
-                                  ? AppTheme.surfaceDark.withValues(alpha: 0.8)
+                                  ? AppTheme.surfaceDark.withOpacity(0.8)
                                   : Colors.white,
                               padding: const EdgeInsets.all(12),
                             ),
@@ -172,21 +172,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 padding: const EdgeInsets.all(28),
                                 decoration: BoxDecoration(
                                   color: isDark
-                                      ? AppTheme.surfaceDark.withValues(
-                                          alpha: 0.7,
-                                        )
-                                      : Colors.white.withValues(alpha: 0.9),
+                                      ? AppTheme.surfaceDark.withOpacity(0.7)
+                                      : Colors.white.withOpacity(0.9),
                                   borderRadius: AppTheme.radiusLarge,
                                   border: Border.all(
                                     color: isDark
-                                        ? Colors.white.withValues(alpha: 0.08)
+                                        ? Colors.white.withOpacity(0.08)
                                         : Colors.white,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: isDark ? 0.3 : 0.08,
+                                      color: Colors.black.withOpacity(
+                                        isDark ? 0.3 : 0.08,
                                       ),
                                       blurRadius: 40,
                                       offset: const Offset(0, 20),
@@ -222,7 +220,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                         ),
                                         elevation: 8,
                                         shadowColor: AppTheme.primaryColor
-                                            .withValues(alpha: 0.3),
+                                            .withOpacity(0.3),
                                       ),
                                       child: const Text(
                                         'Next',

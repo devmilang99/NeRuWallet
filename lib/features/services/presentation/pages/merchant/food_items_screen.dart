@@ -113,12 +113,12 @@ class FoodItemsScreen extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              category['color'].withValues(alpha: 0.1),
-              category['color'].withValues(alpha: 0.05),
+              category['color'].withOpacity(0.1),
+              category['color'].withOpacity(0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: category['color'].withValues(alpha: 0.3)),
+          border: Border.all(color: category['color'].withOpacity(0.3)),
         ),
         child: Stack(
           children: [
@@ -133,7 +133,7 @@ class FoodItemsScreen extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: category['color'].withValues(alpha: 0.15),
+                      color: category['color'].withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
@@ -193,7 +193,7 @@ class FoodItemsScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      category['color'].withValues(alpha: 0.1),
+                      category['color'].withOpacity(0.1),
                       Colors.transparent,
                     ],
                   ),

@@ -138,7 +138,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
+                      ? Colors.white.withOpacity(0.05)
                       : Colors.grey[200],
                   borderRadius: AppTheme.radiusLarge,
                 ),
@@ -212,7 +212,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: providerColor.withValues(alpha: 0.3),
+                              color: providerColor.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -328,7 +328,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                         color: isSelected
                             ? providerColor
                             : (isDark
-                                  ? Colors.white.withValues(alpha: 0.05)
+                                  ? Colors.white.withOpacity(0.05)
                                   : Colors.grey[100]),
                         borderRadius: AppTheme.radiusMedium,
                         border: Border.all(
@@ -364,7 +364,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                     borderRadius: AppTheme.radiusLarge,
                   ),
                   elevation: 8,
-                  shadowColor: providerColor.withValues(alpha: 0.4),
+                  shadowColor: providerColor.withOpacity(0.4),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -409,13 +409,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white)
+                ? (isDark ? Colors.white.withOpacity(0.1) : Colors.white)
                 : Colors.transparent,
             borderRadius: AppTheme.radiusLarge,
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 4,
                     ),
                   ]
@@ -452,7 +452,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                color: const Color(0xFF10B981).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 20, color: const Color(0xFF10B981)),
@@ -554,9 +554,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey[100],
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100],
           shape: BoxShape.circle,
         ),
         child: Icon(

@@ -61,7 +61,7 @@ class BalanceCard extends ConsumerWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -78,7 +78,7 @@ class BalanceCard extends ConsumerWidget {
                   height: 150,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                    color: AppTheme.primaryColor.withOpacity(0.15),
                   ),
                 ),
               ),
@@ -94,15 +94,15 @@ class BalanceCard extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: AppTheme.radiusLarge,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: Colors.white.withOpacity(0.08),
                         width: 1.5,
                       ),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.02),
+                          Colors.white.withOpacity(0.1),
+                          Colors.white.withOpacity(0.02),
                         ],
                       ),
                     ),
@@ -147,7 +147,7 @@ class BalanceCard extends ConsumerWidget {
                                         ),
                                         style: IconButton.styleFrom(
                                           backgroundColor: Colors.white
-                                              .withValues(alpha: 0.1),
+                                              .withOpacity(0.1),
                                           padding: const EdgeInsets.all(8),
                                           minimumSize: Size.zero,
                                           tapTargetSize:
@@ -160,9 +160,8 @@ class BalanceCard extends ConsumerWidget {
                                       )
                                       .shimmer(
                                         duration: 2000.ms,
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.3,
-                                        ),
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.3),
                                       ),
                                 const SizedBox(width: 12),
                                 _buildCardChip(),
@@ -287,7 +286,7 @@ class BalanceCard extends ConsumerWidget {
                   angle: 1.57,
                   child: Icon(
                     Icons.wifi_rounded,
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: Colors.white.withOpacity(0.1),
                     size: 24,
                   ),
                 ),
@@ -307,7 +306,7 @@ class BalanceCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -355,7 +354,7 @@ class BalanceCard extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFFFD700).withValues(alpha: 0.8),
+            const Color(0xFFFFD700).withOpacity(0.8),
             const Color(0xFFB8860B),
           ],
           begin: Alignment.topLeft,
@@ -364,7 +363,7 @@ class BalanceCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -401,7 +400,7 @@ class BalanceCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.white10),
         ),
@@ -430,7 +429,7 @@ class BalanceCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 16),
@@ -481,11 +480,9 @@ class BalanceCard extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.errorColor.withValues(alpha: 0.1),
+              color: AppTheme.errorColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.errorColor.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: AppTheme.errorColor.withOpacity(0.2)),
             ),
             child: Row(
               children: [

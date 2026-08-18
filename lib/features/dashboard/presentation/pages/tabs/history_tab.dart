@@ -163,7 +163,7 @@ class _HistoryTabState extends State<HistoryTab> {
         //                 boxShadow: isActive
         //                     ? [
         //                         BoxShadow(
-        //                           color: AppTheme.primaryColor.withValues(alpha: 0.3),
+        //                           color: AppTheme.primaryColor.withOpacity(0.3),
         //                           blurRadius: 8,
         //                           offset: const Offset(0, 4),
         //                         ),
@@ -207,7 +207,7 @@ class _HistoryTabState extends State<HistoryTab> {
                               (widget.isDark
                                       ? AppTheme.textHintDark
                                       : AppTheme.textHintColor)
-                                  .withValues(alpha: 0.2),
+                                  .withOpacity(0.2),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -320,9 +320,7 @@ class _DateHeader extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    (isDark ? Colors.white : Colors.black).withValues(
-                      alpha: 0.1,
-                    ),
+                    (isDark ? Colors.white : Colors.black).withOpacity(0.1),
                   ],
                 ),
               ),
@@ -346,9 +344,7 @@ class _DateHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    (isDark ? Colors.white : Colors.black).withValues(
-                      alpha: 0.1,
-                    ),
+                    (isDark ? Colors.white : Colors.black).withOpacity(0.1),
                     Colors.transparent,
                   ],
                 ),

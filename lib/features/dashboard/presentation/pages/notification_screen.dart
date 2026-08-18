@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neruwallet/core/theme/app_theme.dart';
+
 import '../providers/notification_provider.dart';
 
 class NotificationScreen extends ConsumerWidget {
@@ -13,13 +14,18 @@ class NotificationScreen extends ConsumerWidget {
     final notifications = ref.watch(notificationProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, 
-            color: isDark ? Colors.white : AppTheme.textBodyColor, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: isDark ? Colors.white : AppTheme.textBodyColor,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -33,8 +39,12 @@ class NotificationScreen extends ConsumerWidget {
         actions: [
           if (notifications.isNotEmpty)
             TextButton(
-              onPressed: () => ref.read(notificationProvider.notifier).markAllAsRead(),
-              child: const Text('Mark all as read', style: TextStyle(fontSize: 12)),
+              onPressed: () =>
+                  ref.read(notificationProvider.notifier).markAllAsRead(),
+              child: const Text(
+                'Mark all as read',
+                style: TextStyle(fontSize: 12),
+              ),
             ),
         ],
       ),
@@ -43,7 +53,10 @@ class NotificationScreen extends ConsumerWidget {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -56,13 +69,14 @@ class NotificationScreen extends ConsumerWidget {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => ref.read(notificationProvider.notifier).clearAll(),
+                        onTap: () =>
+                            ref.read(notificationProvider.notifier).clearAll(),
                         child: Text(
                           'Clear All',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.errorColor.withValues(alpha: 0.8),
+                            color: AppTheme.errorColor.withOpacity(0.8),
                           ),
                         ),
                       ),
@@ -73,23 +87,35 @@ class NotificationScreen extends ConsumerWidget {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(20),
                     itemCount: notifications.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = notifications[index];
                       return Dismissible(
                         key: Key(item.id),
                         direction: DismissDirection.endToStart,
-                        onDismissed: (_) => ref.read(notificationProvider.notifier).removeNotification(item.id),
+                        onDismissed: (_) => ref
+                            .read(notificationProvider.notifier)
+                            .removeNotification(item.id),
                         background: Container(
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorColor.withValues(alpha: 0.1),
+                            color: AppTheme.errorColor.withOpacity(0.1),
                             borderRadius: AppTheme.radiusMedium,
                           ),
-                          child: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppTheme.errorColor,
+                          ),
                         ),
-                        child: _buildNotificationTile(context, ref, item, isDark, index),
+                        child: _buildNotificationTile(
+                          context,
+                          ref,
+                          item,
+                          isDark,
+                          index,
+                        ),
                       );
                     },
                   ),
@@ -99,7 +125,13 @@ class NotificationScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotificationTile(BuildContext context, WidgetRef ref, NotificationItem item, bool isDark, int index) {
+  Widget _buildNotificationTile(
+    BuildContext context,
+    WidgetRef ref,
+    NotificationItem item,
+    bool isDark,
+    int index,
+  ) {
     return GestureDetector(
       onTap: () {
         if (item.isUnread) {
@@ -113,14 +145,17 @@ class NotificationScreen extends ConsumerWidget {
           borderRadius: AppTheme.radiusMedium,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withOpacity(0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
-          border: item.isUnread 
-            ? Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1), width: 1.5)
-            : Border.all(color: Colors.transparent, width: 1.5),
+          border: item.isUnread
+              ? Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  width: 1.5,
+                )
+              : Border.all(color: Colors.transparent, width: 1.5),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +163,7 @@ class NotificationScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: item.color.withValues(alpha: 0.1),
+                color: item.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(item.icon, color: item.color, size: 20),
@@ -145,9 +180,13 @@ class NotificationScreen extends ConsumerWidget {
                         child: Text(
                           item.title,
                           style: TextStyle(
-                            fontWeight: item.isUnread ? FontWeight.w900 : FontWeight.bold,
+                            fontWeight: item.isUnread
+                                ? FontWeight.w900
+                                : FontWeight.bold,
                             fontSize: 14,
-                            color: isDark ? Colors.white : AppTheme.textBodyColor,
+                            color: isDark
+                                ? Colors.white
+                                : AppTheme.textBodyColor,
                           ),
                         ),
                       ),
@@ -167,9 +206,13 @@ class NotificationScreen extends ConsumerWidget {
                     item.message,
                     style: TextStyle(
                       fontSize: 13,
-                      color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor,
+                      color: isDark
+                          ? AppTheme.textSecondaryDark
+                          : AppTheme.textSecondaryColor,
                       height: 1.4,
-                      fontWeight: item.isUnread ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: item.isUnread
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -177,7 +220,9 @@ class NotificationScreen extends ConsumerWidget {
                     item.time,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? AppTheme.textHintDark : AppTheme.textHintColor,
+                      color: isDark
+                          ? AppTheme.textHintDark
+                          : AppTheme.textHintColor,
                     ),
                   ),
                 ],
@@ -197,13 +242,13 @@ class NotificationScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_none_rounded,
               size: 60,
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              color: AppTheme.primaryColor.withOpacity(0.3),
             ),
           ),
           const SizedBox(height: 24),
@@ -214,7 +259,11 @@ class NotificationScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'You have no new notifications.',
-            style: TextStyle(color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryColor),
+            style: TextStyle(
+              color: isDark
+                  ? AppTheme.textSecondaryDark
+                  : AppTheme.textSecondaryColor,
+            ),
           ),
         ],
       ).animate().fadeIn(),

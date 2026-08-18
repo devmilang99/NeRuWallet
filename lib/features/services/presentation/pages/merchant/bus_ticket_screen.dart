@@ -163,7 +163,7 @@ Widget _buildTicketCard(
       borderRadius: BorderRadius.circular(28),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+          color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
           blurRadius: 30,
           offset: const Offset(0, 15),
         ),
@@ -202,7 +202,7 @@ Widget _buildTicketCard(
                       Text(
                         data['busLine'] ?? 'LUXURY COACH',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: Colors.white.withOpacity(0.7),
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -246,7 +246,7 @@ Widget _buildTicketCard(
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
+                        color: color.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -327,13 +327,13 @@ Widget _buildTicketCard(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.03)
+                        ? Colors.white.withOpacity(0.03)
                         : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDark
                           ? Colors.white10
-                          : Colors.black.withValues(alpha: 0.05),
+                          : Colors.black.withOpacity(0.05),
                     ),
                   ),
                   child: Row(
@@ -389,7 +389,7 @@ Widget _buildTicketCard(
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.successColor.withValues(alpha: 0.1),
+                          color: AppTheme.successColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
@@ -466,12 +466,10 @@ Widget _buildInfoItem(
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(
-      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
+      color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey[50],
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.grey[100]!,
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!,
       ),
     ),
     child: Column(
@@ -508,8 +506,8 @@ Widget _buildAmenityBadge(String text, bool isDark) {
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
       color: isDark
-          ? Colors.white.withValues(alpha: 0.1)
-          : Colors.black.withValues(alpha: 0.05),
+          ? Colors.white.withOpacity(0.1)
+          : Colors.black.withOpacity(0.05),
       borderRadius: BorderRadius.circular(6),
     ),
     child: Text(
@@ -528,7 +526,7 @@ Widget _buildTopIconButton({
     child: Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: Colors.white, size: 20),

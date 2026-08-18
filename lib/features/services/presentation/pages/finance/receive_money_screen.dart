@@ -33,7 +33,7 @@ class ReceiveMoneyScreen extends ConsumerWidget {
                       borderRadius: AppTheme.radiusLarge,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 40,
                           offset: const Offset(0, 20),
                         ),
@@ -69,7 +69,7 @@ class ReceiveMoneyScreen extends ConsumerWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            color: AppTheme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -110,7 +110,7 @@ class ReceiveMoneyScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            color: AppTheme.primaryColor.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: AppTheme.primaryColor, size: 28),

@@ -9,15 +9,15 @@ import '../../data/models/quick_action_model.dart';
 class QuickActionsManagerScreen extends ConsumerStatefulWidget {
   final bool isDark;
 
-  const QuickActionsManagerScreen({
-    required this.isDark, super.key,
-  });
+  const QuickActionsManagerScreen({required this.isDark, super.key});
 
   @override
-  ConsumerState<QuickActionsManagerScreen> createState() => _QuickActionsManagerScreenState();
+  ConsumerState<QuickActionsManagerScreen> createState() =>
+      _QuickActionsManagerScreenState();
 }
 
-class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerScreen> {
+class _QuickActionsManagerScreenState
+    extends ConsumerState<QuickActionsManagerScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -37,7 +37,7 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
     final filteredActions = allActions.where((action) {
       final searchLower = _searchQuery.toLowerCase();
       return action.label.toLowerCase().contains(searchLower) ||
-             action.category.toLowerCase().contains(searchLower);
+          action.category.toLowerCase().contains(searchLower);
     }).toList();
 
     // Group by category efficiently
@@ -47,7 +47,9 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
     }
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundColor,
+      backgroundColor: isDark
+          ? AppTheme.backgroundDark
+          : AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text('All Services'),
         backgroundColor: Colors.transparent,
@@ -62,7 +64,9 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: selectedActions.length >= 8 ? Colors.orange : AppTheme.primaryColor,
+                  color: selectedActions.length >= 8
+                      ? Colors.orange
+                      : AppTheme.primaryColor,
                 ),
               ),
             ),
@@ -76,7 +80,13 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               children: groupedActions.entries.map((entry) {
-                return _buildCategorySection(context, entry.key, entry.value, selectedActions, isDark);
+                return _buildCategorySection(
+                  context,
+                  entry.key,
+                  entry.value,
+                  selectedActions,
+                  isDark,
+                );
               }).toList(),
             ),
           ),
@@ -94,15 +104,15 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
         decoration: InputDecoration(
           hintText: 'Search for services...',
           prefixIcon: const Icon(Icons.search_rounded),
-          suffixIcon: _searchQuery.isNotEmpty 
-            ? IconButton(
-                icon: const Icon(Icons.clear_rounded),
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() => _searchQuery = '');
-                },
-              )
-            : null,
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
           filled: true,
           fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
           border: OutlineInputBorder(
@@ -116,11 +126,11 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
   }
 
   Widget _buildCategorySection(
-    BuildContext context, 
-    String category, 
-    List<QuickActionModel> actions, 
+    BuildContext context,
+    String category,
+    List<QuickActionModel> actions,
     List<QuickActionModel> selectedActions,
-    bool isDark
+    bool isDark,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,8 +157,10 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
           itemCount: actions.length,
           itemBuilder: (ctx, i) {
             final action = actions[i];
-            final isSelected = selectedActions.any((a) => a.label == action.label);
-            
+            final isSelected = selectedActions.any(
+              (a) => a.label == action.label,
+            );
+
             return GestureDetector(
               onTap: () {
                 ref.read(quickActionsProvider.notifier).toggleAction(action);
@@ -163,9 +175,13 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: action.color.withValues(alpha: isSelected ? 0.2 : 0.1),
+                          color: action.color.withOpacity(
+                            isSelected ? 0.2 : 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(18),
-                          border: isSelected ? Border.all(color: action.color, width: 2) : null,
+                          border: isSelected
+                              ? Border.all(color: action.color, width: 2)
+                              : null,
                         ),
                         child: Icon(action.icon, color: action.color, size: 24),
                       ),
@@ -175,7 +191,9 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
                           fontSize: 10,
                           color: isDark ? Colors.white : AppTheme.textBodyColor,
                         ),
@@ -193,7 +211,11 @@ class _QuickActionsManagerScreenState extends ConsumerState<QuickActionsManagerS
                           color: Colors.blue,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.check, color: Colors.white, size: 10),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 10,
+                        ),
                       ).animate().scale(),
                     ),
                 ],

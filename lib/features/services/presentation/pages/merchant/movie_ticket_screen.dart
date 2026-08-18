@@ -177,7 +177,7 @@ Widget _buildTicketCard(
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
+              color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
               blurRadius: 40,
               offset: const Offset(0, 20),
             ),
@@ -197,7 +197,7 @@ Widget _buildTicketCard(
                     ),
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
-                      Colors.black.withValues(alpha: 0.5),
+                      Colors.black.withOpacity(0.5),
                       BlendMode.darken,
                     ),
                   ),
@@ -215,7 +215,7 @@ Widget _buildTicketCard(
                     Positioned.fill(
                       child: CustomPaint(
                         painter: TicketPatternPainter(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: Colors.white.withOpacity(0.1),
                         ),
                       ),
                     ),
@@ -234,7 +234,7 @@ Widget _buildTicketCard(
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
+                                  color: Colors.white.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -324,9 +324,7 @@ Widget _buildTicketCard(
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.3,
-                                      ),
+                                      color: Colors.black.withOpacity(0.3),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
                                     ),
@@ -411,7 +409,7 @@ Widget _buildTicketCard(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
+                            ? Colors.white.withOpacity(0.05)
                             : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -504,7 +502,7 @@ Widget _buildTopIconButton({
     child: Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: Colors.white, size: 20),

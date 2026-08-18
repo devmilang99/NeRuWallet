@@ -25,7 +25,7 @@ class RewardsScreen extends StatelessWidget {
             borderRadius: AppTheme.radiusLarge,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                color: const Color(0xFF6366F1).withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -54,7 +54,7 @@ class RewardsScreen extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withOpacity(0.15),
                   borderRadius: AppTheme.radiusFull,
                 ),
                 child: const Text(
@@ -107,8 +107,8 @@ class RewardsScreen extends StatelessWidget {
         borderRadius: AppTheme.radiusLarge,
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
       ),
       child: Row(
@@ -116,7 +116,7 @@ class RewardsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: AppTheme.radiusMedium,
             ),
             child: Icon(icon, color: color),

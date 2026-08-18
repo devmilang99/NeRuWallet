@@ -61,7 +61,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -129,7 +129,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                   .animate(onPlay: (controller) => controller.repeat())
                   .shimmer(
                     duration: 2.seconds,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Colors.white.withOpacity(0.5),
                   ),
               const SizedBox(height: 40),
               const Text(
@@ -328,7 +328,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
@@ -360,7 +360,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -419,9 +419,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           color: isDark ? AppTheme.surfaceDark : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark
-                ? Colors.white10
-                : Colors.black.withValues(alpha: 0.05),
+            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
           ),
         ),
         child: Column(

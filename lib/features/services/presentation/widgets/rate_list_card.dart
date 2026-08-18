@@ -19,7 +19,7 @@ class RateListCard extends StatelessWidget {
         borderRadius: AppTheme.radiusLarge,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -31,7 +31,7 @@ class RateListCard extends StatelessWidget {
         itemCount: rates.length,
         separatorBuilder: (context, index) => Divider(
           height: 1,
-          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
           indent: 20,
           endIndent: 20,
         ),

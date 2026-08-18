@@ -56,7 +56,7 @@ class GlassDialog {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.errorColor.withValues(alpha: 0.15),
+                color: AppTheme.errorColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -122,7 +122,7 @@ class GlassDialog {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.successColor.withValues(alpha: 0.15),
+                color: AppTheme.successColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -276,7 +276,7 @@ class GlassDialog {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                color: AppTheme.primaryColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -347,8 +347,8 @@ class _GlassDialogBase extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  color: (isDark ? Colors.black : Colors.white).withValues(
-                    alpha: 0.3,
+                  color: (isDark ? Colors.black : Colors.white).withOpacity(
+                    0.3,
                   ),
                 ),
               ),
@@ -364,16 +364,16 @@ class _GlassDialogBase extends StatelessWidget {
                           padding: const EdgeInsets.all(36),
                           decoration: BoxDecoration(
                             color: (isDark ? colorScheme.surface : Colors.white)
-                                .withValues(alpha: isDark ? 0.85 : 0.9),
+                                .withOpacity(isDark ? 0.85 : 0.9),
                             borderRadius: BorderRadius.circular(40),
                             border: Border.all(
                               color: (isDark ? Colors.white : Colors.black)
-                                  .withValues(alpha: 0.1),
+                                  .withOpacity(0.1),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 40,
                                 offset: const Offset(0, 20),
                               ),

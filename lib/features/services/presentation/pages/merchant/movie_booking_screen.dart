@@ -384,9 +384,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                                             end: Alignment.bottomCenter,
                                             colors: [
                                               Colors.transparent,
-                                              Colors.black.withValues(
-                                                alpha: 0.8,
-                                              ),
+                                              Colors.black.withOpacity(0.8),
                                             ],
                                           ),
                                           border: isSelected
@@ -513,7 +511,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 color: isSelected
-                                    ? Colors.white.withValues(alpha: 0.8)
+                                    ? Colors.white.withOpacity(0.8)
                                     : Colors.grey,
                               ),
                             ),
@@ -555,7 +553,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                         color: isSelected
                             ? providerColor
                             : (isDark
-                                  ? Colors.white.withValues(alpha: 0.05)
+                                  ? Colors.white.withOpacity(0.05)
                                   : Colors.white),
                         borderRadius: AppTheme.radiusSmall,
                         border: Border.all(
@@ -566,7 +564,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: providerColor.withValues(alpha: 0.2),
+                                  color: providerColor.withOpacity(0.2),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -598,7 +596,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                   borderRadius: AppTheme.radiusLarge,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -718,7 +716,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
                     borderRadius: AppTheme.radiusMedium,
                   ),
                   elevation: 8,
-                  shadowColor: providerColor.withValues(alpha: 0.4),
+                  shadowColor: providerColor.withOpacity(0.4),
                 ),
                 child: const Text(
                   'Proceed to Payment',
@@ -765,9 +763,7 @@ class _MovieBookingScreenState extends ConsumerState<MovieBookingScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.grey[50],
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
           borderRadius: AppTheme.radiusMedium,
           border: Border.all(
             color: isDark ? Colors.white10 : Colors.grey[200]!,

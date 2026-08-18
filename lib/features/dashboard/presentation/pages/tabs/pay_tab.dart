@@ -123,10 +123,7 @@ class PayTab extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: AppTheme.radiusMedium,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
         ],
       ),
       child: const TextField(
@@ -176,10 +173,10 @@ class PayTab extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isAdd ? null : color?.withValues(alpha: 0.15),
+                  color: isAdd ? null : color?.withOpacity(0.15),
                   border: isAdd
                       ? Border.all(
-                          color: AppTheme.textHintColor.withValues(alpha: 0.4),
+                          color: AppTheme.textHintColor.withOpacity(0.4),
                           width: 1.5,
                         )
                       : null,
@@ -226,7 +223,7 @@ class PayTab extends StatelessWidget {
         borderRadius: AppTheme.radiusMedium,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
             blurRadius: 10,
           ),
         ],
@@ -236,7 +233,7 @@ class PayTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withOpacity(0.12),
               borderRadius: AppTheme.radiusMedium,
             ),
             child: Icon(icon, color: color, size: 24),

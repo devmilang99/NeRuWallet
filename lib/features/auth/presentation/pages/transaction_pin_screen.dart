@@ -741,7 +741,7 @@ class _TransactionPinScreenState extends ConsumerState<TransactionPinScreen> {
             ? [
                 BoxShadow(
                   color: (isWrong ? AppTheme.errorColor : AppTheme.primaryColor)
-                      .withValues(alpha: 0.3),
+                      .withOpacity(0.3),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),

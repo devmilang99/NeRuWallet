@@ -201,7 +201,7 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            color: AppTheme.primaryColor.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -253,13 +253,13 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: isDark
-                ? AppTheme.surfaceDark.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
+                ? AppTheme.surfaceDark.withOpacity(0.4)
+                : Colors.white.withOpacity(0.6),
             borderRadius: AppTheme.radiusLarge,
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.05),
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.05),
               width: 1.5,
             ),
           ),
@@ -340,8 +340,8 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
                   prefixIcon: const Icon(Icons.help_outline, size: 22),
                   filled: true,
                   fillColor: isDark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : Colors.black.withValues(alpha: 0.02),
+                      ? Colors.white.withOpacity(0.03)
+                      : Colors.black.withOpacity(0.02),
                 ),
                 items: _securityQuestions
                     .map(
@@ -397,7 +397,7 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        color: AppTheme.primaryColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -452,8 +452,8 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: isDark
-                ? Colors.white.withValues(alpha: 0.03)
-                : Colors.black.withValues(alpha: 0.02),
+                ? Colors.white.withOpacity(0.03)
+                : Colors.black.withOpacity(0.02),
           ),
         ),
       ],
@@ -491,7 +491,7 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
               size: 16,
               color: isMet
                   ? AppTheme.successColor
-                  : Colors.grey.withValues(alpha: 0.5),
+                  : Colors.grey.withOpacity(0.5),
             )
             .animate(target: isMet ? 1 : 0)
             .scale(duration: 200.ms)

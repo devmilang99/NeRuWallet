@@ -37,7 +37,7 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
           borderRadius: AppTheme.radiusLarge,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
               blurRadius: 30,
               offset: const Offset(0, 15),
             ),
@@ -75,11 +75,16 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      onPressed: () => setState(() => _isAdjusting = !_isAdjusting),
+                      onPressed: () =>
+                          setState(() => _isAdjusting = !_isAdjusting),
                       icon: Icon(
-                        _isAdjusting ? Icons.check_circle_outline_rounded : Icons.reorder_rounded,
+                        _isAdjusting
+                            ? Icons.check_circle_outline_rounded
+                            : Icons.reorder_rounded,
                         size: 18,
-                        color: _isAdjusting ? AppTheme.primaryColor : (isDark ? Colors.white38 : Colors.black26),
+                        color: _isAdjusting
+                            ? AppTheme.primaryColor
+                            : (isDark ? Colors.white38 : Colors.black26),
                       ),
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
@@ -124,7 +129,9 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
               ),
               itemCount: displayedActions.length,
               onReorder: (oldIndex, newIndex) {
-                ref.read(quickActionsProvider.notifier).reorderActions(oldIndex, newIndex);
+                ref
+                    .read(quickActionsProvider.notifier)
+                    .reorderActions(oldIndex, newIndex);
               },
               itemBuilder: (ctx, i) =>
                   _buildQuickActionItem(context, displayedActions[i], i),
@@ -175,10 +182,7 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             border: _isAdjusting
-                ? Border.all(
-                    color: action.color.withValues(alpha: 0.3),
-                    width: 1.5,
-                  )
+                ? Border.all(color: action.color.withOpacity(0.3), width: 1.5)
                 : null,
             borderRadius: AppTheme.radiusMedium,
           ),
@@ -188,7 +192,7 @@ class _QuickActionsGridState extends ConsumerState<QuickActionsGrid> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: action.color.withValues(alpha: 0.08),
+                  color: action.color.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(action.icon, color: action.color, size: 20),

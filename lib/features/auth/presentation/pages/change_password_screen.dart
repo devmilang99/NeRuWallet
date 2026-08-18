@@ -180,9 +180,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               onPressed: toggleObscure,
             ),
             filled: true,
-            fillColor: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.white,
+            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
           ),
         ),
       ],

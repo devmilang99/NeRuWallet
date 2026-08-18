@@ -110,7 +110,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -401,7 +401,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        color: AppTheme.primaryColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -582,13 +582,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: (isDark ? AppTheme.surfaceDark : Colors.white).withValues(
-                alpha: 0.7,
+              color: (isDark ? AppTheme.surfaceDark : Colors.white).withOpacity(
+                0.7,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withValues(
-                  alpha: 0.1,
+                color: (isDark ? Colors.white : Colors.black).withOpacity(
+                  0.1,
                 ),
               ),
             ),
@@ -618,7 +618,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             borderRadius: BorderRadius.circular(50),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                color: AppTheme.primaryColor.withOpacity(0.4),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),

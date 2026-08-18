@@ -129,7 +129,7 @@ class TicketsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 18, color: color),
@@ -160,7 +160,7 @@ class TicketsScreen extends StatelessWidget {
         borderRadius: AppTheme.radiusLarge,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+            color: const Color(0xFF4F46E5).withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -174,7 +174,7 @@ class TicketsScreen extends StatelessWidget {
             child: Icon(
               Icons.explore_rounded,
               size: 160,
-              color: Colors.white.withValues(alpha: 0.1),
+              color: Colors.white.withOpacity(0.1),
             ),
           ),
           Padding(
@@ -188,7 +188,7 @@ class TicketsScreen extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -218,9 +218,7 @@ class TicketsScreen extends StatelessWidget {
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF4F46E5),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     minimumSize: const Size(100, 36),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -258,15 +256,10 @@ class TicketsScreen extends StatelessWidget {
           color: isDark ? AppTheme.surfaceDark : Colors.white,
           borderRadius: AppTheme.radiusLarge,
           border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.grey[100]!,
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!,
           ),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
           ],
         ),
         child: Row(
@@ -275,7 +268,7 @@ class TicketsScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, size: 28, color: color),
@@ -303,7 +296,7 @@ class TicketsScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.05),
+                      color: color.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -347,15 +340,10 @@ class TicketsScreen extends StatelessWidget {
           color: isDark ? AppTheme.surfaceDark : Colors.white,
           borderRadius: AppTheme.radiusLarge,
           border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.grey[100]!,
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!,
           ),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
           ],
         ),
         child: Column(
@@ -365,7 +353,7 @@ class TicketsScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 22, color: color),
