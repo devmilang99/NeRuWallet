@@ -55,8 +55,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Cache build_runner
+        uses: actions/cache@v4
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
+
       - name: Run build_runner
         run: dart run build_runner build --delete-conflicting-outputs
+        timeout-minutes: 20
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -87,15 +96,18 @@ jobs:
         run: |
           chmod +x ios/build_rust_ios.sh
           ./ios/build_rust_ios.sh
+        timeout-minutes: 20
 
       - name: Run Tests
         run: flutter test
 
       - name: Build iOS
         run: flutter build ios --no-codesign --release
+        timeout-minutes: 30
 
       - name: Build Android APK
         run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+        timeout-minutes: 20
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
