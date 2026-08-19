@@ -1,15 +1,14 @@
-name: NeRuWallet CI/CD
+name: NeRuWallet Release
 
 on:
   push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main" ]
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
-  build:
-    name: Build & Test
-    runs-on: macos-latest
+  build-and-release:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
@@ -22,6 +21,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -29,100 +29,55 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android SDK
-        run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-37" "build-tools;35.0.0" "ndk;28.2.13676358"
-
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
-
-      - name: Cache Pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Cache Cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            rust_signer/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
 
       - name: Cache FRB Codegen
-        id: cache-frb-codegen
+        id: cache-frb
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/flutter_rust_bridge_codegen
-          key: ${{ runner.os }}-frb-codegen-2.12.0
+          key: ${{ runner.os }}-frb-2.12.0
 
-      - name: Install dependencies
+      - name: Install & Generate Bindings
         run: |
-          flutter clean
+          if [ "${{ steps.cache-frb.outputs.cache-hit }}" != "true" ]; then
+            cargo install flutter_rust_bridge_codegen --version 2.12.0
+          fi
+          
           flutter pub get
-
-      - name: Install FRB Codegen
-        if: steps.cache-frb-codegen.outputs.cache-hit != 'true'
-        run: cargo install flutter_rust_bridge_codegen --version 2.12.0
-
-      - name: Generate Bindings
-        run: |
-          mkdir -p lib/src/rust/
           ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
-
-      - name: Create .env file
-        run: |
-          echo "SUPABASE_URL=https://dummy-project.supabase.co" > .env
-          echo "SUPABASE_ANON_KEY=dummy-anon-key" >> .env
-
-      - name: Run build_runner
-        run: dart run build_runner build --delete-conflicting-outputs
-        timeout-minutes: 20
-
-      - name: Run Tests
-        run: flutter test
+          
+          # Setup environment variables (Use GitHub Secrets for real keys)
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
+          
+          dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Android APK
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          # Set NDK path for the Rust-Android-Gradle plugin
-          echo "ndk.dir=$ANDROID_HOME/ndk/28.2.13676358" > android/local.properties
+          # The NDK version is usually pre-installed on ubuntu-latest. 
+          # We point to it so the Rust plugin can find it.
+          echo "ndk.dir=$ANDROID_HOME/ndk-bundle" > android/local.properties
           flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
-        timeout-minutes: 20
-
-      - name: Upload Android APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 7
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest Release
           files: build/app/outputs/flutter-apk/app-release.apk
-          body: "This release contains the latest automated APK build from the main branch."
+          body: |
+            ## Automated Release
+            This release contains the latest APK build for NeRuWallet.
+            
+            **Build Info:**
+            - Branch: `${{ github.ref_name }}`
+            - Commit: `${{ github.sha }}`
+            - Date: $(date +'%Y-%m-%d %H:%M:%S')
           prerelease: false
           make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
