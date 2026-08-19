@@ -14,7 +14,7 @@
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		A1B2C3D41E8E89220040F4C2 /* SecureEnclaveProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D31E8E89220040F4C2 /* SecureEnclaveProvider.swift */; };
 		A1B2C3D61E8E89220040F4C2 /* rust_signer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D51E8E89220040F4C2 /* rust_signer.swift */; };
-		A1B2C3DA1E8E89220040F4C2 /* libuniffi_rust_signer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D91E8E89220040F4C2 /* libuniffi_rust_signer.a */; };
+		A1B2C3DA1E8E89220040F4C2 /* librust_signer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D91E8E89220040F4C2 /* librust_signer.a */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -56,7 +56,7 @@
 		A1B2C3D51E8E89220040F4C2 /* rust_signer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = rust_signer.swift; sourceTree = "<group>"; };
 		A1B2C3D71E8E89220040F4C2 /* rust_signerFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rust_signerFFI.h; sourceTree = "<group>"; };
 		A1B2C3D81E8E89220040F4C2 /* rust_signerFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = rust_signerFFI.modulemap; sourceTree = "<group>"; };
-		A1B2C3D91E8E89220040F4C2 /* libuniffi_rust_signer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuniffi_rust_signer.a; path = ../rust_signer/target/universal/libuniffi_rust_signer.a; sourceTree = SOURCE_ROOT; };
+		A1B2C3D91E8E89220040F4C2 /* librust_signer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librust_signer.a; path = ../rust_signer/target/universal/librust_signer.a; sourceTree = SOURCE_ROOT; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -72,7 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1B2C3DA1E8E89220040F4C2 /* libuniffi_rust_signer.a in Frameworks */,
+				A1B2C3DA1E8E89220040F4C2 /* librust_signer.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,7 +131,7 @@
 				A1B2C3D51E8E89220040F4C2 /* rust_signer.swift */,
 				A1B2C3D71E8E89220040F4C2 /* rust_signerFFI.h */,
 				A1B2C3D81E8E89220040F4C2 /* rust_signerFFI.modulemap */,
-				A1B2C3D91E8E89220040F4C2 /* libuniffi_rust_signer.a */,
+				A1B2C3D91E8E89220040F4C2 /* librust_signer.a */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -394,7 +394,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -413,7 +413,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -601,7 +601,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -620,7 +620,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -643,7 +643,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -662,7 +662,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-luniffi_rust_signer",
+					"-lrust_signer",
 				);
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

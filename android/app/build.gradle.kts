@@ -72,10 +72,14 @@ android {
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
-            // Point to the relocated build directory where the rust-android-gradle plugin
-            // will place its generated JNI libraries.
-            jniLibs.srcDirs(file("${layout.buildDirectory.get().asFile}/rustJniLibs"))
         }
+    }
+}
+
+// Ensure Rust libraries are built before the app is bundled
+tasks.configureEach {
+    if (name.contains("merge") && (name.contains("JniLibFolders") || name.contains("NativeLibs"))) {
+        dependsOn("cargoBuild")
     }
 }
 
@@ -95,4 +99,6 @@ cargo {
     module = "../../rust_signer"
     libname = "rust_signer"
     targets = listOf("arm", "arm64", "x86", "x86_64")
+    apiLevel = 24
+    extraCargoBuildArguments = listOf("--verbose")
 }

@@ -27,7 +27,7 @@ class SecureSigningService {
   /// Independent Rust hashing for non-biometric flows.
   Future<Uint8List?> hashDataOnly(Uint8List data) async {
     if (_ref == null) return null;
-    final rustService = _ref!.read(rustServiceProvider);
+    final rustService = _ref.read(rustServiceProvider);
     AppLogger.d('SECURITY_PIPELINE: Independent Rust hashing initiated');
     return await rustService.processTransactionData(data);
   }
@@ -44,7 +44,7 @@ class SecureSigningService {
       return signData(data);
     }
 
-    final rustService = _ref!.read(rustServiceProvider);
+    final rustService = _ref.read(rustServiceProvider);
     AppLogger.d(
       'SECURITY_PIPELINE: Calling RustService.processTransactionData',
     );

@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sqlite3/open.dart';
 
 part 'app_database.g.dart';
 
@@ -274,6 +276,19 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
+    if (Platform.isAndroid) {
+      open.overrideFor(OperatingSystem.android, () {
+        try {
+          return DynamicLibrary.open('libsqlite3.so');
+        } catch (e) {
+          // Fallback if the library is in a different location or needs a specific path
+          return DynamicLibrary.open(
+            '/data/data/com.example.neruwallet/lib/libsqlite3.so',
+          );
+        }
+      });
+    }
+
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'neru_wallet.sqlite'));
     return NativeDatabase(file);

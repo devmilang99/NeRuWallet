@@ -412,11 +412,16 @@ flutter_rust_bridge_codegen generate
 
 ### 🤖 Android Integration
 
-The Android build is integrated via the Rust toolchain. When you run `flutter run`, the Rust
-library is compiled and linked directly to the application.
+The Android build is automated via the **`rust-android-gradle`** plugin and **`flutter_rust_bridge`
+**.
 
 - **Source**: `rust_signer/`
 - **Output**: Direct FFI bindings in `lib/src/rust/`
+- **Automated Build**: When you run `flutter run` or `flutter build apk`, the Gradle task
+  `cargoBuild` is automatically triggered. It compiles the Rust code into a JNI-compatible `.so`
+  library (`librust_signer.so`) and bundles it into the APK's `jniLibs` folder.
+- **Troubleshooting**: If you encounter a `library not found` error, run `flutter clean` and ensure
+  your `ANDROID_NDK_HOME` environment variable is correctly set in `local.properties`.
 
 ### 🍎 iOS Integration (macOS Only)
 

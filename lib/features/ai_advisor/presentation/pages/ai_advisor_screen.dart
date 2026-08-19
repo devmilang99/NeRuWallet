@@ -314,10 +314,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
           _buildChart(isDark),
           const SizedBox(height: 24),
           if (_isLoading && _structuredSummary == null)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(color: Color(0xFF10B981)),
-            )
+            _buildLoadingAnalysis(isDark)
           else
             _buildStructuredSummaryView(isDark),
           const SizedBox(height: 100),
@@ -771,6 +768,53 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
     );
   }
 
+  Widget _buildLoadingAnalysis(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 60),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child:
+                const Icon(
+                      Icons.settings_rounded,
+                      color: Color(0xFF10B981),
+                      size: 40,
+                    )
+                    .animate(onPlay: (controller) => controller.repeat())
+                    .rotate(duration: 2.seconds, curve: Curves.linear),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+                'Preparing analysis...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+              .animate(onPlay: (controller) => controller.repeat())
+              .shimmer(
+                duration: 1500.ms,
+                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+              ),
+          const SizedBox(height: 8),
+          Text(
+            'Our AI is crunching your financial data',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn();
+  }
+
   Widget _buildStructuredSummaryView(bool isDark) {
     final transactions = _getFilteredTransactions();
     final hasExpenses = transactions.any((t) => t.amount < 0);
@@ -1159,7 +1203,9 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
 
       final periodTransactions = allTransactions.where(
         (t) =>
-            t.createdAt.isAfter(pointStart) && t.createdAt.isBefore(pointEnd),
+            (t.createdAt.isAfter(pointStart) ||
+                t.createdAt.isAtSameMomentAs(pointStart)) &&
+            t.createdAt.isBefore(pointEnd),
       );
 
       double income = 0;
@@ -1168,7 +1214,7 @@ class _AIAdvisorScreenState extends ConsumerState<AIAdvisorScreen> {
         if (t.amount > 0) {
           income += t.amount;
         } else {
-          expense += t.amount.abs();
+          expense += (t.amount.abs() + t.fee + t.tax);
         }
       }
 

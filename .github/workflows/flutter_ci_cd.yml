@@ -31,12 +31,12 @@ jobs:
 
       - name: Setup Android SDK
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-37" "build-tools;35.0.0" "ndk;28.2.13676358"
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, x86_64-linux-android
+          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
 
       - name: Cache Pub dependencies
         uses: actions/cache@v4
@@ -101,7 +101,12 @@ jobs:
         run: flutter test
 
       - name: Build Android APK
-        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          # Set NDK path for the Rust-Android-Gradle plugin
+          echo "ndk.dir=$ANDROID_HOME/ndk/28.2.13676358" > android/local.properties
+          flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
         timeout-minutes: 20
 
       - name: Upload Android APK Artifact

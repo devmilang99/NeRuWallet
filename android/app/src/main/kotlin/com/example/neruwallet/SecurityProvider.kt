@@ -16,7 +16,7 @@ class SecurityProvider(private val context: Context) {
 
     private val keyStoreAlias = "neru_wallet_signing_key"
     private val providerName = "AndroidKeyStore"
-    private val TAG = "RustSigner"
+    private val TAG = "SecurityProvider"
 
     fun generateHardwareBackedKey(): Boolean {
         Log.d(TAG, "Kotlin: generateHardwareBackedKey requested")

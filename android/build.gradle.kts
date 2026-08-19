@@ -5,24 +5,20 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
+// Redirect build directory to the root project's build folder
+val rootBuildDir: File = if (rootProject.projectDir.absolutePath.contains(" ")) {
+    // Fix for spaces in path: Relocate build directory to a space-free location
+    file("${rootProject.projectDir.absolutePath.substring(0, 3)}NeRuBuild")
+} else {
+    rootProject.projectDir.parentFile.resolve("build")
+}
 
-subprojects {
-    val projectRoot = project.projectDir.toPath().root
-    val buildRoot = newBuildDir.asFile.toPath().root
-
-    // Only relocate build directory if project and build dir are on the same drive
-    if (projectRoot == buildRoot) {
-        val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-        project.layout.buildDirectory.value(newSubprojectBuildDir)
-    }
+allprojects {
+    layout.buildDirectory.set(rootBuildDir.resolve(project.name))
 }
 
 subprojects {
-    project.evaluationDependsOn(":app")
+    // project.evaluationDependsOn(":app")
 }
 
 // Force SDK versions to 37 to support modern plugins while targeting SDK 35
@@ -31,6 +27,12 @@ subprojects {
         if (project.extensions.findByName("android") != null) {
             val android = project.extensions.getByName("android")
             try {
+                // Remove the forced ndkVersion reflection to see if it fixes initialization
+                /*
+                android.javaClass.getMethod("setNdkVersion", String::class.java)
+                    .invoke(android, "28.2.13676358")
+                */
+
                 // Set compileSdk
                 android.javaClass.getMethod("setCompileSdk", Int::class.javaPrimitiveType)
                     .invoke(android, 37)
