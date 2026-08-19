@@ -53,6 +53,10 @@ jobs:
           # Setup environment variables (Use GitHub Secrets for real keys)
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || '' }}" >> .env
+          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID || '' }}" >> .env
+          echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY || '' }}" >> .env
+          echo "ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV || '' }}" >> .env
           
           dart run build_runner build --delete-conflicting-outputs
 
