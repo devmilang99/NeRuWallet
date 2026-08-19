@@ -2,8 +2,10 @@ name: NeRuWallet CI/CD
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch: # Allow manual trigger from GitHub UI
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -45,7 +47,7 @@ jobs:
           flutter pub get
           ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
           
-          # Setup environment variables for code generation if needed
+          # Setup environment variables
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
           
@@ -110,14 +112,15 @@ jobs:
         run: |
           flutter build apk --debug --android-skip-build-dependency-validation
 
-      - name: Upload Debug APK
+      - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-debug-apk
+          name: NeRuWallet-Debug-APK
           path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 90
 
   build-ios:
-    name: Build iOS Debug App
+    name: Build iOS App Bundle & IPA
     needs: test
     runs-on: macos-latest
     steps:
@@ -176,11 +179,70 @@ jobs:
             -output target/universal/librust_signer.a
           cd ..
 
-      - name: Build iOS App
+      - name: Build iOS App Bundle
         run: flutter build ios --debug --no-codesign
 
-      - name: Upload iOS Debug App
+      - name: Create Unsigned IPA
+        run: |
+          mkdir -p build/ios/ipa
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r ../ipa/NeRuWallet.ipa Payload
+
+      - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-debug-app
-          path: build/ios/iphoneos/Runner.app
+          name: NeRuWallet-iOS-IPA
+          path: build/ios/ipa/NeRuWallet.ipa
+          retention-days: 90
+
+  create_release:
+    name: Create GitHub Release
+    needs: [ build-android, build-ios ]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: NeRuWallet-Debug-APK
+          path: artifacts/android
+
+      - name: Download iOS IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: NeRuWallet-iOS-IPA
+          path: artifacts/ios
+
+      - name: Prepare Release Files
+        run: |
+          mv artifacts/android/app-debug.apk NeRuWallet-Android.apk
+          mv artifacts/ios/NeRuWallet.ipa NeRuWallet-iOS.ipa
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "NeRuWallet Latest Build"
+          body: |
+            ## 🚀 Latest Build Summary
+            
+            This release contains the latest automated builds from the `main` branch.
+            
+            ### 📦 Artifacts
+            - **Android**: `NeRuWallet-Android.apk` (Debug Build)
+            - **iOS**: `NeRuWallet-iOS.ipa` (Unsigned Build - for BrowserStack/Simulation)
+            
+            *Last updated: ${{ github.event.head_commit.timestamp }}*
+            *Commit: ${{ github.sha }}*
+          files: |
+            NeRuWallet-Android.apk
+            NeRuWallet-iOS.ipa
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

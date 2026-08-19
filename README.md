@@ -5,8 +5,8 @@
 <img src="https://img.shields.io/badge/AI-Gemini--3.5--Flash-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white" />
 <img src="https://img.shields.io/badge/Material--3-Dynamic--UI-6366F1?style=for-the-badge&logo=google&logoColor=white" />
 <img src="https://img.shields.io/badge/Flutter-3.11%2B-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
-<a href="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci_cd.yml">
-  <img src="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci_cd.yml/badge.svg" alt="Flutter CI/CD" />
+<a href="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci.yml">
+  <img src="https://github.com/devmilang99/NeRuWallet/actions/workflows/flutter_ci.yml/badge.svg" alt="Flutter CI/CD" />
 </a>
 
 <br /><br />
@@ -383,12 +383,24 @@ The NeRuWallet architecture was meticulously selected to solve the "Fintech Tril
 *
 
 *
-⬇️ [Download APK from Build Artifacts](https://github.com/devmilang99/NeRuWallet/actions/runs/32239538812/artifacts/9360559423)
+⬇️ [Download Latest Android APK](https://github.com/devmilang99/NeRuWallet/releases/latest/download/NeRuWallet-Android.apk)
 **
 
 > [!TIP]
 > This APK is automatically built and packaged from the latest source code via GitHub Actions CI/CD
-> pipeline.
+> pipeline. For detailed instructions, see the **[APK Download Guide](APK_DOWNLOAD_GUIDE.md)**.
+
+### 🍏 iOS Testing
+
+*
+
+*
+⬇️ [Download Latest iOS IPA](https://github.com/devmilang99/NeRuWallet/releases/latest/download/NeRuWallet-iOS.ipa)
+**
+
+> [!IMPORTANT]
+> iOS builds are unsigned. Use **BrowserStack** to test the IPA on real devices. See the *
+*[iOS Download & Testing Guide](IOS_DOWNLOAD_GUIDE.md)** for step-by-step instructions.
 
 ### ✅ System Requirements
 
@@ -454,9 +466,11 @@ To get a local copy up and running for development, follow these steps:
       `rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim`
 4. **Setup Environment**: Create a `.env` file in the root directory and add your `GEMINI_API_KEY`
    and Supabase credentials.
-5. **iOS Specifics**: For Google & Apple Sign-In configuration, refer to
-   the [iOS Setup Guide](file:///D:/For Portfolio/NeRuWallet/iOS_SIGNIN_SETUP.md).
-6. **Run the App**: `flutter run`
+5. **CI/CD Setup**: For information on how to configure GitHub Actions secrets, refer to
+   the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md).
+6. **iOS Specifics**: For Google & Apple Sign-In configuration, refer to
+   the [iOS Setup Guide](iOS_SIGNIN_SETUP.md).
+7. **Run the App**: `flutter run`
 
 ---
 
