@@ -1,4 +1,4 @@
-name: NeRuWallet Release
+name: NeRuWallet CI/CD
 
 on:
   push:
@@ -6,12 +6,58 @@ on:
   workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
-  build-and-release:
-    name: Build & Release APK
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache FRB Codegen
+        id: cache-frb
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/flutter_rust_bridge_codegen
+          key: ${{ runner.os }}-frb-2.12.0
+
+      - name: Install & Generate Bindings
+        run: |
+          if [ "${{ steps.cache-frb.outputs.cache-hit }}" != "true" ]; then
+            cargo install flutter_rust_bridge_codegen --version 2.12.0
+          fi
+          
+          flutter pub get
+          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
+          
+          # Setup environment variables for code generation if needed
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
+          
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run Tests
+        run: flutter test
+
+  build-android:
+    name: Build Android Debug APK
+    needs: test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,7 +78,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - name: Cache FRB Codegen
         id: cache-frb
@@ -50,7 +96,7 @@ jobs:
           flutter pub get
           ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
           
-          # Setup environment variables (Use GitHub Secrets for real keys)
+          # Setup environment variables
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || '' }}" >> .env
@@ -58,33 +104,68 @@ jobs:
           echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY || '' }}" >> .env
           echo "ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV || '' }}" >> .env
           
-          dart run build_runner build
-
-      - name: Run Tests
-        run: flutter test
+          dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Android APK
         run: |
-          # The NDK version is usually pre-installed on ubuntu-latest. 
-          # We point to it so the Rust plugin can find it.
-          echo "ndk.dir=$ANDROID_HOME/ndk-bundle" > android/local.properties
-          flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+          flutter build apk --debug
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: latest
-          name: Latest Release
-          files: build/app/outputs/flutter-apk/app-release.apk
-          body: |
-            ## Automated Release
-            This release contains the latest APK build for NeRuWallet.
-            
-            **Build Info:**
-            - Branch: `${{ github.ref_name }}`
-            - Commit: `${{ github.sha }}`
-            - Date: $(date +'%Y-%m-%d %H:%M:%S')
-          prerelease: false
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: android-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+  build-ios:
+    name: Build iOS Debug App
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim
+
+      - name: Cache FRB Codegen
+        id: cache-frb
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/flutter_rust_bridge_codegen
+          key: ${{ runner.os }}-frb-2.12.0
+
+      - name: Install & Generate Bindings
+        run: |
+          if [ "${{ steps.cache-frb.outputs.cache-hit }}" != "true" ]; then
+            cargo install flutter_rust_bridge_codegen --version 2.12.0
+          fi
+          
+          flutter pub get
+          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
+          
+          # Setup environment variables
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'dummy-key' }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || '' }}" >> .env
+          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID || '' }}" >> .env
+          echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY || '' }}" >> .env
+          echo "ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV || '' }}" >> .env
+          
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build iOS App
+        run: flutter build ios --debug --no-codesign
+
+      - name: Upload iOS Debug App
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-debug-app
+          path: build/ios/iphoneos/Runner.app
