@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_testrt 'package:neruwallet/src/rust/api.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:neruwallet/src/rust/api.dart';
 import 'package:neruwallet/src/rust/frb_generated.dart';
 
 class MockRustLibApi extends RustLibApi {
