@@ -20,7 +20,7 @@ Built with Flutter, Rust, and Hardware HSMs, NeRuWallet is an engineering-first 
 harmonizes fluid Material 3 design with an uncompromising "Defense in Depth" security architecture,
 now featuring **Hardware-Backed Multi-Signature Vaults**.
 
-[Architecture](#architecture) · [Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Get Started](#get-started)
+[Architecture](#architecture) · [Security Pipeline](#security-pipeline) · [Neru AI](#neru-ai) · [UX Philosophy](#ux-philosophy) · [Screenshots](#screenshots) · [Installation](#installation) · [Get Started](#get-started)
 
 ---
 
@@ -374,11 +374,74 @@ The NeRuWallet architecture was meticulously selected to solve the "Fintech Tril
 
 ---
 
+<a id="installation"></a>
+
+## 📲 Installation & Deployment
+
+### 🎯 Quick Start (Direct APK)
+
+*
+
+*
+⬇️ [Download APK from Build Artifacts](https://github.com/devmilang99/NeRuWallet/actions/runs/32239538812/artifacts/9360559423)
+**
+
+> [!TIP]
+> This APK is automatically built and packaged from the latest source code via GitHub Actions CI/CD
+> pipeline.
+
+### ✅ System Requirements
+
+| Requirement             | Specification                              |
+|-------------------------|--------------------------------------------|
+| **Min Android Version** | Android 6.0 (API Level 23)                 |
+| **Storage Space**       | ~100MB free                                |
+| **Permissions**         | Camera (QR), Contacts (Optional), Internet |
+
+### 🚀 Installation Methods
+
+<details>
+<summary><b>Method 1: Direct Installation (Easiest)</b></summary>
+
+1. **Download**: Click the link above to get the `.apk` file.
+2. **Settings**: Enable **"Unknown Sources"** in your device settings.
+3. **Install**: Tap the downloaded file and confirm.
+4. **Launch**: Grant permissions (Camera, Contacts) for full functionality.
+
+</details>
+
+<details>
+<summary><b>Method 2: Command Line (ADB)</b></summary>
+
+```bash
+# Connect device & verify
+adb devices
+
+# Install APK
+adb install path/to/NeRuWallet.apk
+
+# Launch app
+adb shell am start -n com.devmilang99.neruwallet/.MainActivity
+```
+
+</details>
+
+### 🔒 Security & Permissions
+
+| Permission        | Purpose                                     |
+|-------------------|---------------------------------------------|
+| **INTERNET**      | Sync transactions with Supabase & Gemini AI |
+| **CAMERA**        | QR code scanning for payments               |
+| **READ_CONTACTS** | Recipient suggestions                       |
+| **WRITE_STORAGE** | Encrypted transaction backups               |
+
+---
+
 <a id="get-started"></a>
 
-## Get Started
+## 🚀 Get Started (Developer Setup)
 
-To get a local copy up and running, follow these simple steps:
+To get a local copy up and running for development, follow these steps:
 
 1. **Clone the repository**: `git clone https://github.com/devmilang99/NeRuWallet.git`
 2. **Install Flutter dependencies**: `flutter pub get`
