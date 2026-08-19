@@ -94,7 +94,7 @@ jobs:
           fi
           
           flutter pub get
-          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
+          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/ --c-output ios/Runner/frb.h
           
           # Setup environment variables
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
@@ -105,6 +105,21 @@ jobs:
           echo "ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV || '' }}" >> .env
           
           dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Rust Library for iOS
+        run: |
+          cd rust_signer
+          # Build for physical device and simulator
+          cargo build --target aarch64-apple-ios
+          cargo build --target x86_64-apple-ios
+          
+          # Create universal library for Xcode
+          mkdir -p target/universal
+          lipo -create \
+            target/aarch64-apple-ios/debug/librust_signer.a \
+            target/x86_64-apple-ios/debug/librust_signer.a \
+            -output target/universal/librust_signer.a
+          cd ..
 
       - name: Build Android APK
         run: |
@@ -149,7 +164,7 @@ jobs:
           fi
           
           flutter pub get
-          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/
+          ~/.cargo/bin/flutter_rust_bridge_codegen generate --rust-input crate::api --rust-root rust_signer --dart-output lib/src/rust/ --c-output ios/Runner/frb.h
           
           # Setup environment variables
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}" > .env
@@ -160,6 +175,21 @@ jobs:
           echo "ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV || '' }}" >> .env
           
           dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Rust Library for iOS
+        run: |
+          cd rust_signer
+          # Build for physical device and simulator
+          cargo build --target aarch64-apple-ios
+          cargo build --target x86_64-apple-ios
+          
+          # Create universal library for Xcode
+          mkdir -p target/universal
+          lipo -create \
+            target/aarch64-apple-ios/debug/librust_signer.a \
+            target/x86_64-apple-ios/debug/librust_signer.a \
+            -output target/universal/librust_signer.a
+          cd ..
 
       - name: Build iOS App
         run: flutter build ios --debug --no-codesign

@@ -1,0 +1,4 @@
+module rust_signerFFI {
+    header "rust_signerFFI.h"
+    export *
+}
