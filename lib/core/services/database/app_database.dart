@@ -272,6 +272,20 @@ class AppDatabase extends _$AppDatabase {
           .get();
 
   Future<void> clearAiMemories() => delete(aiMemories).go();
+
+  /// Clears all local data from the database.
+  /// Typically called during logout to ensure no data leaks between users.
+  Future<void> clearAllData() async {
+    await transaction(() async {
+      await delete(transactions).go();
+      await delete(appPreferences).go();
+      await delete(dbNotifications).go();
+      await delete(aiMemories).go();
+      await delete(multiSigGroups).go();
+      await delete(multiSigMembers).go();
+      await delete(pendingSignatures).go();
+    });
+  }
 }
 
 LazyDatabase _openConnection() {

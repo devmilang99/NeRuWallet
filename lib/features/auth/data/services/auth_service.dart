@@ -1,7 +1,9 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:neruwallet/core/services/database/app_database.dart';
 import 'package:neruwallet/core/services/preference_service.dart';
+import 'package:neruwallet/core/services/sync_service.dart';
 import 'package:neruwallet/core/utils/logger.dart';
 import 'package:neruwallet/features/auth/domain/models/user_model.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -241,6 +243,10 @@ class AuthService {
       await _googleSignIn.signOut();
       await _supabase.auth.signOut();
       await _ref.read(preferenceServiceProvider).clearAuthPreferences();
+      // Stop periodic sync before clearing data
+      _ref.read(syncServiceProvider).stopPeriodicSync();
+      // Clear the local database to prevent data leaking to the next user
+      await _ref.read(appDatabaseProvider).clearAllData();
     } catch (e) {
       AppLogger.e('Error during signOut', e);
     }

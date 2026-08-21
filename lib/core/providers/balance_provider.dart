@@ -91,10 +91,8 @@ class Balance extends _$Balance {
 
     _balanceSubscription?.cancel();
     _balanceSubscription = _db.watchPreference('total_balance').listen((val) {
-      if (val != null) {
-        final balance = double.tryParse(val) ?? 0.0;
-        state = state.copyWith(totalBalance: balance);
-      }
+      final balance = double.tryParse(val ?? '50000.0') ?? 50000.0;
+      state = state.copyWith(totalBalance: balance);
     });
 
     _voucherSubscription?.cancel();
